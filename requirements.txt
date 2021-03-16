@@ -1,0 +1,5 @@
+setuptools
+Cython
+transformations
+matplotlib
+seaborn
