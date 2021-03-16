@@ -1108,3 +1108,30 @@ std::string WSR_Util::bool_to_string(bool value)
     else
         return "false"; 
 }
+
+std::string WSR_Util::format_mac(std::string const& s) {
+    unsigned char a[6];
+    int last = -1;
+    int rc = sscanf(s.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx%n",
+                    a + 0, a + 1, a + 2, a + 3, a + 4, a + 5,
+                    &last);
+    if(rc != 6 || s.size() != last)
+        throw std::runtime_error("invalid mac address format " + s);
+    
+    uint64_t(a[0]) << 40 |
+    uint64_t(a[1]) << 32 | 
+    (
+    uint32_t(a[2]) << 24 | 
+    uint32_t(a[3]) << 16 |
+    uint32_t(a[4]) << 8 |
+    uint32_t(a[5])
+    );
+
+    std::string output = std::to_string(a[0]) + ":" +
+                         std::to_string(a[1]) + ":" +
+                         std::to_string(a[2]) + ":" +
+                         std::to_string(a[3]) + ":" +
+                         std::to_string(a[4]) + ":" +
+                         std::to_string(a[5]);
+    return output;
+}

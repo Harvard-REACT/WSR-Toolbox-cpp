@@ -68,6 +68,7 @@ class WSR_Util{
         struct passwd *pw = getpwuid(getuid());
         std::string __homedir = pw->pw_dir;
         std::string bool_to_string(bool value);
+        std::string format_mac(std::string const& s);
 };
 
 

@@ -66,11 +66,11 @@ WSR_Module::WSR_Module(std::string config_fn)
     
     if(__FLAG_use_magic_mac)
     {
-        __RX_SAR_robot_MAC_ID = __precompute_config["Magic_MAC_ID"]["value"];
+        __RX_SAR_robot_MAC_ID = utils.format_mac(__precompute_config["Magic_MAC_ID"]["value"]);
     }
     else
     {
-        __RX_SAR_robot_MAC_ID = __precompute_config["MAC_ID"]["value"];
+        __RX_SAR_robot_MAC_ID = utils.format_mac(__precompute_config["MAC_ID"]["value"]);
     }
 
     theta_list = nc::linspace(_theta_min*M_PI/180,_theta_max*M_PI/180,__ntheta);

@@ -105,15 +105,29 @@
             "tx_4":{"x":0.011, "y":2.50, "z":0.328}
         }
     },
+    "MAC_ID":{
+        "desc":"MAC ID of RX_SAR robot",
+        "value":"00:21:6A:C5:FC:0",
+        "mac_id_val":"0:33:106:197:252:0"
+    },
+    "Magic_MAC_ID":{
+        "desc":"MAC ID of RX_SAR robot",
+        "value":"00:16:EA:12:34:56"
+    },
+    "use_magic_mac":{
+        "desc":"Flag to use magic mac-id or not",
+        "value":false
+    },
     "input_TX_channel_csi_fn":{
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
             "tx_0":{
-                "mac_id":"0:22:234:18:52:86",
+                "mac_id":"00:16:EA:12:34:56",
                 "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/LOS_2D_1_RX_1_TX_RX_P0_TX_P1/2D_TX_dataset_csi_rx_tx/csi_tx_2021-03-04_154912.dat"
             },
             "tx_1":{
-                "mac_id":"0:33:106:62:245:126",
+                "mac_id_val":"0:33:106:62:245:126",
+                "mac_id":"00:21:6A:3E:F5:7E",
                 "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/LOS_2D_1_RX_1_TX_RX_P0_TX_P1/2D_TX_dataset_csi_rx_tx/csi_tx_2021-03-04_154912.dat"
                 },
             "tx_2":{
@@ -181,18 +195,6 @@
     "multi_threading":{
         "desc":"Enable multi-threading during AOA profile calculation",
         "value":true
-    },
-    "MAC_ID":{
-        "desc":"MAC ID of RX_SAR robot",
-        "value":"0:33:106:197:252:0"
-    },
-    "Magic_MAC_ID":{
-        "desc":"MAC ID of RX_SAR robot",
-        "value":"0:22:234:18:52:86"
-    },
-    "use_magic_mac":{
-        "desc":"Flag to use magic mac-id or not",
-        "value":false
     },
     "interpolate_phase": {
         "desc": "flag for phase angle interpolation",
