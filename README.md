@@ -71,7 +71,9 @@ python3 visualize_aoa_profile.py --file ../data/Realtime_data/Feb_2_2021/aoa_pro
 ```
 
 4. To visualize different data outputs for debugging
+
 a. Interpolated Trajectory
+
 ```
 cd scripts
 python3 viz_traj.py
