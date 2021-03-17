@@ -99,9 +99,9 @@
         "desc":"True groundtruth positions of TX for checking accuracy",
         "value":{
             "tx_0":{"x":-2.48, "y":-0.0485, "z":0.97},
-            "tx_1":{"x":-2.48, "y":-0.0485, "z":0.97},
+            "tx_1":{"x":0.0111060673371, "y":2.5016, "z":0.3284},
             "tx_2":{"x":-4.460, "y":-0.1020, "z":0.283},
-            "tx_3":{"x":2.4502, "y":2.465, "z":0.28},
+            "tx_3":{"x":1.9382, "y":-2.2969, "z":0.2506},
             "tx_4":{"x":0.011, "y":2.50, "z":0.328}
         }
     },
@@ -123,34 +123,37 @@
         "value":{
             "tx_0":{
                 "mac_id":"00:16:EA:12:34:56",
-                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/LOS_2D_1_RX_1_TX_RX_P0_TX_P1/2D_TX_dataset_csi_rx_tx/csi_tx_2021-03-04_154912.dat"
+                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_tx1_2021-03-03_212019.dat"
             },
             "tx_1":{
                 "mac_id_val":"0:33:106:62:245:126",
                 "mac_id":"00:21:6A:3E:F5:7E",
-                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/LOS_2D_1_RX_1_TX_RX_P0_TX_P1/2D_TX_dataset_csi_rx_tx/csi_tx_2021-03-04_154912.dat"
+                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_tx1_2021-03-03_212019.dat"
                 },
             "tx_2":{
+                "mac_id_val":"0:33:106:63:23:90",
                 "mac_id":"0:33:106:63:23:90",
                 "csi_fn":"/catkin_ws/src/csitoolbox/WSR_toolbox_data/bug_36_data/csi_tx2_2021-02-25_203709.dat"
             },
             "tx_3":{
-                "mac_id":"0:33:106:48:210:60",
-                "csi_fn":"/REACT-Projects/WSR-IROS-2021/data/Dataset1-REACT_Testbed/2_TX_1_RX/3D_2D_multi_robot_csi_formation_1/csi_tx3_2021-03-03_203752.dat"
+                "mac_id_val":"0:33:106:48:210:60",
+                "mac_id":"00:21:6A:30:D2:3C",
+                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_tx3_2021-03-03_212019.dat"
             },
             "tx_4":{
-                "mac_id":"0:33:106:178:110:250",
+                "mac_id_val":"0:33:106:178:110:250",
+                "mac_id":"0:33:106:63:23:90",
                 "csi_fn":"/catkin_ws/src/csitoolbox/WSR_toolbox_data/bug_36_data/csi_tx4_2021-02-25_203709.dat"
             }
         }
     },
     "input_RX_channel_csi_fn":{
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
-        "value":"/REACT-Projects/WSR-Toolbox-cpp/data/LOS_2D_1_RX_1_TX_RX_P0_TX_P1/2D_TX_dataset_csi_rx_tx/csi_rx_2021-03-04_154912.dat"
+        "value":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_rx1_2021-03-03_212019.dat"
     },
     "input_trajectory_csv_fn_rx":{
         "desc":"Trajectory fiile",
-        "value":"/REACT-Projects/WSR-Toolbox-cpp/data/LOS_2D_1_RX_1_TX_RX_P0_TX_P1/2D_TX_dataset_traj_rx/rx_trajectory_2021-03-04_154912_.csv"
+        "value":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_rx_traj/rx_trajectory_2021-03-03_212019_.csv"
     },
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory fiile",

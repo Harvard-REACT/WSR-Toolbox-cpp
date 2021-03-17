@@ -66,11 +66,11 @@ WSR_Module::WSR_Module(std::string config_fn)
     
     if(__FLAG_use_magic_mac)
     {
-        __RX_SAR_robot_MAC_ID = utils.format_mac(__precompute_config["Magic_MAC_ID"]["value"]);
+        __RX_SAR_robot_MAC_ID = __precompute_config["Magic_MAC_ID"]["value"];
     }
     else
     {
-        __RX_SAR_robot_MAC_ID = utils.format_mac(__precompute_config["MAC_ID"]["value"]);
+        __RX_SAR_robot_MAC_ID = __precompute_config["MAC_ID"]["value"];
     }
 
     theta_list = nc::linspace(_theta_min*M_PI/180,_theta_max*M_PI/180,__ntheta);
@@ -155,7 +155,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
 
     std::cout << "log [calculate_AOA_profile]: Parsing CSI Data " << std::endl;
 
-    __rx_pkt_size = utils.readCsiData(rx_csi_file, RX_SAR_robot,__FLAG_debug);
+    auto temp1  = utils.readCsiData(rx_csi_file, RX_SAR_robot,__FLAG_debug);
 
     // std::vector<std::string> mac_id_tx;
     std::vector<std::string> mac_id_tx; 
@@ -197,7 +197,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         std::cout << "log [calculate_AOA_profile]: Profile for RX_SAR_robot MAC-ID: "<< __RX_SAR_robot_MAC_ID
                   << ", TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
 
-        __tx_pkt_size[mac_id_tx[num_tx]] = utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], 
+        auto temp2 = utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], 
                                                             TX_Neighbor_robot,__FLAG_debug);
 
         data_packets_RX = RX_SAR_robot.get_wifi_data(mac_id_tx[num_tx]); //Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
@@ -211,7 +211,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                       << data_packets_TX.size() << std::endl;
             std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product " << std::endl;
         }
-
+        
         //Potential Bug #28
         auto csi_data = utils.getForwardReverseChannel_v2(data_packets_RX,
                                                           data_packets_TX,
@@ -300,6 +300,8 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             __perf_aoa_profile_cal_time[mac_id_tx[num_tx]] = processtime/1000;
             __memory_used[mac_id_tx[num_tx]] = utils.mem_usage()/1000000;
             __calculated_ts_offset[mac_id_tx[num_tx]] = cal_ts_offset ;
+            __rx_pkt_size[mac_id_tx[num_tx]] = data_packets_RX.size();
+            __tx_pkt_size[mac_id_tx[num_tx]] = data_packets_TX.size();
         }
 
         /*Store the aoa_profile*/
@@ -1126,8 +1128,16 @@ std::vector<double> WSR_Module::top_aoa_error(double phi, double theta,
  *
  *
  * */
-int WSR_Module::get_pkt_count(const std::string& tx_mac_id) {
+int WSR_Module::get_tx_pkt_count(const std::string& tx_mac_id) {
     return __tx_pkt_size[tx_mac_id];
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+int WSR_Module::get_rx_pkt_count(const std::string& tx_mac_id) {
+    return __rx_pkt_size[tx_mac_id];
 }
 //=============================================================================================================================
 /**
@@ -1186,8 +1196,8 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
             }},
             {"e_INFO_Performance",
              {
-                {"Forward_channel_packets", get_pkt_count(tx_mac_id)},
-                {"Reverse_channel_packets", __rx_pkt_size},
+                {"Forward_channel_packets", get_tx_pkt_count(tx_mac_id)},
+                {"Reverse_channel_packets", get_rx_pkt_count(tx_mac_id)},
                 {"Packets_Used", get_paired_pkt_count(tx_mac_id)},
                 {"time(sec)", get_processing_time(tx_mac_id)},
                 {"memory(GB)", get_memory_used(tx_mac_id)},

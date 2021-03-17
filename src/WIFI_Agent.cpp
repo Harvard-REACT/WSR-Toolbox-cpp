@@ -24,18 +24,26 @@ WIFI_Agent::WIFI_Agent(void){
         exit(2);
     }
 }
-
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
 WIFI_Agent::~WIFI_Agent(void){
     free (field_len);
     free (code);
     free(bytes_data);
 }
-
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
 std::vector<DataPacket> WIFI_Agent::get_wifi_data(std::string mac_id){
     std::vector<DataPacket> temp;
     for (int i=0;i < wifi_data_packet_array.size();i++)
     {
-        if(wifi_data_packet_array[i].mac_real == mac_id) temp.push_back(wifi_data_packet_array[i]);
+        if(mac2str(wifi_data_packet_array[i].mac_real) == mac_id) temp.push_back(wifi_data_packet_array[i]);
     }
 
     return temp;
@@ -56,33 +64,81 @@ int WIFI_Agent::getSize(std::string fn){
     }
     return file_size__;
 }
-
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
 void WIFI_Agent::updatePktCount(){
     pkt_count+=1;
 }
-
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
 int WIFI_Agent::getPktCount(){
     return pkt_count ;
 }
-
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
 void WIFI_Agent::saveDataPacket(DataPacket wifi_data_packet){
     wifi_data_packet_array.push_back(wifi_data_packet);
-    if (unique_mac_ids_packets.find(wifi_data_packet.mac_real) != unique_mac_ids_packets.end())
+    std::string mac_id_str = mac2str(wifi_data_packet.mac_real);
+    if (unique_mac_ids_packets.find(mac_id_str) != unique_mac_ids_packets.end())
     {
-        unique_mac_ids_packets[wifi_data_packet.mac_real] = unique_mac_ids_packets[wifi_data_packet.mac_real] + 1;
+        unique_mac_ids_packets[mac_id_str] = unique_mac_ids_packets[mac_id_str] + 1;
     }
     else
     {
-        unique_mac_ids_packets[wifi_data_packet.mac_real] = 1;
+        unique_mac_ids_packets[mac_id_str] = 1;
     }
 
 }
-
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
 void WIFI_Agent::reset(){
     wifi_data_packet_array.clear();
     pkt_count = 0;
 }
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+std::string WIFI_Agent::mac2str(std::string const& s) {
 
+    std::vector <std::string> mac_val; 
+    std::stringstream check1(s); 
+    std::string intermediate; 
+    while(getline(check1, intermediate, ':')) 
+    { 
+        mac_val.push_back(intermediate); 
+    } 
 
-
+    std::string output = "0"+dec2hex(std::stoi(mac_val[0])) + ":" +
+                         dec2hex(std::stoi(mac_val[1])) + ":" +
+                         dec2hex(std::stoi(mac_val[2])) + ":" +
+                         dec2hex(std::stoi(mac_val[3])) + ":" +
+                         dec2hex(std::stoi(mac_val[4])) + ":" +
+                         dec2hex(std::stoi(mac_val[5]));
+    return output;
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+std::string WIFI_Agent::dec2hex(unsigned int i)
+{
+    std::stringstream ss;
+    ss << std::hex << std::uppercase << i;
+    return ss.str();
+}
 //Function to check if CSI is empty or not for a given packet

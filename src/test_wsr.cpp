@@ -34,14 +34,13 @@ int main(){
     std::unordered_map<std::string,std::string> tx_robot_csi;
     std::unordered_map<std::string,std::string> tx_profile_timestamp;
     std::unordered_map<std::string,std::string> tx_name_list;
-    std::unordered_map<std::string,std::string> tx_mac_string;
 
     for (auto it = run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].begin(); 
       it != run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].end(); ++it)
     {
         const string& tx_name =  it.key();
         auto temp =  it.value();
-        string tx_mac_id = utils.format_mac(temp["mac_id"]);
+        string tx_mac_id = temp["mac_id"];
         string csi_data_file = temp["csi_fn"]; 
         csi_data_file.erase(remove( csi_data_file.begin(), csi_data_file.end(), '\"' ),csi_data_file.end());
         tx_robot_csi[tx_mac_id] = utils.__homedir + csi_data_file;
@@ -61,7 +60,6 @@ int main(){
         getline(tokenize_string3, time_val, '.');
         tx_profile_timestamp[tx_mac_id] = date_val +"_"+ time_val;
         tx_name_list[tx_mac_id] = tx_name;
-        tx_mac_string[tx_mac_id] = temp["mac_id"];
     }
 
     //load trajectory
@@ -141,7 +139,7 @@ int main(){
 
             auto stats = run_module.get_stats(true_phi, true_theta,
                                               top_aoa_error, closest_AOA_error,
-                                              tx_mac_string[tx_id], tx_name_list[tx_id]);
+                                              tx_id, tx_name_list[tx_id]);
 
             std::cout << stats.dump(4) << std::endl;
 

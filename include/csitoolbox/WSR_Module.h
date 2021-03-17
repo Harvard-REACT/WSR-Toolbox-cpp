@@ -21,9 +21,9 @@ class WSR_Module
         double __lambda,__time_offset,__time_threshold,__peak_radius;
         size_t __nphi, __ntheta, __snum_start, __snum_end;
         std::unordered_map<std::string, double> __perf_aoa_profile_cal_time,__memory_used, __calculated_ts_offset;
-        std::unordered_map<std::string, int> __paired_pkt_count,__tx_pkt_size;
+        std::unordered_map<std::string, int> __paired_pkt_count,__tx_pkt_size,__rx_pkt_size;
         int _topN_count = 1, __max_packets_to_process=500, __min_packets_to_process=10;
-        int _phi_min=-180, _phi_max=180, _theta_min = 0,_theta_max=180, __rx_pkt_size;
+        int _phi_min=-180, _phi_max=180, _theta_min = 0,_theta_max=180;
         std::vector<double> __aoa_confidence;
         std::string __RX_SAR_robot_MAC_ID;
         nc::NdArray<double> compute_profile_bartlett_multithread(
@@ -52,7 +52,8 @@ class WSR_Module
         WSR_Module();
         ~WSR_Module();
         WSR_Module(std::string config_fn);
-        int get_pkt_count(const std::string& tx_mac_id);
+        int get_tx_pkt_count(const std::string& tx_mac_id);
+        int get_rx_pkt_count(const std::string& tx_mac_id);
         int get_paired_pkt_count(const std::string& tx_mac_id);
         double get_memory_used(const std::string& tx_mac_id);
         double get_calculated_ts_offset(const std::string& tx_mac_id);

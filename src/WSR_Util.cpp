@@ -1108,7 +1108,11 @@ std::string WSR_Util::bool_to_string(bool value)
     else
         return "false"; 
 }
-
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
 std::string WSR_Util::format_mac(std::string const& s) {
     unsigned char a[6];
     int last = -1;

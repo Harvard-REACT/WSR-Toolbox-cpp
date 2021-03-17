@@ -16,7 +16,8 @@ class WIFI_Agent {
        int file_size__ = -1, pkt_count = 0;
        std::vector<DataPacket> wifi_data_packet_array; 
        std::vector<std::vector<double>> csi_performax;
-       
+       std::string mac2str(std::string const& s);
+       std::string dec2hex(unsigned int i);
 
        //TODO: get antenna number from config file. It would be useful in extracting the csi for that specific antenna (among antenna
        //1,2,3). By default set to 1. 
@@ -35,6 +36,7 @@ class WIFI_Agent {
         void reset();
         WIFI_Agent();
         ~WIFI_Agent();
+        
 };
 
 
