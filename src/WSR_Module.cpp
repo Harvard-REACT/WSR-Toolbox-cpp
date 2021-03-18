@@ -118,7 +118,8 @@ WSR_Module::WSR_Module(std::string config_fn)
     if(__FLAG_debug)
     {
         //List of bool flags that impact calculations
-        std::cout << "log [Precomp]: Bool FLAGS status" << std::endl;
+        std::cout << "log [Precomp]: Important FLAGS status" << std::endl;
+        std::cout << "  Trajectory Type = " << __precompute_config["trajectory_type"]["value"] << std::endl;
         std::cout << "  __FLAG_packet_threshold = " << utils.bool_to_string(__FLAG_packet_threshold) << std::endl;
         std::cout << "  __FLAG_debug = " << utils.bool_to_string(__FLAG_debug) << std::endl;
         std::cout << "  __FLAG_threading = " << utils.bool_to_string(__FLAG_threading) << std::endl;

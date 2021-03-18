@@ -70,7 +70,22 @@ e.g
 python3 visualize_aoa_profile.py --file ../data/Realtime_data/Feb_2_2021/aoa_profiles/aoa_profile_2021-02-02_200917.csv
 ```
 
-4. To visualize different data outputs for debugging
+4. Make sure that the correct flags and parameters are set during initialization. (This requires that the 'debug' config parameter is enabled):
+```
+log [Precomp]: Important FLAGS status
+  Trajectory Type = "3D"
+  __FLAG_packet_threshold = true
+  __FLAG_debug = true
+  __FLAG_threading = true
+  __FLAG_interpolate_phase = true
+  __FLAG_sub_sample = false
+  __FLAG_normalize_profile = true
+  __FLAG_use_multiple_sub_carriers = false
+  __FLAG_use_magic_mac = false
+
+```
+
+5. To visualize different data outputs for debugging
 
 a. Interpolated Trajectory
 
