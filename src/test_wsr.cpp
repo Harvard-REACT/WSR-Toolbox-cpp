@@ -7,6 +7,9 @@
 int main(){
     
     WSR_Util utils;
+    // struct passwd *pw = getpwuid(getuid());
+    // std::string homedir = pw->pw_dir;
+    // std::string folder = "";
     // std::string config = utils.__homedir+"/catkin_ws/src/csitoolbox/config/config_3D_SAR.json";
     std::string config = "../config/config_3D_SAR.json";
     WSR_Module run_module(config);
