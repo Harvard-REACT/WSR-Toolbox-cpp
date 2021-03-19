@@ -1,5 +1,5 @@
 # WSR-Toolbox-cpp
-CAlculate AOA for multiple files in batch for faster data processing.
+Calculate AOA for multiple files in batch for faster data processing. This branch is to be used only for post-processing the data files.
 
 ## Ubuntu version tested
 - [x] Ubuntu 18.04
