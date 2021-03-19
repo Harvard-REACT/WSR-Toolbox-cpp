@@ -95,14 +95,76 @@
         "desc":"Top N AOA angles to return from AOA profile",
         "value":5
     },
-    "true_tx_positions":{
+    "true_tx_positions":
+    {
         "desc":"True groundtruth positions of TX for checking accuracy",
-        "value":{
-            "tx_0":{"x":-2.48, "y":-0.0485, "z":0.97},
-            "tx_1":{"x":0.0111060673371, "y":2.5016, "z":0.3284},
-            "tx_2":{"x":-4.460, "y":-0.1020, "z":0.283},
-            "tx_3":{"x":1.9382, "y":-2.2969, "z":0.2506},
-            "tx_4":{"x":0.011, "y":2.50, "z":0.328}
+        "value":
+        {
+        "tx0":{
+            "position":{ 
+            "x": 0,
+            "y": 0,
+            "z": 0
+            },
+            "orientation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 0
+            }
+        },
+        "tx1":{
+            "position":{ 
+            "x": -2.48014688492,
+            "y": -0.0483481697738,
+            "z": 0.97895771265
+            },
+            "orientation": {
+                "x": 0.0168978497386,
+                "y":-0.006858184468,
+                "z": 0.453646808863,
+                "w": -0.890995025635
+            }
+            },
+            "tx2":{
+            "position":{ 
+            "x": 0,
+            "y": 0,
+            "z": 0
+            },
+            "orientation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 0
+            }
+            },
+            "tx3":{
+            "position":{ 
+            "x": 0,
+            "y": 0,
+            "z": 0
+            },
+            "orientation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 0
+            }
+            },
+            "tx4":{
+            "position":{ 
+            "x": 0,
+            "y": 0,
+            "z": 0
+            },
+            "orientation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 0
+            }
+            }
         }
     },
     "MAC_ID":{
@@ -121,26 +183,26 @@
     "input_TX_channel_csi_fn":{
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
-            "tx_0":{
+            "tx0":{
                 "mac_id":"00:16:EA:12:34:56",
                 "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_tx1_2021-03-03_212019.dat"
             },
-            "tx_1":{
+            "tx1":{
                 "mac_id_val":"0:33:106:62:245:126",
                 "mac_id":"00:21:6A:3E:F5:7E",
-                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_tx1_2021-03-03_212019.dat"
+                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_TX_dataset_csi_rx_tx/csi_tx1_2021-03-03_212019.dat"
                 },
-            "tx_2":{
+            "tx2":{
                 "mac_id_val":"0:33:106:63:23:90",
                 "mac_id":"0:33:106:63:23:90",
                 "csi_fn":"/catkin_ws/src/csitoolbox/WSR_toolbox_data/bug_36_data/csi_tx2_2021-02-25_203709.dat"
             },
-            "tx_3":{
+            "tx3":{
                 "mac_id_val":"0:33:106:48:210:60",
                 "mac_id":"00:21:6A:30:D2:3C",
-                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_tx3_2021-03-03_212019.dat"
+                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_TX_dataset_csi_rx_tx/csi_tx3_2021-03-03_212019.dat"
             },
-            "tx_4":{
+            "tx4":{
                 "mac_id_val":"0:33:106:178:110:250",
                 "mac_id":"0:33:106:63:23:90",
                 "csi_fn":"/catkin_ws/src/csitoolbox/WSR_toolbox_data/bug_36_data/csi_tx4_2021-02-25_203709.dat"
@@ -149,11 +211,11 @@
     },
     "input_RX_channel_csi_fn":{
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
-        "value":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_rx1_2021-03-03_212019.dat"
+        "value":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_TX_dataset_csi_rx_tx/csi_rx_2021-03-03_212019.dat"
     },
     "input_trajectory_csv_fn_rx":{
         "desc":"Trajectory fiile",
-        "value":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_rx_traj/rx_trajectory_2021-03-03_212019_.csv"
+        "value":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_TX_dataset_traj_rx/rx_trajectory_2021-03-03_212019_.csv"
     },
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory fiile",

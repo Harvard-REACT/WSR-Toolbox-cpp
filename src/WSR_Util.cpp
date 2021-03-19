@@ -1003,9 +1003,9 @@ std::unordered_map<std::string, std::pair<double,double>> WSR_Util::get_true_aoa
         double true_phi=0, true_theta=0, x_diff=0, y_diff=0, z_diff=0;
         string tx_id = tx.key();
         nlohmann::json position = tx.value();
-        double gt_x = double(position["x"]);
-        double gt_y = double(position["y"]);
-        double gt_z = double(position["z"]);
+        double gt_x = double(position["position"]["x"]);
+        double gt_y = double(position["position"]["y"]);
+        double gt_z = double(position["position"]["z"]);
 
         //First position
         //std::cout << gt_x <<", " << displacement(0,0) << "," << gt_y << "," << displacement(0,1) << std::endl;
