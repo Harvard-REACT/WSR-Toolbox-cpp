@@ -42,7 +42,8 @@ class WSR_Util{
 
         void writeToFile(nc::NdArray<double>& nd_array, 
                         std::string fn);
-        void writeCSIToFile(nc::NdArray<std::complex<double>>& nd_array, 
+        void writeCSIToFile(nc::NdArray<std::complex<double>>& nd_array,
+                            nc::NdArray<double>&timestamp,
                             string fn);
         void writeCSIToJsonFile(nc::NdArray<std::complex<double>>& nd_array, 
                                 nc::NdArray<double>&timestamp, 

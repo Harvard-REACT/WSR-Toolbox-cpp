@@ -811,30 +811,45 @@ void WSR_Util::writeToFile(nc::NdArray<double>& nd_array, std::string fn)
  * Inputs: inXp ==> csi_timestamp, inX ==> trajectory_timestamp, inFp ==> trajectory
  * 
  * */ 
-void WSR_Util::writeCSIToFile(nc::NdArray<std::complex<double>>& nd_array, string fn)
+void WSR_Util::writeCSIToFile(nc::NdArray<std::complex<double>>& nd_array,
+                              nc::NdArray<double>&timestamp,
+                              string fn)
 {
     std::cout.precision(15);
-    ofstream myfile1 (fn+"_real.csv");
-    ofstream myfile2 (fn+"_img.csv");
+    std::string csi_data = __homedir+"/"+fn+"_csi_data.csv";
+    ofstream myfile1 (csi_data);
 
-    if (myfile1.is_open() && myfile2.is_open())
+    if (myfile1.is_open())
     {
+
+        myfile1 << fixed << "timestamp" << ",";
+
+        //real and img part for the subcarriers
+        for(size_t j = 0; j < nd_array.shape().cols; j++) {
+            // std::cout << fixed << value << std::endl;
+            myfile1 << fixed << "sub_carrier_real_part" << ","
+                    << fixed << "sub_carrier_img_part" << ",";
+        }
+        myfile1 << "\n";
+        
         for(size_t i = 0; i < nd_array.shape().rows; i++)
         {
+            myfile1 << fixed << timestamp(i,0) << ",";
+
+            //real and img part for the subcarriers
             for(size_t j = 0; j < nd_array.shape().cols; j++) {
                 auto value = nd_array(i,j);
                 // std::cout << fixed << value << std::endl;
-                myfile1 << fixed << value.real() << ",";
-                myfile2 << fixed << value.imag() << ",";
+                myfile1 << fixed << value.real() << ","
+                        << fixed << value.imag() << ",";
             }
             // break;
             myfile1 << "\n";
-            myfile2 << "\n";
         }
         
     }
+    //@BUG: File not being saved!!!!
     myfile1.close();
-    myfile2.is_open();
 }
 //=============================================================================================================================
 /**
