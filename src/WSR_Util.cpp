@@ -846,6 +846,7 @@ void WSR_Util::writeCSIToJsonFile(nc::NdArray<std::complex<double>>& nd_array,
 {
     string output_file = __homedir+"/"+fn, key,key_sub;
     std::cout.precision(15);
+    std::cout <<"Outfile = " << output_file<< std::endl;
     ofstream myfile (output_file);
     nlohmann::json interpl_traj;
     interpl_traj["channel_packets"] = {};
@@ -863,6 +864,7 @@ void WSR_Util::writeCSIToJsonFile(nc::NdArray<std::complex<double>>& nd_array,
         myfile << interpl_traj;
     }
     myfile.close();
+    std::cout <<"Wrote CSI data to JSON" << std::endl;
 }
 //=============================================================================================================================
 /**

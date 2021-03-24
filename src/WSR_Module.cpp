@@ -120,6 +120,8 @@ WSR_Module::WSR_Module(std::string config_fn)
         //List of bool flags that impact calculations
         std::cout << "log [Precomp]: Important FLAGS status" << std::endl;
         std::cout << "  Trajectory Type = " << __precompute_config["trajectory_type"]["value"] << std::endl;
+        std::cout << "  WiFi Channel = " << double(__precompute_config["channel"]["value"]) << std::endl;
+        std::cout << "  Channel center frequency (GHz) = " << centerfreq << std::endl;
         std::cout << "  __FLAG_packet_threshold = " << utils.bool_to_string(__FLAG_packet_threshold) << std::endl;
         std::cout << "  __FLAG_debug = " << utils.bool_to_string(__FLAG_debug) << std::endl;
         std::cout << "  __FLAG_threading = " << utils.bool_to_string(__FLAG_threading) << std::endl;
@@ -153,6 +155,8 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
     nc::NdArray<std::complex<double>> h_list_all;
     nc::NdArray<double> csi_timestamp_all;
     double cal_ts_offset;
+    std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
+    debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
 
     std::cout << "log [calculate_AOA_profile]: Parsing CSI Data " << std::endl;
 
@@ -263,10 +267,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                 std::cout << "log [calculate_AOA_profile]: CSI_packets_used = " << csi_timestamp.shape() << std::endl;
                 std::cout << "log [calculate_AOA_profile]: pose_list size  = " << pose_list.shape() << std::endl;
                 std::cout << "log [calculate_AOA_profile]: h_list size  = " << h_list.shape() << std::endl;
-                
-                std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
-                debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
-                
+                                
                 //Store phase and timestamp of the channel for debugging
                 std::string channel_data_sliced =  debug_dir+"/tx_"+mac_id_tx[num_tx]+"_sliced_channel_data.json";
                 utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_sliced);
@@ -1237,9 +1238,9 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
     std::cout << "============ Testing CSI data ==============" << std::endl;
 
     WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR 
-    nc::NdArray<std::complex<double>> h_list_all;
-    nc::NdArray<double> csi_timestamp_all;
     double cal_ts_offset;
+    std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
+    debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
 
     std::cout << "log [test_csi_data]: Parsing CSI Data " << std::endl;
 
@@ -1302,13 +1303,6 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
         nc::NdArray<std::complex<double>> h_list = csi_data.first;
         nc::NdArray<double> csi_timestamp = csi_data.second;
 
-        if (__FLAG_debug)
-        {
-            h_list_all = h_list;
-            csi_timestamp_all = csi_timestamp;
-        }
-
-        
         if(h_list.shape().rows < __min_packets_to_process)
         {
             std::cout << "log [calculate_AOA_profile]: Not enough CSI packets." << std::endl;    
@@ -1322,6 +1316,8 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
             {
                 std::cout << "log [test_csi_data]: CSI_packets_used = " << csi_timestamp.shape() << std::endl;
                 std::cout << "log [test_csi_data]: h_list size  = " << h_list.shape() << std::endl;
+                std::string channel_data_all =  debug_dir+"/tx_"+mac_id_tx[num_tx]+"_csi_test_data.json";
+                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_all);
             }
 
             auto starttime = std::chrono::high_resolution_clock::now();      
