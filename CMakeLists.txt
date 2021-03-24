@@ -49,6 +49,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 
 add_executable(test_wsr src/test_wsr.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp)
+add_executable(test_csi_data src/test_csi_data.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -65,6 +66,10 @@ target_link_libraries(test_wsr
    -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
    ${BOOST_LIBRARIES}
  )
+target_link_libraries(test_csi_data
+  -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
+  ${BOOST_LIBRARIES}
+)
 
 #############
 ## Install ##

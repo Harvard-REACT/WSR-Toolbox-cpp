@@ -1224,3 +1224,160 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
 
     return output_stats;
 }
+//======================================================================================================================
+/**
+ * Description: 
+ * Input:
+ * Output:
+ * */
+int WSR_Module::test_csi_data(std::string rx_csi_file, 
+                              std::unordered_map<std::string, std::string> tx_csi_file)
+{
+
+    std::cout << "============ Testing CSI data ==============" << std::endl;
+
+    WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR 
+    nc::NdArray<std::complex<double>> h_list_all;
+    nc::NdArray<double> csi_timestamp_all;
+    double cal_ts_offset;
+
+    std::cout << "log [test_csi_data]: Parsing CSI Data " << std::endl;
+
+    auto temp1  = utils.readCsiData(rx_csi_file, RX_SAR_robot,__FLAG_debug);
+
+    // std::vector<std::string> mac_id_tx;
+    std::vector<std::string> mac_id_tx; 
+
+    std::cout << "log [test_csi_data]: Neighbouring TX robot IDs = " <<
+                RX_SAR_robot.unique_mac_ids_packets.size() << std::endl;
+
+    for(auto key : RX_SAR_robot.unique_mac_ids_packets)
+    {
+        if(__FLAG_debug) std::cout << "log [test_csi_data]: Detected MAC ID = " << key.first 
+                                   << ", Packet count: = " << key.second << std::endl;
+        mac_id_tx.push_back(key.first);
+    }
+
+    //Get AOA profile for each of the RX neighboring robots
+    if(__FLAG_debug) std::cout << "log [test_csi_data]: Getting AOA profiles" << std::endl;
+    std::vector<DataPacket> data_packets_RX, data_packets_TX;
+
+    for (int num_tx=0; num_tx<mac_id_tx.size(); num_tx++)
+    {
+        WIFI_Agent TX_Neighbor_robot; // Neighbouring robots who reply back
+
+        if(tx_csi_file.find (mac_id_tx[num_tx]) == tx_csi_file.end()) 
+        {
+            if(__FLAG_debug) std::cout << "log [test_csi_data]: No CSI data available for TX Neighbor MAC-ID: "
+                                       << mac_id_tx[num_tx] << ". Skipping" << std::endl;
+            continue;
+        }
+        std::cout << "log [test_csi_data]: =========================" << std::endl;
+        std::cout << "log [test_csi_data]: Data for RX_SAR_robot MAC-ID: "<< __RX_SAR_robot_MAC_ID
+                  << ", TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
+
+        auto temp2 = utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], 
+                                      TX_Neighbor_robot,__FLAG_debug);
+
+        data_packets_RX = RX_SAR_robot.get_wifi_data(mac_id_tx[num_tx]); //Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
+        data_packets_TX = TX_Neighbor_robot.get_wifi_data(__RX_SAR_robot_MAC_ID); //Packets only of RX_SAR_robot in a TX_Neighbor_robot's csi file
+        
+        if(__FLAG_debug)
+        {
+            std::cout << "log [calculate_AOA_profile]: Packets for TX_Neighbor_robot collected by RX_SAR_robot : "
+                      << data_packets_RX.size() << std::endl;
+            std::cout << "log [calculate_AOA_profile]: Packets for RX_SAR_robot collected by TX_Neighbor_robot : "
+                      << data_packets_TX.size() << std::endl;
+            std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product " << std::endl;
+        }
+        
+        //Potential Bug #28
+        auto csi_data = utils.getForwardReverseChannel_v2(data_packets_RX,
+                                                          data_packets_TX,
+                                                          __time_offset,
+                                                          __time_threshold,
+                                                          cal_ts_offset,
+                                                          __FLAG_interpolate_phase,
+                                                          __FLAG_sub_sample);
+        nc::NdArray<std::complex<double>> h_list = csi_data.first;
+        nc::NdArray<double> csi_timestamp = csi_data.second;
+
+        if (__FLAG_debug)
+        {
+            h_list_all = h_list;
+            csi_timestamp_all = csi_timestamp;
+        }
+
+        
+        if(h_list.shape().rows < __min_packets_to_process)
+        {
+            std::cout << "log [calculate_AOA_profile]: Not enough CSI packets." << std::endl;    
+            std::cout << "log [calculate_AOA_profile]: Return Empty AOA profile" << std::endl;            
+            //Return empty dummpy AOA profile
+            __aoa_profile = nc::zeros<double>(1,1);  
+        }   
+        else
+        {
+            if(__FLAG_debug)
+            {
+                std::cout << "log [test_csi_data]: CSI_packets_used = " << csi_timestamp.shape() << std::endl;
+                std::cout << "log [test_csi_data]: h_list size  = " << h_list.shape() << std::endl;
+            }
+
+            auto starttime = std::chrono::high_resolution_clock::now();      
+            auto endtime = std::chrono::high_resolution_clock::now();
+            float processtime = std::chrono::duration<float, std::milli>(endtime - starttime).count();
+            /*Interpolate the trajectory and csi data*/
+            __paired_pkt_count[mac_id_tx[num_tx]] = csi_timestamp.shape().rows;
+            __calculated_ts_offset[mac_id_tx[num_tx]] = cal_ts_offset ;
+            __rx_pkt_size[mac_id_tx[num_tx]] = data_packets_RX.size();
+            __tx_pkt_size[mac_id_tx[num_tx]] = data_packets_TX.size();
+            __perf_aoa_profile_cal_time[mac_id_tx[num_tx]] = processtime/1000;
+        }
+
+        //TODO: get azimuth and elevation from beta_profile
+        std::cout << "log [test_csi_data]: Completed Testing CSI data" << std::endl; 
+        TX_Neighbor_robot.reset();       
+    }
+    
+    std::cout << "============ WSR module end ==============" << std::endl;
+    RX_SAR_robot.reset();
+    
+
+    return 0;
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+nlohmann::json WSR_Module::get_performance_stats( const std::string& tx_mac_id,
+                                                  const std::string& tx_name)
+{
+    nlohmann::json perf_stats = {
+            {"a_Info_TX",{
+                {"TX_Name",tx_name},
+                {"TX_MAC_ID",tx_mac_id}
+            }},
+            {"b_INFO_Performance",
+             {
+                {"Forward_channel_packets", get_tx_pkt_count(tx_mac_id)},
+                {"Reverse_channel_packets", get_rx_pkt_count(tx_mac_id)},
+                {"Packets_Used", get_paired_pkt_count(tx_mac_id)},
+                {"time(sec)", get_processing_time(tx_mac_id)},
+                {"memory(GB)", get_memory_used(tx_mac_id)},
+                {"first_forward-reverse_ts_offset(sec)", get_calculated_ts_offset(tx_mac_id)}
+             }}
+    };
+
+    return perf_stats;
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+std::unordered_map<std::string, int> WSR_Module::get_paired_pkt_count()
+{
+    return __paired_pkt_count;
+}

@@ -42,6 +42,8 @@ pip3 install -r requirements.txt
 6. cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'` 
 7.  sudo ./b2 --with=all -j $cpuCores
 ```
+Note: Do not run install since will break the default boost installation required for ROS systems. 
+
 
 4. Compile as a standalone C++ project
 Create new subdirectory to store the build 
@@ -52,9 +54,15 @@ cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'`
 make -j $cpuCores
 ```
 
+## Test CSI data files
+1. To test the channel reciprocity module run the following:
+```
+cd wsr_build
+./test_csi_data
+```
 
-## Test CSI data using C++ executable
-1. To test the forward-reverse channel calculation run the following:
+## Calculate AOA profiles using Core C++ framework(needs trajectory information)
+1. To test the AOA calculation run the following:
 ```
 cd wsr_build
 ./test_wsr
