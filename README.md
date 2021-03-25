@@ -23,7 +23,7 @@ Core C++ code repo for WSR toolbox with Cython wrapper.
 - [x] gcc 5.4.0
 - [x] gcc 9.3.0
 
-## Setup instructions
+## Setup instructions (tested on UP Squared board)
 
 1. Clone the repository in your cakin workspace under csitoolbox directory
 
