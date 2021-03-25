@@ -14,9 +14,9 @@ Core C++ code repo for WSR toolbox with Cython wrapper.
 - [ ] c++20
 
 ## Python version tested
-- [x] python 3.5
-- [ ] python 3.6
-- [ ] python 3.7
+- ~~[ ] python 3.5~~
+- ~~[ ] python 3.6~~
+- [x] python 3.7
 - [x] python 3.8
 
 ## GCC version tested
@@ -27,12 +27,27 @@ Core C++ code repo for WSR toolbox with Cython wrapper.
 
 1. Clone the repository in your cakin workspace under csitoolbox directory
 
-2. Install the python dependency packages
+2. Install python 3.7 (minimum supported version)
 ```
-pip3 install -r requirements.txt
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install python3.7
 ```
 
-3. Download and compile the boost_1.68 locally in $HOME/Downloads.
+Set it as default version
+```
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2
+sudo update-alternatives --config python
+sudo update-alternatives  --set python /usr/bin/python3.7
+```
+
+3. Install the python dependency packages
+```
+sudo apt install python3-pip
+python3.7 -m pip install -r requirements.txt
+```
+
+4. Download and compile the boost_1.68 locally in $HOME/Downloads.
 ```
 1. cd Downloads
 2. wget http://downloads.sourceforge.net/project/boost/boost/1.68.0/boost_1_68_0.tar.gz
@@ -45,7 +60,7 @@ pip3 install -r requirements.txt
 Note: Do not run install since will break the default boost installation required for ROS systems. 
 
 
-4. Compile as a standalone C++ project
+5. Compile as a standalone C++ project
 Create new subdirectory to store the build 
 ```
 mkdir wsr_build && cd wsr_build
