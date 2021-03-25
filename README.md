@@ -27,11 +27,12 @@ Core C++ code repo for WSR toolbox with Cython wrapper.
 
 1. Clone the repository in your cakin workspace under csitoolbox directory
 
-2. Install python 3.7 (minimum supported version)
+2. Install python 3.7 (minimum supported version) and other dependencies
 ```
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
 sudo apt install python3.7
+sudo apt-get install python3.7-tk
 ```
 
 Set it as default version
