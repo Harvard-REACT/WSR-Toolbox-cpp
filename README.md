@@ -37,9 +37,8 @@ sudo apt-get install python3.7-tk
 
 Set it as default version
 ```
-sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2
-sudo update-alternatives --config python
-sudo update-alternatives  --set python /usr/bin/python3.7
+sudo rm -rf /usr/bin/python3
+sudo ln -s /usr/bin/python3.7 /usr/bin/python3
 ```
 
 3. Install the python dependency packages
