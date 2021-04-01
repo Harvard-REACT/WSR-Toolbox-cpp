@@ -30,7 +30,7 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="AOA profile csv file")
+    parser.add_argument("--file", help="Channel data file")
     args = parser.parse_args()
         
     f = open(args.file,"r") 

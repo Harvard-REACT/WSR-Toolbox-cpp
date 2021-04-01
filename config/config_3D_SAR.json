@@ -204,7 +204,7 @@
             },
             "tx4":{
                 "mac_id_val":"0:33:106:178:110:250",
-                "mac_id":"0:33:106:63:23:90",
+                "mac_id":"00:21:6A:B2:6E:FA",
                 "csi_fn":"/catkin_ws/src/csitoolbox/WSR_toolbox_data/bug_36_data/csi_tx4_2021-02-25_203709.dat"
             }
         }
@@ -231,7 +231,7 @@
     },
     "min_packets_to_process":{
         "desc":"Minimum number of csi packets to process",
-        "value":350
+        "value":400
     },
     "use_max_packets_threshold":{
         "desc":"Flag to enable/disable max packet threshold",
@@ -271,7 +271,7 @@
     },
     "time_threshold": {
         "desc": "threshold for paring forward and backward channel",
-        "value": 400e-6
+        "value": 700e-6
     },
     "peak_radius": {
         "desc" : "radius of patch to ignore neighbor peak in degree",
