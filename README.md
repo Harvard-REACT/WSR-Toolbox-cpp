@@ -69,6 +69,40 @@ cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'`
 make -j $cpuCores
 ```
 
+## Updating the config file 
+1. Add the MAC_ID in the config file for the robot. If its a RX_SAR_robot then use the field MAC_ID :
+```
+    "MAC_ID":{
+        "desc":"MAC ID of RX_SAR robot",
+        "value":"00:21:6A:C5:FC:0"
+    },
+```
+
+and if its a TX_Neighbor robot, then use the field input_TX_channel_csi_fn. e.g
+```
+"input_TX_channel_csi_fn":{
+        "desc":"Forward channel csi File for each of the neighboring TX robots",
+        "value":{
+            "tx_0":{
+                "mac_id":"00:16:EA:12:34:56",
+                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/LOS_2D_1_RX_1_TX_RX_P0_TX_P1/2D_TX_dataset_csi_rx_tx/csi_tx_2021-03-04_154912.dat"
+            },
+        }
+```
+
+2. Make sure that the correct flags and parameters are set during initialization. (This requires that the 'debug' config parameter is enabled):
+```
+log [Precomp]: Important FLAGS status
+  Trajectory Type = "3D"
+  __FLAG_packet_threshold = true
+  __FLAG_debug = true
+  __FLAG_threading = true
+  __FLAG_interpolate_phase = true
+  __FLAG_sub_sample = false
+  __FLAG_normalize_profile = true
+  __FLAG_use_multiple_sub_carriers = false
+  __FLAG_use_magic_mac = false
+
 ## Test CSI data files
 1. To test the channel reciprocity module run the following:
 ```
