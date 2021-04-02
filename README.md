@@ -102,6 +102,7 @@ log [Precomp]: Important FLAGS status
   __FLAG_normalize_profile = true
   __FLAG_use_multiple_sub_carriers = false
   __FLAG_use_magic_mac = false
+```
 
 ## Test CSI data files
 1. To test the channel reciprocity module run the following:
