@@ -35,34 +35,37 @@ sudo apt install python3.7
 sudo apt-get install python3.7-tk
 ```
 
-Set it as default version
-```
-sudo rm -rf /usr/bin/python3
-sudo ln -s /usr/bin/python3.7 /usr/bin/python3
-```
-
 3. Install the python dependency packages
 ```
+cd ~
 sudo apt install python3-pip
+cd WSR-Toolbox-cpp
 python3.7 -m pip install -r requirements.txt
 ```
 
 4. Download and compile the boost_1.68 locally in $HOME/Downloads.
 ```
-1. cd Downloads
-2. wget http://downloads.sourceforge.net/project/boost/boost/1.68.0/boost_1_68_0.tar.gz
-3. tar -zxvf boost_1_68_0.tar.gz
-4. cd boost_1_68_0/
-5. ./bootstrap.sh
-6. cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'` 
-7.  sudo ./b2 --with=all -j $cpuCores
+cd ~/Downloads
+wget http://downloads.sourceforge.net/project/boost/boost/1.68.0/boost_1_68_0.tar.gz
+tar -zxvf boost_1_68_0.tar.gz
+cd boost_1_68_0/
+./bootstrap.sh
+cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'` 
+sudo ./b2 --with=all -j $cpuCores
 ```
 Note: Do not run install since will break the default boost installation required for ROS systems. 
 
+5. Install cmake(the default version works for now)
 
-5. Compile as a standalone C++ project
-Create new subdirectory to store the build 
 ```
+sudo apt install cmake
+```
+
+6. Compile as a standalone C++ project
+
+Create new subdirectory in the WSR-Toolbox folder to store the build 
+```
+cd ~/WSR-Toolbox-cpp/
 mkdir wsr_build && cd wsr_build
 cmake ..
 cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'`
