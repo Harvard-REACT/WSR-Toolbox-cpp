@@ -118,8 +118,8 @@ cd wsr_build
 
 ```
 cd scripts
-python3 viz_channel_data.py --file <filename>
-e.g. python3 viz_channel_data.py --file "../debug/tx_00:21:6A:3E:F5:7E_csi_test_data.json"
+python3.7 viz_channel_data.py --file <filename>
+e.g. python3.7 viz_channel_data.py --file "../debug/tx_00:21:6A:3E:F5:7E_csi_test_data.json"
 ```
 
 ## Calculate AOA profiles using Core C++ framework(needs trajectory information)
@@ -133,10 +133,10 @@ cd wsr_build
 
 3. To visualize the profile , go to scripts directory and use the visualize_aoa_profile.py
 ```
-python3 visualize_aoa_profile.py --file <filepath>
+python3.7 visualize_aoa_profile.py --file <filepath>
 
 e.g
-python3 visualize_aoa_profile.py --file ../data/Realtime_data/Feb_2_2021/aoa_profiles/aoa_profile_2021-02-02_200917.csv
+python3.7 visualize_aoa_profile.py --file ../data/Realtime_data/Feb_2_2021/aoa_profiles/aoa_profile_2021-02-02_200917.csv
 ```
 
 4. Make sure that the correct flags and parameters are set during initialization. (This requires that the 'debug' config parameter is enabled):
@@ -160,7 +160,7 @@ a. Interpolated Trajectory
 
 ```
 cd scripts
-python3 viz_traj.py
+python3.7 viz_traj.py
 ```
 
 ## Compiling and using Cpython modules (WIP)
@@ -177,7 +177,7 @@ Once the library is compiled, the csi reader function can be called using python
 
 ```
 cd scripts
-python3 main.py --f ../data/3D_Helix_101_mocap_2020-03-04_102615/mocap_data_a.txt_2020-03-04_102615.txt --mocap_id 101 --parser_type optitrack
+python3.7 main.py --f ../data/3D_Helix_101_mocap_2020-03-04_102615/mocap_data_a.txt_2020-03-04_102615.txt --mocap_id 101 --parser_type optitrack
 ```
 
 ### Testing Trajectory data
