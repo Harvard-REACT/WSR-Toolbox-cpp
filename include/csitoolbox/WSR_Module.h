@@ -45,6 +45,8 @@ class WSR_Module
         
     public:
         nlohmann::json __precompute_config; 
+        std::string data_sample_ts;
+        std::unordered_map<std::string,std::string> tx_name_list;
         int calculate_AOA_profile(std::string tx_csi_file, 
                                     std::unordered_map<std::string, std::string> rx_csi_file, 
                                     nc::NdArray<double> rx_displacement,

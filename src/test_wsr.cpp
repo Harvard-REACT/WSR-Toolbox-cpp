@@ -35,8 +35,6 @@ int main(){
     
     /*============= Process the TX_SAR_Robot files =======================*/
     std::unordered_map<std::string,std::string> tx_robot_csi;
-    std::unordered_map<std::string,std::string> tx_profile_timestamp;
-    std::unordered_map<std::string,std::string> tx_name_list;
 
     for (auto it = run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].begin(); 
       it != run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].end(); ++it)
@@ -61,8 +59,8 @@ int main(){
         }
         stringstream tokenize_string3(ts);
         getline(tokenize_string3, time_val, '.');
-        tx_profile_timestamp[tx_mac_id] = date_val +"_"+ time_val;
-        tx_name_list[tx_mac_id] = tx_name;
+        run_module.data_sample_ts = date_val +"_"+ time_val;
+        run_module.tx_name_list[tx_mac_id] = tx_name;
     }
 
     //load trajectory
@@ -113,7 +111,7 @@ int main(){
           std::cout << "-----------------------------" << std::endl;
           
           std::string tx_id = itr.first;
-          std::string ts = tx_profile_timestamp[itr.first];
+          std::string ts = run_module.data_sample_ts;
           auto profile = itr.second;
 
           if(profile.shape().rows == 1) 
@@ -124,25 +122,25 @@ int main(){
           }
           else
           {
-            string profile_op_fn = utils.__homedir+output+"/tx_"+tx_id+"_aoa_profile_"+ts+".csv";
+            string profile_op_fn = utils.__homedir+output+"/"+run_module.tx_name_list[tx_id]+"_aoa_profile_"+ts+".csv";
             utils.writeToFile(profile,profile_op_fn);
 
-            true_phi = all_true_AOA[tx_name_list[tx_id]].first;
-            true_theta = all_true_AOA[tx_name_list[tx_id]].second;
+            true_phi = all_true_AOA[run_module.tx_name_list[tx_id]].first;
+            true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
 
             auto topN_angles = all_topN_angles[tx_id];
             std::vector<double> top_aoa_error = run_module.top_aoa_error(topN_angles.first[0],
                                                                          topN_angles.second[0],
-                                                                         all_true_AOA[tx_name_list[tx_id]],
+                                                                         all_true_AOA[run_module.tx_name_list[tx_id]],
                                                                          trajType);
 
             std::vector<double> closest_AOA_error = run_module.get_aoa_error(topN_angles,
-                                                                             all_true_AOA[tx_name_list[tx_id]],
+                                                                             all_true_AOA[run_module.tx_name_list[tx_id]],
                                                                              trajType);
 
             auto stats = run_module.get_stats(true_phi, true_theta,
                                               top_aoa_error, closest_AOA_error,
-                                              tx_id, tx_name_list[tx_id]);
+                                              tx_id, run_module.tx_name_list[tx_id]);
 
             std::cout << stats.dump(4) << std::endl;
 

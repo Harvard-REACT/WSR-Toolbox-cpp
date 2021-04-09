@@ -267,16 +267,19 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                 std::cout << "log [calculate_AOA_profile]: CSI_packets_used = " << csi_timestamp.shape() << std::endl;
                 std::cout << "log [calculate_AOA_profile]: pose_list size  = " << pose_list.shape() << std::endl;
                 std::cout << "log [calculate_AOA_profile]: h_list size  = " << h_list.shape() << std::endl;
-                                
+                
+                std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
+                debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
+                
                 //Store phase and timestamp of the channel for debugging
-                std::string channel_data_sliced =  debug_dir+"/tx_"+mac_id_tx[num_tx]+"_sliced_channel_data.json";
+                std::string channel_data_sliced =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts+"_sliced_channel_data.json";
                 utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_sliced);
 
-                std::string channel_data_all =  debug_dir+"/tx_"+mac_id_tx[num_tx]+"_all_channel_data.json";
+                std::string channel_data_all =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts+"_all_channel_data.json";
                 utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all);
 
                 //Store interpolated trajectory for debugging
-                std::string interpl_trajectory =  debug_dir+"/tx_"+mac_id_tx[num_tx]+"_interpl_trajectory.json";
+                std::string interpl_trajectory =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts+"_interpl_trajectory.json";
                 utils.writeTrajToFile(pose_list,interpl_trajectory);
             }
 
