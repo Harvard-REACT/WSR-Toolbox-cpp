@@ -12,6 +12,7 @@ import json
 import glob, os
 import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
+import argparse
 
 SMALL_SIZE = 8
 MEDIUM_SIZE = 10
@@ -27,36 +28,31 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 def main():
 
-    os.chdir("../debug")
-    for traj_file in glob.glob("*.json"):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--file", help="Interpolated Trajectory data file")
+    args = parser.parse_args()
         
-        if(traj_file.split("_")[2] != "interpl"): 
-            continue
+    f = open(args.file,"r") 
+    data_json = json.loads(f.read())
+    d = data_json["pose_list"]
+    data_json_sorted = json.dumps({int(x):d[x] for x in d.keys()}, sort_keys=True)
+    data_json = json.loads(data_json_sorted)
 
-        f = open("../debug/"+traj_file,"r") 
-        data_json = json.loads(f.read())
-        d = data_json["pose_list"]
-        data_json_sorted = json.dumps({int(x):d[x] for x in d.keys()}, sort_keys=True)
-        data_json = json.loads(data_json_sorted)
+    traj = pd.DataFrame.from_dict(data_json, orient="index")
 
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection = '3d')
 
-        print("Channel data from TX Neighbor robot : ", traj_file.split("_")[1])
-        traj = pd.DataFrame.from_dict(data_json, orient="index")
+    x = traj['x']
+    y = traj['y']
+    z = traj['z']
 
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection = '3d')
+    ax.set_xlabel("X-axis(m)")
+    ax.set_ylabel("Y-axis(m)")
+    ax.set_zlabel("Z-axis(m)")
 
-        x = traj['x']
-        y = traj['y']
-        z = traj['z']
-
-        ax.set_xlabel("X-axis(m)")
-        ax.set_ylabel("Y-axis(m)")
-        ax.set_zlabel("Z-axis(m)")
-
-        ax.scatter(x, y, z,marker='x',s=8)
-        plt.title('RX robot Interpolated Trajectory for TX robot: ' + traj_file.split("_")[1])
-        plt.show()
+    ax.scatter(x, y, z,marker='x',s=8)
+    plt.show()
 
 
 if __name__ == "__main__":

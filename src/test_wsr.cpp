@@ -59,7 +59,7 @@ int main(){
         }
         stringstream tokenize_string3(ts);
         getline(tokenize_string3, time_val, '.');
-        run_module.data_sample_ts = date_val +"_"+ time_val;
+        run_module.data_sample_ts[tx_mac_id] = date_val +"_"+ time_val;
         run_module.tx_name_list[tx_mac_id] = tx_name;
     }
 
@@ -111,7 +111,7 @@ int main(){
           std::cout << "-----------------------------" << std::endl;
           
           std::string tx_id = itr.first;
-          std::string ts = run_module.data_sample_ts;
+          std::string ts = run_module.data_sample_ts[tx_id];
           auto profile = itr.second;
 
           if(profile.shape().rows == 1) 
