@@ -26,6 +26,14 @@ class WSR_Util{
                                                                 double& calculated_ts_offset,
                                                                 bool interpolate_phase,
                                                                 bool sub_sample);
+        /// @brief Generate ideal channel given receiving pose list and tranmitter static pos
+        /// \param receiver_poses - n*3 pose list
+        /// \param transmitter_pos - 1*3 static pos
+        /// \param lambda - wavelength
+        /// \return n*1 ideal channel list
+        static nc::NdArray<std::complex<double>> getIdealChannelStatic( const nc::NdArray<double>& receiver_poses,
+                                                                const nc::NdArray<double>& transmitter_pos,
+                                                                double lambda);
         void read_bfee_timestamp_mac(uint8_t *inBytes, WIFI_Agent& robot);
         int readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug);
         std::pair<nc::NdArray<double>,std::vector<size_t>> interpolate(const nc::NdArray<double>& inX,
@@ -34,7 +42,7 @@ class WSR_Util{
         int formatTrajectory(std::vector<std::vector<double>>& rx_trajectory, 
                             Eigen::MatrixXd& displacement, 
                             Eigen::MatrixXd& trajectory_timestamp);
-        std::pair<nc::NdArray<double>, nc::NdArray<double>> formatTrajectory_v2(std::vector<std::vector<double>>& rx_trajectory);
+        static std::pair<nc::NdArray<double>, nc::NdArray<double>> formatTrajectory_v2(std::vector<std::vector<double>>& rx_trajectory, bool normalize_first_pose);
         std::pair<nc::NdArray<double>, nc::NdArray<double>> getRelativeTrajectory(std::vector<std::vector<double>>& trajectory_tx,
                                                                                   std::vector<std::vector<double>>& trajectory_rx);
         std::pair<int,int> returnClosestIndices(const nc::NdArray<double>& csi_timestamp,

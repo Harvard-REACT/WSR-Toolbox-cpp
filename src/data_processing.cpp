@@ -122,10 +122,12 @@ int main(int argc, char *argv[])
       }
       else
       {
-        auto return_val = utils.formatTrajectory_v2(trajectory_rx);
+        auto return_val = WSR_Util::formatTrajectory_v2(trajectory_rx,true);
         trajectory_timestamp = return_val.first;
         displacement = return_val.second;
       }
+      //Trying ideal channel
+
 
       //Get all True AOA angles
       nlohmann::json true_positions_tx = TX_gt_positions["true_tx_positions"];

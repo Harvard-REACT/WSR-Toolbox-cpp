@@ -576,7 +576,7 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::match_trajectory_t
  * 
  * */
 std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v2(
-                            std::vector<std::vector<double>>& rx_trajectory)
+                            std::vector<std::vector<double>>& rx_trajectory,bool normalize_first_pose)
 {
     
     nc::NdArray<double> displacement(rx_trajectory.size(),3);
@@ -647,11 +647,12 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     first_x = sorted_displacement(start_index, 0);
     first_y = sorted_displacement(start_index, 1);
     first_z = sorted_displacement(start_index, 2);
-    for(int i=start_index; i<end_index+1; i++)
-    {
-        sorted_displacement.put(i,0,sorted_displacement(i, 0) - first_x);
-        sorted_displacement.put(i,1,sorted_displacement(i, 1) - first_y);
-        sorted_displacement.put(i,2,sorted_displacement(i, 2) - first_z);
+    if(normalize_first_pose) {
+        for (int i = start_index; i < end_index + 1; i++) {
+            sorted_displacement.put(i, 0, sorted_displacement(i, 0) - first_x);
+            sorted_displacement.put(i, 1, sorted_displacement(i, 1) - first_y);
+            sorted_displacement.put(i, 2, sorted_displacement(i, 2) - first_z);
+        }
     }
 
     // std::cout << sorted_trajectory_timestamp({start_index,end_index},sorted_trajectory_timestamp.cSlice()).shape() <<std::endl;
@@ -1153,4 +1154,18 @@ std::string WSR_Util::format_mac(std::string const& s) {
                          std::to_string(a[4]) + ":" +
                          std::to_string(a[5]);
     return output;
+}
+
+nc::NdArray<std::complex<double>>
+WSR_Util::getIdealChannelStatic(const nc::NdArray<double>& receiver_poses, const nc::NdArray<double>& transmitter_pos, double lambda) {
+    assert(receiver_poses.numCols() == tramitter_pos.numCols());
+    auto h_list = nc::zeros<std::complex<double>>(30,1);
+    for(size_t i = 0; i < receiver_poses.numRows(); i++){
+        auto relative_pos = receiver_poses(i,receiver_poses.cSlice()) - transmitter_pos;
+        double dist = std::sqrt(pow(relative_pos(0,0),2)+
+                pow(relative_pos(0,1),2)+
+                pow(relative_pos(0,2),2));
+        h_list(i,0) = std::exp(std::complex<double>(0,-1)*2.0*dist/lambda)/dist;
+    }
+    return h_list;
 }
