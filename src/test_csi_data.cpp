@@ -14,7 +14,7 @@ int main(){
     //TX_SAR_Robot(s): Neighboring robots for which RX_SAR_robot calculates AOA
 
     /*================== Process RX_SAR_Robot files ====================*/
-    std::string reverse_csi = run_module.__precompute_config["input_RX_channel_csi_fn"]["value"].dump();
+    std::string reverse_csi = run_module.__precompute_config["input_RX_channel_csi_fn"]["value"]["csi_fn"].dump();
     std::string output = run_module.__precompute_config["output_aoa_profile_path"]["value"].dump();
 
     //Remove all double-quote characters

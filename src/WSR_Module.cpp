@@ -70,7 +70,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     }
     else
     {
-        __RX_SAR_robot_MAC_ID = __precompute_config["MAC_ID"]["value"];
+        __RX_SAR_robot_MAC_ID = __precompute_config["input_RX_channel_csi_fn"]["value"]["mac_id"];
     }
 
     theta_list = nc::linspace(_theta_min*M_PI/180,_theta_max*M_PI/180,__ntheta);
