@@ -203,6 +203,15 @@ e.g.
 python3.8 viz_traj.py --file ../debug/tx1_2021-03-04_154746_interpl_trajectory.json
 ```
 
+3. To visualize packet distrubution
+```
+cd scripts
+python3.7 viz_traj.py --file <filepath>
+
+e.g.
+python3.8 viz_traj.py --file ../debug/tx1_2021-03-04_154746_packet_dist.json
+```
+
 ## Calculate AOA profiles using Core C++ framework(needs trajectory information)
 1. Setting up time-synchronization (recommended method, not required for sample data) - TODO
 ```

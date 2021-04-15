@@ -1139,3 +1139,49 @@ std::string WSR_Util::format_mac(std::string const& s) {
                          std::to_string(a[5]);
     return output;
 }
+//=============================================================================================================================
+/**
+ * 
+ * 
+ * */
+void WSR_Util::writePacketDistributionToJsonFile(const nc::NdArray<double>& csi_timestamp, 
+                                                const nc::NdArray<double>& trajectory_timestamp, 
+                                                const nc::NdArray<double>& displacement,
+                                                std::string fn)
+{
+    string output_file = __homedir+"/"+fn, key;
+    std::cout.precision(15);
+    ofstream myfile (output_file);
+    nlohmann::json packet_distribution;
+    packet_distribution["pose_list"] = {};
+
+    int k = 0;
+
+    if (myfile.is_open())
+    {
+        for(size_t i = 0; i < csi_timestamp.shape().rows; i++)
+        {
+            //Find the first trajectory timestamp >= csi_timestamp
+            for(size_t k = 0; i < trajectory_timestamp.shape().rows; k++)
+            {
+                if(trajectory_timestamp(k,0) < csi_timestamp(i,0))
+                {
+                    continue;
+                }
+                else
+                {
+                    nlohmann::json temp = {
+                        {"x",displacement(k,0)},
+                        {"y",displacement(k,1)},
+                        {"z",displacement(k,2)}, 
+                    };
+                    key = std::to_string(i);
+                    packet_distribution["pose_list"][key] = temp;
+                    break;
+                }
+            }
+        }
+        myfile << packet_distribution;   
+    }
+    myfile.close();
+}

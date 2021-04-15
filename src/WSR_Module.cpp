@@ -278,6 +278,10 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                 std::string channel_data_all =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_all_channel_data.json";
                 utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all);
 
+                //Store the packet distribution to check for spotty packets
+                std::string packet_dist = debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_packet_dist.json";
+                utils.writePacketDistributionToJsonFile(csi_timestamp, trajectory_timestamp, displacement,packet_dist);
+
                 //Store interpolated trajectory for debugging
                 std::string interpl_trajectory =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_interpl_trajectory.json";
                 utils.writeTrajToFile(pose_list,interpl_trajectory);

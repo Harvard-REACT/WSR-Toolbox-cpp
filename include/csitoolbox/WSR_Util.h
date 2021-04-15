@@ -69,6 +69,10 @@ class WSR_Util{
         std::string __homedir = pw->pw_dir;
         std::string bool_to_string(bool value);
         std::string format_mac(std::string const& s);
+        void writePacketDistributionToJsonFile(const nc::NdArray<double>& csi_timestamp, 
+                                                const nc::NdArray<double>& trajectory_timestamp, 
+                                                const nc::NdArray<double>& displacement,
+                                                std::string fn);
 };
 
 
