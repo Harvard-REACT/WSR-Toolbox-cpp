@@ -115,9 +115,9 @@
             },
             "tx1":{
                 "position":{ 
-                "x": -2.48014688492,
-                "y": -0.0483481697738,
-                "z": 0.97895771265
+                    "x": 1.28,
+                    "y": 5.53,
+                    "z": 1.0
                 },
                 "orientation": {
                     "x": 0.0168978497386,
@@ -128,9 +128,9 @@
             },
             "tx2":{
                 "position":{ 
-                "x": 0,
-                "y": 0,
-                "z": 0
+                    "x": -2.51,
+                    "y": 2.53,
+                    "z": 0.38
                 },
                 "orientation": {
                     "x": 0,
@@ -141,9 +141,9 @@
             },
             "tx3":{
                 "position":{ 
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": -3.07344865799,
+                "y": -1.43260526657,
+                "z": 0.766652286053
                 },
                 "orientation": {
                     "x": 0,
@@ -154,9 +154,9 @@
             },
             "tx4":{
                 "position":{ 
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 2.57294034958,
+                "y": -0.201433882117,
+                "z": 0.361933887005
                 },
                 "orientation": {
                     "x": 0,
@@ -166,11 +166,6 @@
                 }
             }
         }
-    },
-    "MAC_ID":{
-        "desc":"MAC ID of RX_SAR robot",
-        "value":"00:21:6A:C5:FC:0",
-        "mac_id_val":"0:33:106:197:252:0"
     },
     "Magic_MAC_ID":{
         "desc":"MAC ID of RX_SAR robot",
@@ -184,41 +179,46 @@
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
             "tx0":{
-                "mac_id":"00:16:EA:12:34:56",
-                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_tx1_2021-03-03_212019.dat"
+                "mac_id_val":"00:16:EA:12:34:56",
+                "mac_id":"00:21:6A:C5:FC:0",
+                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_tx0_2021-03-03_192000.dat"
             },
             "tx1":{
                 "mac_id_val":"0:33:106:62:245:126",
                 "mac_id":"00:21:6A:3E:F5:7E",
-                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_TX_dataset_csi_rx_tx/csi_tx1_2021-03-03_212019.dat"
+                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset1-REACT_Testbed/1_TX_1_RX/Line-of-Sight/2D_Trajectories/TX_Neighbor_Position_Changing/RX_P0_TX_P5/2D_TX_dataset_csi_rx_tx/csi_tx_2021-04-13_121631.dat"
                 },
             "tx2":{
                 "mac_id_val":"0:33:106:63:23:90",
-                "mac_id":"0:33:106:63:23:90",
-                "csi_fn":"/catkin_ws/src/csitoolbox/WSR_toolbox_data/bug_36_data/csi_tx2_2021-02-25_203709.dat"
+                "mac_id":"00:21:6A:3F:17:5A",
+                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset2-REACT_testbed/3D_ramp_LOS_dataset_2MR_csi_P2_P5_P8_circular_traj/csi_tx2_2021-04-13_121631.dat"
             },
             "tx3":{
                 "mac_id_val":"0:33:106:48:210:60",
                 "mac_id":"00:21:6A:30:D2:3C",
-                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_TX_dataset_csi_rx_tx/csi_tx3_2021-03-03_212019.dat"
+                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset2-REACT_testbed/3D_ramp_LOS_dataset_2MR_csi_P2_P5_P8_circular_traj/csi_tx3_2021-04-13_121631.dat"
             },
             "tx4":{
                 "mac_id_val":"0:33:106:178:110:250",
-                "mac_id":"0:33:106:63:23:90",
-                "csi_fn":"/catkin_ws/src/csitoolbox/WSR_toolbox_data/bug_36_data/csi_tx4_2021-02-25_203709.dat"
+                "mac_id":"00:21:6A:B2:6E:FA",
+                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset2-REACT_testbed/3D_ramp_LOS_dataset_2MR_csi_P2_P5_P8_circular_traj/csi_tx4_2021-04-13_121631.dat"
             }
         }
     },
     "input_RX_channel_csi_fn":{
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
-        "value":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_TX_dataset_csi_rx_tx/csi_rx_2021-03-03_212019.dat"
+        "value":{           
+            "mac_id":"00:21:6A:C5:FC:0",
+            "mac_id_val":"0:33:106:197:252:0",
+            "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset2-REACT_testbed/3D_ramp_LOS_dataset_2MR_csi_P2_P5_P8_circular_traj/csi_rx_2021-04-13_121631.dat"
+        }
     },
     "input_trajectory_csv_fn_rx":{
         "desc":"Trajectory fiile",
-        "value":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/3D_1_RX_2_TX_formation_2/3D_TX_dataset_traj_rx/rx_trajectory_2021-03-03_212019_.csv"
+        "value":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset2-REACT_testbed/3D_ramp_LOS_dataset_2MR_traj_P2_P5_P8_circular_traj/rx_trajectory_2021-04-13_121631_.csv"
     },
     "input_trajectory_csv_fn_tx":{
-        "desc":"Trajectory fiile",
+        "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
         "value":"/catkin_ws/src/csitoolbox/WSR_toolbox_data/bug_36_data/tx_trajectory.csv"
     },
     "output_aoa_profile_path":{
@@ -231,7 +231,7 @@
     },
     "min_packets_to_process":{
         "desc":"Minimum number of csi packets to process",
-        "value":350
+        "value":1
     },
     "use_max_packets_threshold":{
         "desc":"Flag to enable/disable max packet threshold",
@@ -271,7 +271,7 @@
     },
     "time_threshold": {
         "desc": "threshold for paring forward and backward channel",
-        "value": 400e-6
+        "value": 600e-6
     },
     "peak_radius": {
         "desc" : "radius of patch to ignore neighbor peak in degree",
