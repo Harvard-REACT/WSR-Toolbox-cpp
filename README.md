@@ -1,33 +1,35 @@
 # WSR-Toolbox-cpp
 Core C++ code repo for WSR toolbox with Cython wrapper.
 
-## Ubuntu version tested
+## Supported Environments
+
+### Ubuntu version tested
 - [x] Ubuntu 16.04
 - [ ] Ubuntu 18.04
 - [x] Ubuntu 20.04
 - [ ] TX2
 
-## C++ version tested and supported
+### C++ version tested and supported
 - ~~[ ] c++11~~
 - [x] c++14
 - [ ] c++17
 - [ ] c++20
 
-## Python version tested
+### Python version tested
 - ~~[ ] python 3.5~~
 - ~~[ ] python 3.6~~
 - [x] python 3.7
 - [x] python 3.8
 
-## GCC version tested
+### GCC version tested
 - [x] gcc 5.4.0
 - [x] gcc 9.3.0
 
 ## Setup instructions (tested on UP Squared board)
 
-1. Clone the repository in your cakin workspace under csitoolbox directory
+1. Clone the repository in your home directory.
 
-2. Install python 3.7 (minimum supported version) and other dependencies
+2. Install python 3.7 (minimum supported version for using visualization scripts) and other dependencies
 ```
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
@@ -72,31 +74,47 @@ cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'`
 make -j $cpuCores
 ```
 
-## Updating the config file 
-1. Add the MAC_ID in the config file for the robot. If its a RX_SAR_robot then use the field MAC_ID :
+### Updating the config file 
+The config file 'config_3D_SAR.json' is located in the config directory.
+
+1. Add the MAC_ID and the location of the csi.dat file (obtained when collecting channel data) in the config file for the robot. If its a RX_SAR_robot then use the 'mac_id' filed in input_RX_channel_csi_fn :
 ```
-    "MAC_ID":{
-        "desc":"MAC ID of RX_SAR robot",
-        "value":"00:21:6A:C5:FC:0"
-    },
+  "input_RX_channel_csi_fn":{
+      "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
+      "value":{           
+          "mac_id":"00:21:6A:C5:FC:0",
+          "mac_id_val":"0:33:106:197:252:0",
+          "csi_fn":"/WSR-Toolbox-cpp/data/Line-of-Sight/2D_trajectory_sample/csi_data/csi_rx_2021-03-04_154746.dat"
+      }
+  }
 ```
 
-and if its a TX_Neighbor robot, then use the field input_TX_channel_csi_fn. e.g
+If its a TX_Neighbor robot, then use the 'mac_id' filed in input_RX_channel_csi_fn input_TX_channel_csi_fn. e.g
 ```
 "input_TX_channel_csi_fn":{
-        "desc":"Forward channel csi File for each of the neighboring TX robots",
-        "value":{
-            "tx_0":{
-                "mac_id":"00:16:EA:12:34:56",
-                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/LOS_2D_1_RX_1_TX_RX_P0_TX_P1/2D_TX_dataset_csi_rx_tx/csi_tx_2021-03-04_154912.dat"
-            },
-        }
+    "desc":"Forward channel csi File for each of the neighboring TX robots",
+    "value":{
+        "tx1":{
+            "mac_id_val":"00:16:EA:12:34:56",
+            "mac_id":"00:21:6A:C5:FC:0",
+            "csi_fn":"/WSR-Toolbox-cpp/data/Line-of-Sight/2D_trajectory_sample/csi_data/csi_tx1_2021-03-04_154746.dat"
+        },
+    }
+```
+Note: Multiple TX_Neighbor robots can be added with id as tx1 (,tx2,tx3...and so on). Only add relative path of the repository.
+
+2. Add the location of the trajectory file for TX_Neighbor robot in the field input_trajectory_csv_fn_rx.
+```
+"input_trajectory_csv_fn_rx":{
+    "desc":"Trajectory file",
+    "value":"/WSR-Toolbox-cpp/data/Line-of-Sight/2D_trajectory_sample/trajectory_data/rx_trajectory_2021-03-04_154746_.csv"
+}
 ```
 
-2. Make sure that the correct flags and parameters are set during initialization. (This requires that the 'debug' config parameter is enabled):
+3. Make sure that the correct flags and parameters are set during initialization. (This requires that the 'debug' config parameter is set to 'true' to see the status during code execution):
 ```
 log [Precomp]: Important FLAGS status
-  Trajectory Type = "3D"
+  Trajectory Type = "2D" (3D)
   __FLAG_packet_threshold = true
   __FLAG_debug = true
   __FLAG_threading = true
@@ -107,22 +125,93 @@ log [Precomp]: Important FLAGS status
   __FLAG_use_magic_mac = false
 ```
 
-## Test CSI data files
-1. To test the channel reciprocity module run the following:
+4. Sample data for testing is available in data/Line-of-Sight folder (2D and 3D trajectories). Add the correct path of csi.data files for RX_SAR_robot (csi_rx*) and TX_neighbor_robot (csi_tx*) as well as as the corresponding trajectory file (rx_*) in the config.json.
+
+5. The groundtruth positions can be added (if known) in the field (for the corresponding tx):
+```
+"true_tx_positions":
+    {
+        "desc":"True groundtruth positions of TX for checking accuracy",
+        "value":
+        {
+            "tx1":{
+                "position":{ 
+                "x": 0,
+                "y": 0,
+                "z": 0
+                },
+                "orientation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 0
+                }
+            }
+        }
+    }
+```
+Each sample data folder has 'groundtruth_positions.json' file.
+
+6. When running the code in UP-Squared board, maximum packets that can be processed is ~450. Set the correct number in the field:
+```
+"max_packets_to_process":{
+    "desc":"Maximum number of csi packets to process",
+    "value":450
+},
+```
+Other option to try is 'sub_sample_channel_data' which picks alternate packets.
+```
+"sub_sample_channel_data": {
+    "desc": "flag for enabling subsampling of channle data to reduce packet count",
+    "value": true
+}
+```
+### Test sample CSI data files
+1. To test the AOA calculation run the following (This requires that the correct file locations of the sample data are added in the config.json):
+
 ```
 cd wsr_build
-./test_csi_data
+./test_wsr
 ```
 
-2. To visualize the channel phase generated by the channel reciprocity module
-
+## Visualization
+1. To visualize the channel phase generated by the channel reciprocity module
 ```
 cd scripts
 python3.7 viz_channel_data.py --file <filename>
-e.g. python3.7 viz_channel_data.py --file "../debug/tx_00:21:6A:3E:F5:7E_csi_test_data.json"
+
+
+e.g.
+python3.7 viz_channel_data.py --file ../debug/tx1_2021-03-04_154746_all_channel_data.json
+```
+
+2. To visualize the profile , go to scripts directory and use the visualize_aoa_profile.py
+```
+cd scripts
+python3.7 visualize_aoa_profile.py --file <filepath>
+
+e.g
+python3.8 visualize_aoa_profile.py --file ../debug/tx1_aoa_profile_2021-03-04_154746.csv
+```
+
+3. To visualize interpolated trajectory
+```
+cd scripts
+python3.7 viz_traj.py --file <filepath>
+
+e.g.
+python3.8 viz_traj.py --file ../debug/tx1_2021-03-04_154746_interpl_trajectory.json
 ```
 
 ## Calculate AOA profiles using Core C++ framework(needs trajectory information)
+1. Setting up time-synchronization (recommended method, not required for sample data) - TODO
+```
+```
+
+2. Setting up T265 tracking camera - TODO
+```
+```
+
 1. To test the AOA calculation run the following:
 ```
 cd wsr_build
@@ -131,13 +220,7 @@ cd wsr_build
 
 2. To update any of the parameters, use the config_3D_SAR.json in the config directory.
 
-3. To visualize the profile , go to scripts directory and use the visualize_aoa_profile.py
-```
-python3.7 visualize_aoa_profile.py --file <filepath>
 
-e.g
-python3.7 visualize_aoa_profile.py --file ../data/Realtime_data/Feb_2_2021/aoa_profiles/aoa_profile_2021-02-02_200917.csv
-```
 
 4. Make sure that the correct flags and parameters are set during initialization. (This requires that the 'debug' config parameter is enabled):
 ```
@@ -152,15 +235,6 @@ log [Precomp]: Important FLAGS status
   __FLAG_use_multiple_sub_carriers = false
   __FLAG_use_magic_mac = false
 
-```
-
-5. To visualize different data outputs for debugging
-
-a. Interpolated Trajectory
-
-```
-cd scripts
-python3.7 viz_traj.py
 ```
 
 ## Compiling and using Cpython modules (WIP)
