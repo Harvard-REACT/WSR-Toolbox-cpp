@@ -167,7 +167,7 @@ Other option to try is 'sub_sample_channel_data' which picks alternate packets.
 }
 ```
 ### Test sample CSI data files
-1. To test the AOA calculation run the following (This requires that the correct file locations of the sample data are added in the config.json):
+1. To test the AOA calculation run the following (This requires that the correct file locations of the sample data are added in the config_3D_SAR.json):
 
 ```
 cd wsr_build
