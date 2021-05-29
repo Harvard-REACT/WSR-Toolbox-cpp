@@ -214,17 +214,14 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                       << data_packets_RX.size() << std::endl;
             std::cout << "log [calculate_AOA_profile]: Packets for RX_SAR_robot collected by TX_Neighbor_robot : "
                       << data_packets_TX.size() << std::endl;
-            std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product " << std::endl;
+            std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product using Counter " << std::endl;
         }
         
-        //Potential Bug #28
-        auto csi_data = utils.getForwardReverseChannel_v2(data_packets_RX,
+        auto csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
                                                           data_packets_TX,
-                                                          __time_offset,
-                                                          __time_threshold,
-                                                          cal_ts_offset,
                                                           __FLAG_interpolate_phase,
                                                           __FLAG_sub_sample);
+                                                          
         nc::NdArray<std::complex<double>> h_list = csi_data.first;
         nc::NdArray<double> csi_timestamp = csi_data.second;
 
@@ -1245,6 +1242,7 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
     std::cout << "============ Testing CSI data ==============" << std::endl;
 
     WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR 
+    RX_SAR_robot.robot_type = "rx";
     double cal_ts_offset;
     std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
     debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
@@ -1268,11 +1266,14 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
 
     //Get AOA profile for each of the RX neighboring robots
     if(__FLAG_debug) std::cout << "log [test_csi_data]: Getting AOA profiles" << std::endl;
-    std::vector<DataPacket> data_packets_RX, data_packets_TX;
+    
 
     for (int num_tx=0; num_tx<mac_id_tx.size(); num_tx++)
     {
-        WIFI_Agent TX_Neighbor_robot; // Neighbouring robots who reply back
+        // WIFI_Agent TX_Neighbor_robot; // Neighbouring robots who reply back
+        WIFI_Agent* TX_Neighbor_robot = new WIFI_Agent;
+        std::vector<DataPacket> data_packets_RX, data_packets_TX;
+        TX_Neighbor_robot->robot_type = "tx";
 
         if(tx_csi_file.find (mac_id_tx[num_tx]) == tx_csi_file.end()) 
         {
@@ -1285,10 +1286,10 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
                   << ", TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
 
         auto temp2 = utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], 
-                                      TX_Neighbor_robot,__FLAG_debug);
+                                      *TX_Neighbor_robot,__FLAG_debug);
 
         data_packets_RX = RX_SAR_robot.get_wifi_data(mac_id_tx[num_tx]); //Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
-        data_packets_TX = TX_Neighbor_robot.get_wifi_data(__RX_SAR_robot_MAC_ID); //Packets only of RX_SAR_robot in a TX_Neighbor_robot's csi file
+        data_packets_TX = TX_Neighbor_robot->get_wifi_data(__RX_SAR_robot_MAC_ID); //Packets only of RX_SAR_robot in a TX_Neighbor_robot's csi file
         
         if(__FLAG_debug)
         {
@@ -1296,17 +1297,14 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
                       << data_packets_RX.size() << std::endl;
             std::cout << "log [calculate_AOA_profile]: Packets for RX_SAR_robot collected by TX_Neighbor_robot : "
                       << data_packets_TX.size() << std::endl;
-            std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product " << std::endl;
+            std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product using Counter " << std::endl;
         }
         
-        //Potential Bug #28
-        auto csi_data = utils.getForwardReverseChannel_v2(data_packets_RX,
+        auto csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
                                                           data_packets_TX,
-                                                          __time_offset,
-                                                          __time_threshold,
-                                                          cal_ts_offset,
                                                           __FLAG_interpolate_phase,
                                                           __FLAG_sub_sample);
+
         nc::NdArray<std::complex<double>> h_list = csi_data.first;
         nc::NdArray<double> csi_timestamp = csi_data.second;
 
@@ -1323,7 +1321,12 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
             {
                 std::cout << "log [test_csi_data]: CSI_packets_used = " << csi_timestamp.shape() << std::endl;
                 std::cout << "log [test_csi_data]: h_list size  = " << h_list.shape() << std::endl;
-                std::string channel_data_all =  debug_dir+"/tx_"+mac_id_tx[num_tx]+"_csi_test_data.json";
+
+                std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
+                debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
+                
+                //Store phase and timestamp of the channel for debugging
+                std::string channel_data_all =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_all_channel_data.json";
                 utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_all);
             }
 
@@ -1340,7 +1343,8 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
 
         //TODO: get azimuth and elevation from beta_profile
         std::cout << "log [test_csi_data]: Completed Testing CSI data" << std::endl; 
-        TX_Neighbor_robot.reset();       
+        TX_Neighbor_robot->reset();
+        delete TX_Neighbor_robot;
     }
     
     std::cout << "============ WSR module end ==============" << std::endl;

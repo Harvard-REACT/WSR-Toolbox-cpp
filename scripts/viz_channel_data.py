@@ -49,6 +49,7 @@ def main():
                     s=8,
                     marker='x')
     plt.title('RX Robot Channel Phase')
+    plt.ylim([-3.14, 3.14])
     plt.show()
 
     sns.scatterplot(y=traj["timestamp"],
