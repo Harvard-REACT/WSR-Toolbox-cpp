@@ -477,7 +477,7 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
 
     while(itr_k < tx_length && itr_l < rx_length)
         {
-            std::cout << "TX frame: " << tx_robot[itr_k].frame_count << ", RX frame:" << rx_robot[itr_l].frame_count << std::endl;
+            //std::cout << "TX frame: " << tx_robot[itr_k].frame_count << ", RX frame:" << rx_robot[itr_l].frame_count << std::endl;
             if (tx_robot[itr_k].frame_count == rx_robot[itr_l].frame_count)
             {
                 //multiply forward and reverse channel
@@ -1238,7 +1238,7 @@ void WSR_Util::writePacketDistributionToJsonFile(const nc::NdArray<double>& csi_
         for(size_t i = 0; i < csi_timestamp.shape().rows; i++)
         {
             //Find the first trajectory timestamp >= csi_timestamp
-            for(size_t k = 0; i < trajectory_timestamp.shape().rows; k++)
+            for(size_t k = 0; k < trajectory_timestamp.shape().rows; k++)
             {
                 if(trajectory_timestamp(k,0) < csi_timestamp(i,0))
                 {
