@@ -13,7 +13,7 @@
     },
     "channel": {
         "desc": "wireless channel used in the 5.0 GHz range",
-        "value": 108
+        "value": 104
     },
     "subCarrier": {
         "desc": "subcarrier for the channel [1,..,30]. Default is 15.5 that corresponds to the center freqency.",
@@ -180,7 +180,7 @@
         "value":{
             "tx0":{
                 "mac_id_val":"00:16:EA:12:34:56",
-                "mac_id":"00:21:6A:C5:FC:0",
+                "mac_id":"00:21:6A:C5:FC:00",
                 "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_tx0_2021-03-03_192000.dat"
             },
             "tx1":{
@@ -191,12 +191,12 @@
             "tx2":{
                 "mac_id_val":"0:33:106:63:23:90",
                 "mac_id":"00:21:6A:3F:17:5A",
-                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/1tx_exp5_6/2d_1tx_5_tx2/2D_TX_dataset_csi_rx_tx/csi_tx2_2021-05-28_173437.dat"
+                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0528_data/2d_2tx_1/2D_TX_dataset_csi_rx_tx/csi_tx2_2021-05-28_164352.dat"
             },
             "tx3":{
                 "mac_id_val":"0:33:106:48:210:60",
                 "mac_id":"00:21:6A:30:D2:3C",
-                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/1tx_exp5_6/2d_1tx_6_tx3/2D_TX_dataset_csi_rx_tx/csi_tx3_2021-05-28_174943.dat"
+                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0528_data/2d_2tx_1/2D_TX_dataset_csi_rx_tx/csi_tx3_2021-05-28_164352.dat"
             },
             "tx4":{
                 "mac_id_val":"0:33:106:178:110:250",
@@ -210,12 +210,12 @@
         "value":{           
             "mac_id":"00:21:6A:C5:FC:0",
             "mac_id_val":"00:16:EA:12:34:56",
-            "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/1tx_exp5_6/2d_1tx_6_tx3/2D_TX_dataset_csi_rx_tx/csi_rx_2021-05-28_174943.dat"
+            "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0528_data/2d_2tx_1/2D_TX_dataset_csi_rx_tx/csi_rx_2021-05-28_164352.dat"
         }
     },
     "input_trajectory_csv_fn_rx":{
         "desc":"Trajectory fiile",
-        "value":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/1tx_exp5_6/2d_1tx_6_tx3/2D_TX_dataset_traj_rx/rx_trajectory_2021-05-28_174943_.csv"
+        "value":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0528_data/2d_2tx_1/2D_TX_dataset_traj_rx/rx_trajectory_2021-05-28_164352_.csv"
     },
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
@@ -263,7 +263,7 @@
     },
     "interpolate_phase": {
         "desc": "flag for phase angle interpolation",
-        "value": true
+        "value": false
     },
     "time_offset": {
         "desc": "offset for time diff on different robots",

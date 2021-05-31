@@ -940,7 +940,7 @@ void WSR_Util::writeCSIToJsonFile(nc::NdArray<std::complex<double>>& nd_array,
         for(size_t i = 0; i < nd_array.shape().rows; i++)
         {
             key = std::to_string(i);
-            auto value = nd_array(i,0);
+            auto value = nd_array(i,15); //by default it shows the subcarrier 16
             interpl_traj["channel_packets"][key]["center_subcarrier_phase"] = std::arg(value);
             interpl_traj["channel_packets"][key]["timestamp"] = timestamp(i,0);
             // interpl_traj["channel_packets"][key]["numcpp_center_subcarrier"] = nc::angle(value);

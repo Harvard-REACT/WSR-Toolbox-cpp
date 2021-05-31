@@ -1261,11 +1261,12 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
     {
         if(__FLAG_debug) std::cout << "log [test_csi_data]: Detected MAC ID = " << key.first 
                                    << ", Packet count: = " << key.second << std::endl;
+        
         mac_id_tx.push_back(key.first);
     }
 
     //Get AOA profile for each of the RX neighboring robots
-    if(__FLAG_debug) std::cout << "log [test_csi_data]: Getting AOA profiles" << std::endl;
+    if(__FLAG_debug) std::cout << "log [test_csi_data]: Forward-Reverse Channel product verification" << std::endl;
     
 
     for (int num_tx=0; num_tx<mac_id_tx.size(); num_tx++)
@@ -1306,6 +1307,7 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
                                                           __FLAG_sub_sample);
 
         nc::NdArray<std::complex<double>> h_list = csi_data.first;
+
         nc::NdArray<double> csi_timestamp = csi_data.second;
 
         if(h_list.shape().rows < __min_packets_to_process)
@@ -1326,8 +1328,8 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
                 debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
                 
                 //Store phase and timestamp of the channel for debugging
-                std::string channel_data_all =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_all_channel_data.json";
-                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_all);
+                std::string channel_data_all_fn =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_all_channel_data.json";
+                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_all_fn);
             }
 
             auto starttime = std::chrono::high_resolution_clock::now();      
