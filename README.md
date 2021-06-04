@@ -62,6 +62,7 @@ e.g
 ```
 
 The following traj_type is currently tested : gt
+
 Note : Make sure that the tx names are passed as a space separated string as shown in the example.
 
 
