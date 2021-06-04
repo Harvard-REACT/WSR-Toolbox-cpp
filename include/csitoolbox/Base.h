@@ -33,6 +33,7 @@ struct DataPacket{
     unsigned int fake_rate_n_flags;
     unsigned long tv_sec;
     unsigned long tv_usec;
+    unsigned long frame_count;
     double ts;
     std::string mac_real;
     // std::vector<double> mac_real;

@@ -25,8 +25,6 @@ int main(){
     
     /*============= Process the TX_SAR_Robot files =======================*/
     std::unordered_map<std::string,std::string> tx_robot_csi;
-    std::unordered_map<std::string,std::string> tx_profile_timestamp;
-    std::unordered_map<std::string,std::string> tx_name_list;
 
     for (auto it = run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].begin(); 
       it != run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].end(); ++it)
@@ -51,8 +49,8 @@ int main(){
         }
         stringstream tokenize_string3(ts);
         getline(tokenize_string3, time_val, '.');
-        tx_profile_timestamp[tx_mac_id] = date_val +"_"+ time_val;
-        tx_name_list[tx_mac_id] = tx_name;
+        run_module.data_sample_ts[tx_mac_id] = date_val +"_"+ time_val;
+        run_module.tx_name_list[tx_mac_id] = tx_name;
     }
 
     
@@ -63,7 +61,7 @@ int main(){
     for(auto & itr : detected_tx)
     {
       std::string tx_id = itr.first;
-      auto stats = run_module.get_performance_stats(tx_id, tx_name_list[tx_id]);
+      auto stats = run_module.get_performance_stats(tx_id, run_module.tx_name_list[tx_id]);
 
       std::cout << stats.dump(4) << std::endl;
       std::cout << "********************************" << std::endl;

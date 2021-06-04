@@ -47,6 +47,10 @@ void WSR_Util::displayDataPacket(DataPacket wifi_data_packet, int packet_number)
  *Decode the byte data from csi files
  **/
 int WSR_Util::readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug){
+    
+    std::cout << "Reading from file : " << std::endl;
+    std::cout << fn << std::endl;
+
     FILE *csi_file;
     long file_length, byte_count = 1, total_bytes_data_sz=0, curr_loc=0;
     size_t result = -1;
@@ -174,12 +178,9 @@ int WSR_Util::readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug){
 void WSR_Util::read_bfee_timestamp_mac(uint8_t *inBytes, WIFI_Agent& robot)
 {
 	struct DataPacket wifi_data_packet;
-    unsigned int antenna_sel = inBytes[15];
 	unsigned int len = 1, calc_len = 0;
 	unsigned int i, j;
 	unsigned int index = 0, remainder;
-    unsigned char *mac = &inBytes[28];
-	unsigned char *payload = &inBytes[34];
 	char tmp1, tmp2;
 
 	wifi_data_packet.timestamp_low = inBytes[0] + (inBytes[1] << 8) +
@@ -192,13 +193,17 @@ void WSR_Util::read_bfee_timestamp_mac(uint8_t *inBytes, WIFI_Agent& robot)
 	wifi_data_packet.rssi_c = inBytes[12];
 	wifi_data_packet.noise = inBytes[13];
 	wifi_data_packet.agc = inBytes[14];
+    unsigned int antenna_sel = inBytes[15];
     len = inBytes[16] + (inBytes[17] << 8);
     wifi_data_packet.fake_rate_n_flags = inBytes[18] + (inBytes[19] << 8);
     wifi_data_packet.tv_sec = inBytes[20] + (inBytes[21] << 8) +
 		(inBytes[22] << 16) + (inBytes[23] << 24);
     wifi_data_packet.tv_usec = inBytes[24] + (inBytes[25] << 8) +
 		(inBytes[26] << 16) + (inBytes[27] << 24);
-	
+    unsigned char *mac = &inBytes[28];
+    wifi_data_packet.frame_count = inBytes[34] + (inBytes[35] << 8) + (inBytes[36] << 16) + (inBytes[37] << 24);
+	unsigned char *payload = &inBytes[38];
+
     wifi_data_packet.ts = wifi_data_packet.tv_sec + wifi_data_packet.tv_usec*pow(10,-6); //TODO: check of open bug 8
     
     /* Create MAC address */
@@ -215,8 +220,7 @@ void WSR_Util::read_bfee_timestamp_mac(uint8_t *inBytes, WIFI_Agent& robot)
                                 std::to_string((int)mac[3])+":"+
                                 std::to_string((int)mac[4])+":"+
                                 std::to_string((int)mac[5]);
-
-
+        
 	/* Check that length matches what it should */
     calc_len = (30 * (wifi_data_packet.Nrx * wifi_data_packet.Ntx * 8 * 2 + 3) + 7) / 8;
 
@@ -382,7 +386,7 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
 //                    std::cout << nc::angle(temp1(0,temp1.cSlice())) << std::endl;
                     auto mag1 = nc::abs(temp1(0,15));
                     auto mag2 = nc::abs(temp1(0,16));
-                    auto fitted =  nc::polynomial::Poly1d<double>::fit(xp,fp,0);
+                    auto fitted =  nc::polynomial::Poly1d<double>::fit(xp.transpose(),fp.transpose(),1);
                     interpolated_phase = nc::unwrap(fitted(central_snum(0,0)));
 //                    std::cout << interpolated_phase << std::endl;
 //                    interpolated_phase = (nc::interp(central_snum, xp, fp))(0,0);
@@ -443,6 +447,87 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
 //        sorted_csi_data = nc::vstack({sorted_csi_data, forward_reverse_channel_product(Idx,forward_reverse_channel_product.cSlice())});
 //    }
     std::cout << "timestamp diff variance:" << nc::var(nc::diff(csi_timestamp)) << std::endl;
+
+    return std::make_pair(forward_reverse_channel_product, csi_timestamp);
+}
+//=============================================================================================================================
+/**
+ * Match the forward and backward channel packets based on counter
+ * input: CSI datapacket for transmitter and receiver
+ * output: pair of NdArray pair<forward-reverse product, csi_timestamp>
+ **/
+std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getForwardReverseChannelCounter(
+                                                                std::vector<DataPacket> rx_robot,
+                                                                std::vector<DataPacket> tx_robot,
+                                                                bool interpolate_phase,
+                                                                bool sub_sample){
+    int tx_length = int(tx_robot.size()), rx_length = int(rx_robot.size());
+    int itr_k=0, itr_l=0;
+    double a;
+    bool first_csi_val = true;
+    std::cout.precision(15);
+
+    nc::NdArray<std::complex<double>> forward_reverse_channel_product;
+    nc::NdArray<double> csi_timestamp;
+    nc::NdArray<std::complex<double>> temp1 = nc::zeros<std::complex<double>>(nc::Shape(1,30));
+    nc::NdArray<double> temp2 = nc::zeros<double>(nc::Shape(1,1));
+    double interpolated_phase;
+    std::complex<double> interpolated_h;
+    auto ArrayShape = forward_reverse_channel_product.shape();
+
+    while(itr_k < tx_length && itr_l < rx_length)
+        {
+            //std::cout << "TX frame: " << tx_robot[itr_k].frame_count << ", RX frame:" << rx_robot[itr_l].frame_count << std::endl;
+            if (tx_robot[itr_k].frame_count == rx_robot[itr_l].frame_count)
+            {
+                //multiply forward and reverse channel
+                for(int h_i = 0;h_i< 30; h_i++)
+                {
+                    temp1(0,h_i) = rx_robot[itr_l].csi[h_i][0] * tx_robot[itr_k].csi[h_i][0]; //Use CSI from first antenna only
+                }
+                if(interpolate_phase) 
+                {
+                    auto central_snum = nc::NdArray<double>(1, 1) = 15.5;
+                    auto xp = nc::arange<double>(1, 31);
+                    auto fp = unwrap(nc::angle(temp1(0,temp1.cSlice())));
+                    auto mag1 = nc::abs(temp1(0,15));
+                    auto mag2 = nc::abs(temp1(0,16));
+                    auto fitted =  nc::polynomial::Poly1d<double>::fit(xp.transpose(),fp.transpose(),1);
+                    interpolated_phase = nc::unwrap(fitted(central_snum(0,0)));
+                    interpolated_h = (mag1+mag2)/2*nc::exp(std::complex<double>(0,1)*interpolated_phase);
+                }
+                assert(temp2(0,0) != rx_robot[itr_l].ts);
+                temp2(0,0) = rx_robot[itr_l].ts;
+                itr_k +=1;
+                itr_l +=1;
+
+                if(first_csi_val)
+                {
+                    if(interpolate_phase)
+                        forward_reverse_channel_product = nc::NdArray<std::complex<double>>{interpolated_h};
+                    else
+                        forward_reverse_channel_product = temp1;
+
+                    csi_timestamp = temp2;
+                    first_csi_val = false;
+                }
+                else
+                {
+                    if(sub_sample && itr_l%2!=0) continue;
+                    
+                    csi_timestamp = nc::append(csi_timestamp, temp2, nc::Axis::ROW);
+                    if(interpolate_phase)
+                        forward_reverse_channel_product = nc::append(forward_reverse_channel_product,nc::NdArray<std::complex<double>>{interpolated_h},nc::Axis::ROW);
+                    else
+                        forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);             
+                }
+            }
+            else if (tx_robot[itr_k].frame_count < rx_robot[itr_l].frame_count )
+                itr_k += 1;
+            else
+                itr_l += 1;
+            
+        }
 
     return std::make_pair(forward_reverse_channel_product, csi_timestamp);
 }
@@ -855,7 +940,7 @@ void WSR_Util::writeCSIToJsonFile(nc::NdArray<std::complex<double>>& nd_array,
         for(size_t i = 0; i < nd_array.shape().rows; i++)
         {
             key = std::to_string(i);
-            auto value = nd_array(i,0);
+            auto value = nd_array(i,15); //by default it shows the subcarrier 16
             interpl_traj["channel_packets"][key]["center_subcarrier_phase"] = std::arg(value);
             interpl_traj["channel_packets"][key]["timestamp"] = timestamp(i,0);
             // interpl_traj["channel_packets"][key]["numcpp_center_subcarrier"] = nc::angle(value);
@@ -1114,29 +1199,20 @@ std::string WSR_Util::bool_to_string(bool value)
  *
  * */
 std::string WSR_Util::format_mac(std::string const& s) {
-    unsigned char a[6];
-    int last = -1;
-    int rc = sscanf(s.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx%n",
-                    a + 0, a + 1, a + 2, a + 3, a + 4, a + 5,
-                    &last);
-    if(rc != 6 || s.size() != last)
-        throw std::runtime_error("invalid mac address format " + s);
-    
-    uint64_t(a[0]) << 40 |
-    uint64_t(a[1]) << 32 | 
-    (
-    uint32_t(a[2]) << 24 | 
-    uint32_t(a[3]) << 16 |
-    uint32_t(a[4]) << 8 |
-    uint32_t(a[5])
-    );
+    std::vector <std::string> mac_val; 
+    std::stringstream check1(s); 
+    std::string intermediate; 
+    while(getline(check1, intermediate, ':')) 
+    { 
+        mac_val.push_back(intermediate); 
+    } 
 
-    std::string output = std::to_string(a[0]) + ":" +
-                         std::to_string(a[1]) + ":" +
-                         std::to_string(a[2]) + ":" +
-                         std::to_string(a[3]) + ":" +
-                         std::to_string(a[4]) + ":" +
-                         std::to_string(a[5]);
+    std::string output = "0"+dec2hex(std::stoi(mac_val[0])) + ":" +
+                         dec2hex(std::stoi(mac_val[1])) + ":" +
+                         dec2hex(std::stoi(mac_val[2])) + ":" +
+                         dec2hex(std::stoi(mac_val[3])) + ":" +
+                         dec2hex(std::stoi(mac_val[4])) + ":" +
+                         dec2hex(std::stoi(mac_val[5]));
     return output;
 }
 //=============================================================================================================================
@@ -1162,7 +1238,7 @@ void WSR_Util::writePacketDistributionToJsonFile(const nc::NdArray<double>& csi_
         for(size_t i = 0; i < csi_timestamp.shape().rows; i++)
         {
             //Find the first trajectory timestamp >= csi_timestamp
-            for(size_t k = 0; i < trajectory_timestamp.shape().rows; k++)
+            for(size_t k = 0; k < trajectory_timestamp.shape().rows; k++)
             {
                 if(trajectory_timestamp(k,0) < csi_timestamp(i,0))
                 {
@@ -1184,4 +1260,88 @@ void WSR_Util::writePacketDistributionToJsonFile(const nc::NdArray<double>& csi_
         myfile << packet_distribution;   
     }
     myfile.close();
+}
+//=============================================================================================================================
+/**
+ * CFO clean using complex conjugate
+ **/
+std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getConjugateProductChannel(
+                                                                std::vector<DataPacket> rx_robot,
+                                                                bool interpolate_phase,
+                                                                bool sub_sample){
+    int rx_length = int(rx_robot.size());
+    int itr_k=0, itr_l=0;
+    double a;
+    bool first_csi_val = true;
+    std::cout.precision(15);
+    int sizeee = rx_robot.size();
+
+    nc::NdArray<std::complex<double>> forward_reverse_channel_product;
+    nc::NdArray<double> csi_timestamp;
+    nc::NdArray<std::complex<double>> temp1 = nc::zeros<std::complex<double>>(nc::Shape(1,30));
+    nc::NdArray<double> temp2 = nc::zeros<double>(nc::Shape(1,1));
+    double interpolated_phase;
+    std::complex<double> interpolated_h;
+
+    auto ArrayShape = forward_reverse_channel_product.shape();
+
+    while(itr_l < rx_length) { //&& not(isempty(receiver{k}))){
+        //multiply forward and reverse channel
+        for(int h_i = 0;h_i< 30; h_i++)
+        {
+            temp1(0,h_i) = rx_robot[itr_l].csi[h_i][1] * nc::conj(rx_robot[itr_l].csi[h_i][0]); //using complex conjugate
+        }
+        if(interpolate_phase) 
+        {
+            auto central_snum = nc::NdArray<double>(1, 1) = 15.5;
+            auto xp = nc::arange<double>(1, 31);
+            auto fp = unwrap(nc::angle(temp1(0,temp1.cSlice())));
+            auto mag1 = nc::abs(temp1(0,15));
+            auto mag2 = nc::abs(temp1(0,16));
+            auto fitted =  nc::polynomial::Poly1d<double>::fit(xp.transpose(),fp.transpose(),1);
+            interpolated_phase = nc::unwrap(fitted(central_snum(0,0)));
+            interpolated_h = (mag1+mag2)/2*nc::exp(std::complex<double>(0,1)*interpolated_phase);
+        }
+        assert(temp2(0,0) != rx_robot[itr_l].ts);
+        temp2(0,0) = rx_robot[itr_l].ts;
+        itr_k +=1;
+        itr_l +=1;
+
+        if(first_csi_val)
+        {
+            if(interpolate_phase)
+                forward_reverse_channel_product = nc::NdArray<std::complex<double>>{interpolated_h};
+            else
+                forward_reverse_channel_product = temp1;
+
+            csi_timestamp = temp2;
+            first_csi_val = false;
+        }
+        else
+        {
+            if(sub_sample && itr_l%2!=0) continue;
+            
+            csi_timestamp = nc::append(csi_timestamp, temp2, nc::Axis::ROW);
+            assert(csi_timestamp(-2,0)  < csi_timestamp(-1,0));
+            if(interpolate_phase)
+                forward_reverse_channel_product = nc::append(forward_reverse_channel_product,nc::NdArray<std::complex<double>>{interpolated_h},nc::Axis::ROW);
+            else
+                forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);
+                            
+        }
+    }
+    std::cout << "timestamp diff variance:" << nc::var(nc::diff(csi_timestamp)) << std::endl;
+
+    return std::make_pair(forward_reverse_channel_product, csi_timestamp);
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+std::string WSR_Util::dec2hex(unsigned int i)
+{
+    std::stringstream ss;
+    ss << std::hex << std::uppercase << i;
+    return ss.str();
 }

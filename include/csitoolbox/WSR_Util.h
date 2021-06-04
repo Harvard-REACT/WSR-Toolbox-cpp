@@ -73,6 +73,16 @@ class WSR_Util{
                                                 const nc::NdArray<double>& trajectory_timestamp, 
                                                 const nc::NdArray<double>& displacement,
                                                 std::string fn);
+        std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> getConjugateProductChannel(
+                                                                std::vector<DataPacket> rx_robot,
+                                                                bool interpolate_phase,
+                                                                bool sub_sample);
+        std::string dec2hex(unsigned int i);
+        std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> getForwardReverseChannelCounter(
+                                                                std::vector<DataPacket> rx_robot,
+                                                                std::vector<DataPacket> tx_robot,
+                                                                bool interpolate_phase,
+                                                                bool sub_sample);
 };
 
 
