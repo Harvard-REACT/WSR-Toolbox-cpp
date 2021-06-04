@@ -23,6 +23,7 @@ class WIFI_Agent {
        //1,2,3). By default set to 1. 
 
     public:
+        std::string robot_type;
         std::unordered_map<std::string, int> unique_mac_ids_packets;
         int getSize(std::string fn); 
         size_t readSizeT(std::string fn);

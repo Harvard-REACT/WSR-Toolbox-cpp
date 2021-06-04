@@ -50,6 +50,7 @@ include_directories(
 
 add_executable(test_wsr src/test_wsr.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp)
 add_executable(data_processing src/data_processing.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp)
+add_executable(remote_processing src/remote_processing.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -66,7 +67,11 @@ target_link_libraries(test_wsr
    -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
    ${BOOST_LIBRARIES}
  )
- target_link_libraries(data_processing
+target_link_libraries(data_processing
+ -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
+ ${BOOST_LIBRARIES}
+)
+target_link_libraries(remote_processing
  -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
  ${BOOST_LIBRARIES}
 )

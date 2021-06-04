@@ -43,7 +43,10 @@ std::vector<DataPacket> WIFI_Agent::get_wifi_data(std::string mac_id){
     std::vector<DataPacket> temp;
     for (int i=0;i < wifi_data_packet_array.size();i++)
     {
-        if(mac2str(wifi_data_packet_array[i].mac_real) == mac_id) temp.push_back(wifi_data_packet_array[i]);
+        if(mac2str(wifi_data_packet_array[i].mac_real) == mac_id) 
+        {
+            temp.push_back(wifi_data_packet_array[i]);
+        }
     }
 
     return temp;

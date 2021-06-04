@@ -42,8 +42,7 @@ class WSR_Util{
 
         void writeToFile(nc::NdArray<double>& nd_array, 
                         std::string fn);
-        void writeCSIToFile(nc::NdArray<std::complex<double>>& nd_array,
-                            nc::NdArray<double>&timestamp,
+        void writeCSIToFile(nc::NdArray<std::complex<double>>& nd_array, 
                             string fn);
         void writeCSIToJsonFile(nc::NdArray<std::complex<double>>& nd_array, 
                                 nc::NdArray<double>&timestamp, 
@@ -70,10 +69,21 @@ class WSR_Util{
         std::string __homedir = pw->pw_dir;
         std::string bool_to_string(bool value);
         std::string format_mac(std::string const& s);
+        void writePacketDistributionToJsonFile(const nc::NdArray<double>& csi_timestamp, 
+                                                const nc::NdArray<double>& trajectory_timestamp, 
+                                                const nc::NdArray<double>& displacement,
+                                                std::string fn);
+        std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> getConjugateProductChannel(
+                                                                std::vector<DataPacket> rx_robot,
+                                                                bool interpolate_phase,
+                                                                bool sub_sample);
+        std::string dec2hex(unsigned int i);
+        std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> getForwardReverseChannelCounter(
+                                                                std::vector<DataPacket> rx_robot,
+                                                                std::vector<DataPacket> tx_robot,
+                                                                bool interpolate_phase,
+                                                                bool sub_sample);
 };
 
 
 #endif //CSITOOLBOX_WSR_UTIL_H
-
-
-

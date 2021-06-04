@@ -28,7 +28,8 @@ class WSR_Module
         std::string __RX_SAR_robot_MAC_ID;
         nc::NdArray<double> compute_profile_bartlett_multithread(
                             const nc::NdArray<std::complex<double>>& h_list, 
-                            const nc::NdArray<double>& pose_list);
+                            const nc::NdArray<double>& pose_list,
+                            int start_index);
         
         nc::NdArray<double> compute_profile_bartlett_singlethread(
                     const nc::NdArray<std::complex<double>>& h_list, 
@@ -44,8 +45,8 @@ class WSR_Module
                         __eigen_rep_theta_co, __precomp__eigen_rep_lambda, __precomp__eigen_rep_phi, __precomp__eigen_rep_theta;
         
     public:
-        nlohmann::json __precompute_config;
-        std::string data_sample_ts;
+        nlohmann::json __precompute_config; 
+        std::unordered_map<std::string,std::string> data_sample_ts;
         std::unordered_map<std::string,std::string> tx_name_list;
         int calculate_AOA_profile(std::string tx_csi_file, 
                                     std::unordered_map<std::string, std::string> rx_csi_file, 
@@ -108,6 +109,11 @@ class WSR_Module
                                    std::vector<double>& closest_AOA_error,
                                    const std::string& tx_mac_id,
                                    const std::string& tx_name);
+        int test_csi_data(std::string rx_csi_file, 
+                        std::unordered_map<std::string, std::string> tx_csi_file);
+        nlohmann::json get_performance_stats(const std::string& tx_mac_id,
+                                            const std::string& tx_name);
+        std::unordered_map<std::string, int> get_paired_pkt_count();
 };
 
 

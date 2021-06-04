@@ -60,7 +60,6 @@ int main(int argc, char *argv[])
       std::string config = "../config/config_3D_SAR.json";
       WSR_Module run_module(config);
 
-      run_module.data_sample_ts = *ts_it;
       std::string output = run_module.__precompute_config["output_aoa_profile_path"]["value"].dump();
       output.erase(remove( output.begin(), output.end(), '\"' ),output.end());
       std::string rx_robot_csi = foldername + csi_folder + "/" + rx_csi_pre + *ts_it + ".dat";
@@ -97,6 +96,7 @@ int main(int argc, char *argv[])
         getline(tokenize_string3, time_val, '.');
         tx_profile_timestamp[tx_mac_id] = date_val +"_"+ time_val;
         run_module.tx_name_list[tx_mac_id] = tx_name;
+        run_module.data_sample_ts[tx_mac_id] = *ts_it;
       }
 
       //load trajectory
