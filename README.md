@@ -47,6 +47,24 @@ cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'`
 make -j $cpuCores
 ```
 
+## Remote processing and visualization of output
+Since visualization cannot be done directly on the robot, we have included this functionality to execute the code on a remote computer. 
+
+1. Copy the relevant csi and trajectory data files to some directory. Make sure to copy the groundtruth_positions.json file there and update the corresponding groundtruth locations of the transmitting robots.
+
+2. Open the debug directly. This is where all the output files are generated. Then run the following shell script
+```
+cd debug
+../viz_latest_output.sh <path_to_directory> <traj_type> '<tx names>'
+
+e.g
+../viz_latest_output.sh /home/jadhav/REACT-Projects/WSR-Toolbox-cpp/data/Test-remote-processing/ gt 'tx2 tx3'
+```
+
+The following traj_type is currently tested : gt
+Note : Make sure that the tx names are passed as a space separated string as shown in the example.
+
+
 ## Test CSI data using C++ executable
 1. To process multiple data samples in a directory
 ```
