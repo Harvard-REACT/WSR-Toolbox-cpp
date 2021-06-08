@@ -270,10 +270,10 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                 
                 //Store phase and timestamp of the channel for debugging
                 std::string channel_data_sliced =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_sliced_channel_data.json";
-                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_sliced);
+                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_sliced,__FLAG_interpolate_phase);
 
                 std::string channel_data_all =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_all_channel_data.json";
-                utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all);
+                utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all,__FLAG_interpolate_phase);
 
                 //Store the packet distribution to check for spotty packets
                 std::string packet_dist = debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_packet_dist.json";
@@ -402,9 +402,9 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_multithread(
     nc::NdArray<std::complex<double>> h_list_single_channel;
     
     if(__FLAG_interpolate_phase)
-        h_list_single_channel = h_list;
+        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(30,31));
     else
-        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(__snum_start, __snum_end));
+        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(15, 16));
     
     auto num_poses = nc::shape(pose_list).rows;
     if(h_list_single_channel.shape().cols == 0)
@@ -570,9 +570,9 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_multithread(
 
     auto result_mat = nc::matmul(e_term, h_list_single_channel);
 
-    auto final_result_mat = nc::prod(result_mat,nc::Axis::COL);
+    // auto final_result_mat = nc::prod(result_mat,nc::Axis::COL);
 
-    auto betaProfileProd = nc::power(nc::abs(final_result_mat),2);
+    auto betaProfileProd = nc::power(nc::abs(result_mat),2);
     auto beta_profile = nc::reshape(betaProfileProd,__ntheta,__nphi);
     
     if(__FLAG_normalize_profile)
@@ -624,9 +624,9 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_singlethread(
     nc::NdArray<std::complex<double>> h_list_single_channel;
     
     if(__FLAG_interpolate_phase)
-        h_list_single_channel = h_list;
+        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(30,31));
     else
-        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(__snum_start, __snum_end));
+        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(15, 16));
 
     auto num_poses = nc::shape(pose_list).rows;
     if(h_list_single_channel.shape().cols == 0)
@@ -707,8 +707,8 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_singlethread(
     if(__FLAG_debug) std::cout << "log [compute_AOA] : getting profile using matmul" << std::endl;
 
     auto result_mat = nc::matmul(e_term, h_list_single_channel);
-    auto final_result_mat = nc::prod(result_mat,nc::Axis::COL);
-    auto betaProfileProd = nc::power(nc::abs(final_result_mat),2);
+    // auto final_result_mat = nc::prod(result_mat,nc::Axis::COL);
+    auto betaProfileProd = nc::power(nc::abs(result_mat),2);
     auto beta_profile = nc::reshape(betaProfileProd,__ntheta,__nphi);
     
     if(__FLAG_normalize_profile)
@@ -1329,7 +1329,7 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
                 
                 //Store phase and timestamp of the channel for debugging
                 std::string channel_data_all_fn =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_all_channel_data.json";
-                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_all_fn);
+                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_all_fn,__FLAG_interpolate_phase);
             }
 
             auto starttime = std::chrono::high_resolution_clock::now();      

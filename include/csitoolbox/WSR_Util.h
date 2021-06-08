@@ -46,7 +46,8 @@ class WSR_Util{
                             string fn);
         void writeCSIToJsonFile(nc::NdArray<std::complex<double>>& nd_array, 
                                 nc::NdArray<double>&timestamp, 
-                                const std::string& fn); 
+                                const std::string& fn,
+                                bool __FLAG_interpolate_phase); 
         void writeTrajToFile(std::vector<std::vector<double>>& rx_trajectory, 
                             std::string fn);
         void writeTrajToFile(nc::NdArray<double>& rx_trajectory, 

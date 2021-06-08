@@ -128,9 +128,9 @@
             },
             "tx2":{
                 "position":{ 
-                    "x": -2.67,
-                    "y": 2.4,
-                    "z": 0.26
+                    "x": -2.83,
+                    "y": -0.66,
+                    "z": 0.36
                 },
                 "orientation": {
                     "x": 0,
@@ -141,9 +141,9 @@
             },
             "tx3":{
                 "position":{ 
-                    "x": -2.96,
-                    "y": -1.6,
-                    "z": 0.77
+                    "x": 3.36,
+                    "y": -0.85,
+                    "z": 0.36
                 },
                 "orientation": {
                     "x": 0,
@@ -191,12 +191,12 @@
             "tx2":{
                 "mac_id_val":"0:33:106:63:23:90",
                 "mac_id":"00:21:6A:3F:17:5A",
-                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0528_data/2d_2tx_1/2D_TX_dataset_csi_rx_tx/csi_tx2_2021-05-28_164352.dat"
+                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0604/csi_tx2_2021-06-04_183301.dat"
             },
             "tx3":{
                 "mac_id_val":"0:33:106:48:210:60",
                 "mac_id":"00:21:6A:30:D2:3C",
-                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0528_data/2d_2tx_1/2D_TX_dataset_csi_rx_tx/csi_tx3_2021-05-28_164352.dat"
+                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0604/csi_tx3_2021-06-04_183301.dat"
             },
             "tx4":{
                 "mac_id_val":"0:33:106:178:110:250",
@@ -210,12 +210,12 @@
         "value":{           
             "mac_id":"00:21:6A:C5:FC:0",
             "mac_id_val":"00:16:EA:12:34:56",
-            "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0528_data/2d_2tx_1/2D_TX_dataset_csi_rx_tx/csi_rx_2021-05-28_164352.dat"
+            "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0604/csi_rx_2021-06-04_183301.dat"
         }
     },
     "input_trajectory_csv_fn_rx":{
         "desc":"Trajectory fiile",
-        "value":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0528_data/2d_2tx_1/2D_TX_dataset_traj_rx/rx_trajectory_2021-05-28_164352_.csv"
+        "value":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0604/rx_trajectory_2021-06-04_183301_.csv"
     },
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
@@ -263,7 +263,7 @@
     },
     "interpolate_phase": {
         "desc": "flag for phase angle interpolation",
-        "value": false
+        "value": true
     },
     "time_offset": {
         "desc": "offset for time diff on different robots",

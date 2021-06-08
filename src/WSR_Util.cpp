@@ -469,7 +469,7 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
 
     nc::NdArray<std::complex<double>> forward_reverse_channel_product;
     nc::NdArray<double> csi_timestamp;
-    nc::NdArray<std::complex<double>> temp1 = nc::zeros<std::complex<double>>(nc::Shape(1,30));
+    nc::NdArray<std::complex<double>> temp1 = nc::zeros<std::complex<double>>(nc::Shape(1,31));
     nc::NdArray<double> temp2 = nc::zeros<double>(nc::Shape(1,1));
     double interpolated_phase;
     std::complex<double> interpolated_h;
@@ -488,13 +488,16 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                 if(interpolate_phase) 
                 {
                     auto central_snum = nc::NdArray<double>(1, 1) = 15.5;
-                    auto xp = nc::arange<double>(1, 31);
+                    auto xp = nc::arange<double>(0, 31);
                     auto fp = unwrap(nc::angle(temp1(0,temp1.cSlice())));
                     auto mag1 = nc::abs(temp1(0,15));
                     auto mag2 = nc::abs(temp1(0,16));
                     auto fitted =  nc::polynomial::Poly1d<double>::fit(xp.transpose(),fp.transpose(),1);
                     interpolated_phase = nc::unwrap(fitted(central_snum(0,0)));
                     interpolated_h = (mag1+mag2)/2*nc::exp(std::complex<double>(0,1)*interpolated_phase);
+                    
+                    //Store the interpolated phase as subcarrier 31
+                    temp1(0,30) = interpolated_h;
                 }
                 assert(temp2(0,0) != rx_robot[itr_l].ts);
                 temp2(0,0) = rx_robot[itr_l].ts;
@@ -503,11 +506,10 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
 
                 if(first_csi_val)
                 {
-                    if(interpolate_phase)
-                        forward_reverse_channel_product = nc::NdArray<std::complex<double>>{interpolated_h};
-                    else
-                        forward_reverse_channel_product = temp1;
-
+                    // if(interpolate_phase)
+                    //     forward_reverse_channel_product = nc::NdArray<std::complex<double>>{interpolated_h};
+                    // else
+                    forward_reverse_channel_product = temp1;
                     csi_timestamp = temp2;
                     first_csi_val = false;
                 }
@@ -516,10 +518,11 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                     if(sub_sample && itr_l%2!=0) continue;
                     
                     csi_timestamp = nc::append(csi_timestamp, temp2, nc::Axis::ROW);
-                    if(interpolate_phase)
-                        forward_reverse_channel_product = nc::append(forward_reverse_channel_product,nc::NdArray<std::complex<double>>{interpolated_h},nc::Axis::ROW);
-                    else
-                        forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);             
+                    forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);
+
+                    // if(interpolate_phase)
+                    //     forward_reverse_channel_product = nc::append(forward_reverse_channel_product,nc::NdArray<std::complex<double>>{interpolated_h},nc::Axis::ROW);
+                                     
                 }
             }
             else if (tx_robot[itr_k].frame_count < rx_robot[itr_l].frame_count )
@@ -927,7 +930,9 @@ void WSR_Util::writeCSIToFile(nc::NdArray<std::complex<double>>& nd_array, strin
  * 
  * */ 
 void WSR_Util::writeCSIToJsonFile(nc::NdArray<std::complex<double>>& nd_array, 
-                                nc::NdArray<double>&timestamp, const std::string& fn)
+                                nc::NdArray<double>&timestamp, 
+                                const std::string& fn,
+                                bool __FLAG_interpolate_phase)
 {
     string output_file = __homedir+"/"+fn, key,key_sub;
     std::cout.precision(15);
@@ -940,7 +945,13 @@ void WSR_Util::writeCSIToJsonFile(nc::NdArray<std::complex<double>>& nd_array,
         for(size_t i = 0; i < nd_array.shape().rows; i++)
         {
             key = std::to_string(i);
-            auto value = nd_array(i,15); //by default it shows the subcarrier 16
+            std::complex<double> value;
+
+            if(__FLAG_interpolate_phase)
+                value = nd_array(i,30); //The interpolated phase is stored as subcarrier 31
+            else
+                value = nd_array(i,15);//by default it shows the subcarrier 16
+
             interpl_traj["channel_packets"][key]["center_subcarrier_phase"] = std::arg(value);
             interpl_traj["channel_packets"][key]["timestamp"] = timestamp(i,0);
             // interpl_traj["channel_packets"][key]["numcpp_center_subcarrier"] = nc::angle(value);
