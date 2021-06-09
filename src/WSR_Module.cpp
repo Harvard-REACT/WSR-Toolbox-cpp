@@ -230,6 +230,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             h_list_all = h_list;
             csi_timestamp_all = csi_timestamp;
         }
+
         
         if(h_list.shape().rows < __min_packets_to_process)
         {
@@ -260,22 +261,19 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
     
             if(__FLAG_debug)
             {
+                std::cout << "log [calculate_AOA_profile]: CSI_packets_used = " << csi_timestamp.shape() << std::endl;
                 std::cout << "log [calculate_AOA_profile]: pose_list size  = " << pose_list.shape() << std::endl;
                 std::cout << "log [calculate_AOA_profile]: h_list size  = " << h_list.shape() << std::endl;
-
-                // for(int zzz=0; zzz < h_list.shape().rows; zzz++){
-                //     std::cout << "pkt" << zzz+start_index+1 << ", sub 0 " << h_list(zzz,0) << ", sub 16: " << h_list(zzz,15) << std::endl;
-                // }
                 
                 std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
                 debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
                 
                 //Store phase and timestamp of the channel for debugging
                 std::string channel_data_sliced =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_sliced_channel_data.json";
-                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_sliced);
+                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_sliced,__FLAG_interpolate_phase);
 
                 std::string channel_data_all =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_all_channel_data.json";
-                utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all);
+                utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all,__FLAG_interpolate_phase);
 
                 //Store the packet distribution to check for spotty packets
                 std::string packet_dist = debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_packet_dist.json";
@@ -292,7 +290,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             
             if(__FLAG_threading)
             {
-                __aoa_profile = compute_profile_bartlett_multithread(h_list,pose_list,start_index);
+                __aoa_profile = compute_profile_bartlett_multithread(h_list,pose_list);
             }
             else
             {
@@ -375,8 +373,7 @@ std::pair<double,double> WSR_Module::get_phi_theta()
  * */
 nc::NdArray<double> WSR_Module::compute_profile_bartlett_multithread(
     const nc::NdArray<std::complex<double>>& input_h_list, 
-    const nc::NdArray<double>& input_pose_list,
-    int start_index)
+    const nc::NdArray<double>& input_pose_list)
 {   
     EigencdMatrix eigen_eterm_3DAdjustment,e_term_prod;
     EigenDoubleMatrix eigen_rep_lambda, eigen_rep_phi, eigen_rep_theta, 
@@ -404,21 +401,17 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_multithread(
     std::cout.precision(15);
     nc::NdArray<std::complex<double>> h_list_single_channel;
     
-    
-
     if(__FLAG_interpolate_phase)
-        h_list_single_channel = h_list;
+        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(30,31));
     else
-        h_list_single_channel = h_list(h_list.rSlice(),15);
+        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(15, 16));
     
-
     auto num_poses = nc::shape(pose_list).rows;
     if(h_list_single_channel.shape().cols == 0)
     {
         THROW_CSI_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
     }
     
-
     if(__FLAG_debug) std::cout << "log [compute_AOA] : get lambda, phi and theta values" << std::endl;
         
     std::thread lambda_repmat (&WSR_Module::get_matrix_block, this, 
@@ -552,11 +545,13 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_multithread(
     int block_rows = __nphi*__ntheta/max_threads;
     std::thread e_term_blk_threads[max_threads];
     std::vector<EigencdMatrix> emat(max_threads);
+
     for (int itr=0; itr<max_threads;itr++)
     {
        e_term_blk_threads[itr] = std::thread(&WSR_Module::get_block_exp, this, std::ref(emat[itr]),
                            std::ref(e_term_prod), itr*block_rows, 0, block_rows, num_poses);
     }
+
     for (int itr=0; itr<max_threads;itr++)
     {
        e_term_blk_threads[itr].join();
@@ -629,9 +624,9 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_singlethread(
     nc::NdArray<std::complex<double>> h_list_single_channel;
     
     if(__FLAG_interpolate_phase)
-        h_list_single_channel = h_list;
+        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(30,31));
     else
-        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(__snum_start, __snum_end));
+        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(15, 16));
 
     auto num_poses = nc::shape(pose_list).rows;
     if(h_list_single_channel.shape().cols == 0)
@@ -712,8 +707,8 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_singlethread(
     if(__FLAG_debug) std::cout << "log [compute_AOA] : getting profile using matmul" << std::endl;
 
     auto result_mat = nc::matmul(e_term, h_list_single_channel);
-    auto final_result_mat = nc::prod(result_mat,nc::Axis::COL);
-    auto betaProfileProd = nc::power(nc::abs(final_result_mat),2);
+    // auto final_result_mat = nc::prod(result_mat,nc::Axis::COL);
+    auto betaProfileProd = nc::power(nc::abs(result_mat),2);
     auto beta_profile = nc::reshape(betaProfileProd,__ntheta,__nphi);
     
     if(__FLAG_normalize_profile)
@@ -823,6 +818,7 @@ std::vector<double> WSR_Module::find_topN_phi(nc::NdArray<double> profile)
     std::vector<double> ret;
     nc::NdArray<double> phi_max = nc::amax(profile, nc::Axis::COL);
     nc::NdArray<nc::uint32> sortedIdxs = argsort(phi_max);
+
     int arr_idx = phi_max.shape().cols - 1;
     for(int i=0; i<__topN_phi_count;i++)
     {
@@ -830,6 +826,7 @@ std::vector<double> WSR_Module::find_topN_phi(nc::NdArray<double> profile)
                                     << " : " << phi_list(0,sortedIdxs(0,arr_idx-i))*180/M_PI << std::endl;
         ret.push_back(phi_list(0,sortedIdxs(0,arr_idx-i))*180/M_PI);
     }
+
     return ret;
 }
 * */
@@ -843,6 +840,7 @@ std::vector<double> WSR_Module::find_topN_theta(nc::NdArray<double> profile)
     std::vector<double> ret;
     nc::NdArray<double> theta_max = nc::amax(profile, nc::Axis::ROW);
     nc::NdArray<nc::uint32> sortedIdxs = argsort(theta_max);
+
     int arr_idx = theta_max.shape().cols - 1;
     for(int i=0; i<__topN_theta_count;i++)
     {
@@ -850,6 +848,7 @@ std::vector<double> WSR_Module::find_topN_theta(nc::NdArray<double> profile)
                                      << 180 - theta_list(0,sortedIdxs(0,arr_idx-i))*180/M_PI << std::endl;
         ret.push_back(180 - theta_list(0,sortedIdxs(0,arr_idx-i))*180/M_PI);
     }
+
     return ret;
 }
  * */
@@ -1330,7 +1329,7 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
                 
                 //Store phase and timestamp of the channel for debugging
                 std::string channel_data_all_fn =  debug_dir+"/"+tx_name_list[mac_id_tx[num_tx]]+"_"+data_sample_ts[mac_id_tx[num_tx]]+"_all_channel_data.json";
-                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_all_fn);
+                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_all_fn,__FLAG_interpolate_phase);
             }
 
             auto starttime = std::chrono::high_resolution_clock::now();      

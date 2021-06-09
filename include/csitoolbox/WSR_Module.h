@@ -28,8 +28,7 @@ class WSR_Module
         std::string __RX_SAR_robot_MAC_ID;
         nc::NdArray<double> compute_profile_bartlett_multithread(
                             const nc::NdArray<std::complex<double>>& h_list, 
-                            const nc::NdArray<double>& pose_list,
-                            int start_index);
+                            const nc::NdArray<double>& pose_list);
         
         nc::NdArray<double> compute_profile_bartlett_singlethread(
                     const nc::NdArray<std::complex<double>>& h_list, 
