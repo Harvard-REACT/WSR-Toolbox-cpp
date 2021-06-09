@@ -58,7 +58,7 @@ cd debug
 ../viz_latest_output.sh <path_to_directory> <traj_type> '<tx names>'
 
 e.g
-../viz_latest_output.sh /home/jadhav/REACT-Projects/WSR-Toolbox-cpp/data/Test-remote-processing/ gt 'tx2 tx3'
+../viz_latest_output.sh /home/jadhav/REACT-Projects/WSR-Toolbox-cpp/data/online_data/ gt 'tx2 tx3'
 ```
 
 The following traj_type is currently tested : gt
