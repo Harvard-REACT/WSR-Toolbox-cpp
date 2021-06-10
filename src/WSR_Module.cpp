@@ -154,7 +154,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
     WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR 
     nc::NdArray<std::complex<double>> h_list_all;
     nc::NdArray<double> csi_timestamp_all;
-    double cal_ts_offset;
+    double cal_ts_offset, channel_ang_mean;
     std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
     debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
 
@@ -220,7 +220,8 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         auto csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
                                                           data_packets_TX,
                                                           __FLAG_interpolate_phase,
-                                                          __FLAG_sub_sample);
+                                                          __FLAG_sub_sample,
+                                                          channel_ang_mean);
                                                           
         nc::NdArray<std::complex<double>> h_list = csi_data.first;
         nc::NdArray<double> csi_timestamp = csi_data.second;
@@ -308,6 +309,8 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             __calculated_ts_offset[mac_id_tx[num_tx]] = cal_ts_offset ;
             __rx_pkt_size[mac_id_tx[num_tx]] = data_packets_RX.size();
             __tx_pkt_size[mac_id_tx[num_tx]] = data_packets_TX.size();
+            __channel_phase_diff_mean[mac_id_tx[num_tx]] =  channel_ang_mean;
+    
         }
 
         /*Store the aoa_profile*/
@@ -1174,6 +1177,14 @@ double WSR_Module::get_calculated_ts_offset(const std::string& tx_mac_id) {
  *
  *
  * */
+double WSR_Module::get_cpdm (const std::string& tx_mac_id) {
+    return __channel_phase_diff_mean[tx_mac_id];
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
 int WSR_Module::get_paired_pkt_count(const std::string& tx_mac_id) {
     return __paired_pkt_count[tx_mac_id];
 }
@@ -1207,7 +1218,8 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                 {"Packets_Used", get_paired_pkt_count(tx_mac_id)},
                 {"time(sec)", get_processing_time(tx_mac_id)},
                 {"memory(GB)", get_memory_used(tx_mac_id)},
-                {"first_forward-reverse_ts_offset(sec)", get_calculated_ts_offset(tx_mac_id)}
+                {"first_forward-reverse_ts_offset(sec)", get_calculated_ts_offset(tx_mac_id)},
+                {"Channe_phase_diff_mean", get_cpdm(tx_mac_id)}
              }},
             {"c_Info_AOA_Top",{
                 {"Phi(deg)", top_aoa_error[0]},
@@ -1243,7 +1255,7 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
 
     WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR 
     RX_SAR_robot.robot_type = "rx";
-    double cal_ts_offset;
+    double cal_ts_offset,channel_ang_mean;
     std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
     debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
 
@@ -1304,7 +1316,8 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
         auto csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
                                                           data_packets_TX,
                                                           __FLAG_interpolate_phase,
-                                                          __FLAG_sub_sample);
+                                                          __FLAG_sub_sample,
+                                                          channel_ang_mean);
 
         nc::NdArray<std::complex<double>> h_list = csi_data.first;
 

@@ -460,7 +460,8 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                                                                 std::vector<DataPacket> rx_robot,
                                                                 std::vector<DataPacket> tx_robot,
                                                                 bool interpolate_phase,
-                                                                bool sub_sample){
+                                                                bool sub_sample,
+                                                                double &channel_ang_mean){
     int tx_length = int(tx_robot.size()), rx_length = int(rx_robot.size());
     int itr_k=0, itr_l=0;
     double a;
@@ -470,10 +471,10 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
     nc::NdArray<std::complex<double>> forward_reverse_channel_product;
     nc::NdArray<double> csi_timestamp;
     nc::NdArray<std::complex<double>> temp1 = nc::zeros<std::complex<double>>(nc::Shape(1,31));
+    nc::NdArray<std::complex<double>> prev;
     nc::NdArray<double> temp2 = nc::zeros<double>(nc::Shape(1,1));
     double interpolated_phase;
     std::complex<double> interpolated_h;
-    auto ArrayShape = forward_reverse_channel_product.shape();
 
     while(itr_k < tx_length && itr_l < rx_length)
         {
@@ -520,10 +521,16 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                     csi_timestamp = nc::append(csi_timestamp, temp2, nc::Axis::ROW);
                     forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);
 
+                    if(interpolate_phase)
+                        channel_ang_mean = channel_ang_mean + abs((std::arg(prev(0,30)) - std::arg(temp1(0,30))));
+                    else
+                        channel_ang_mean = channel_ang_mean + abs((std::arg(prev(0,15)) - std::arg(temp1(0,15))));
+
                     // if(interpolate_phase)
                     //     forward_reverse_channel_product = nc::append(forward_reverse_channel_product,nc::NdArray<std::complex<double>>{interpolated_h},nc::Axis::ROW);
                                      
                 }
+                prev = temp1;
             }
             else if (tx_robot[itr_k].frame_count < rx_robot[itr_l].frame_count )
                 itr_k += 1;
@@ -532,6 +539,8 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
             
         }
 
+    //Calculate mean of channel phase interelement-spacing
+    channel_ang_mean = channel_ang_mean/forward_reverse_channel_product.shape().rows;
     return std::make_pair(forward_reverse_channel_product, csi_timestamp);
 }
 //=============================================================================================================================

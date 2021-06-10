@@ -83,7 +83,8 @@ class WSR_Util{
                                                                 std::vector<DataPacket> rx_robot,
                                                                 std::vector<DataPacket> tx_robot,
                                                                 bool interpolate_phase,
-                                                                bool sub_sample);
+                                                                bool sub_sample,
+                                                                double &channel_ang_mean);
 };
 
 
