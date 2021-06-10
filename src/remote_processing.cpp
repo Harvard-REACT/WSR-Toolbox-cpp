@@ -61,7 +61,8 @@ int main(int argc, char *argv[])
     std::string output = run_module.__precompute_config["output_aoa_profile_path"]["value"].dump();
     output.erase(remove( output.begin(), output.end(), '\"' ),output.end());
     std::string rx_robot_csi = foldername + "/" + rx_csi_pre + latest_ts + ".dat";
-    std::string traj_fn_rx = foldername + "/" + traj_pre + latest_ts + "_.csv";      
+    std::string traj_fn_rx = foldername + "/" + traj_pre + latest_ts + "_.csv";
+    std::cout << "Trajectory fn" << traj_fn_rx << std::endl;      
     std::vector<std::vector<double>> trajectory_rx = utils.loadTrajFromCSV(traj_fn_rx); //Robot performing SAR
     nc::NdArray<double> displacement;
     nc::NdArray<double> trajectory_timestamp;
