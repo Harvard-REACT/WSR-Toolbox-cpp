@@ -23,17 +23,18 @@ do
      
     echo "====== Fetching latest files for visualization TX : $tx ======"
 
-    profile_fn=$(ls -t1 |  head -n $nrf | grep $tx | grep aoa)
-    echo "AOA profile for $profile_fn"
-    python3.8 ../scripts/visualize_aoa_profile.py --file $profile_fn
-
-    csi_phase_fn=$(ls -t1 |  head -n $nrf | grep $tx | grep all_channel)
+    csi_phase_fn=$(ls -t1 ../debug |  head -n $nrf | grep $tx | grep all_channel)
     echo "CSI Phase for $csi_phase_fn"
-    python3.8 ../scripts/viz_channel_data.py --file $csi_phase_fn
+    python3.8 viz_channel_data.py --file ../debug/$csi_phase_fn
 
-    traj_pkt_fn=$(ls -t1 |  head -n $nrf | grep $tx | grep packet)
+    traj_pkt_fn=$(ls -t1 ../debug |  head -n $nrf | grep $tx | grep packet)
     echo "Packet distribution along the trajectory for $traj_pkt_fn"
-    python3.8 ../scripts/viz_traj.py --file $traj_pkt_fn
+    python3.8 viz_traj.py --file ../debug/$traj_pkt_fn
+
+    profile_fn=$(ls -t1 ../debug |  head -n $nrf | grep $tx | grep aoa)
+    echo "AOA profile for $profile_fn"
+    #python3.8 visualize_aoa_profile.py --file ../debug/$profile_fn
+    python3.8 viz_aoa_matlab.py --file ../debug/$profile_fn
 
 done
 

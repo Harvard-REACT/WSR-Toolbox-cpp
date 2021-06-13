@@ -16,28 +16,33 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", help="AOA profile csv file")
     args = parser.parse_args()
-    fig_size = plt.rcParams["figure.figsize"]
-    fig_size[0] = 12
-    fig_size[1] = 10
-    plt.rcParams["figure.figsize"] = fig_size
     
-    X = np.arange(-180, 180, 1).flatten()
-    Y = np.arange(0, 180, 1).flatten()
+    X = np.arange(0, 359, 1).flatten()
+    Y = np.arange(0, 179, 1).flatten()
     X, Y = np.meshgrid(X, Y)
     
     aoa_profile = np.genfromtxt(args.file, delimiter=',')
+
+    max_peak = np.unravel_index(np.argmax(aoa_profile, axis=None), aoa_profile.shape)
     profile = aoa_profile[:,0:180]
-    Z = profile[X+180,Y]
+    Z = profile[X,Y]
 
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    surf = ax.plot_surface(X, Y , Z, cmap=plt.cm.viridis,linewidth=0.01, antialiased=False)
-    ax.set_xlabel('Azimuth (Phi)')
-    ax.set_ylabel('Elevation(Theta)')
+    fig = plt.figure(figsize=(12,6))
+    ax = fig.add_subplot(111, projection='3d')
+
+    surf = ax.plot_surface(X, Y, Z, rstride=8, cstride=8, alpha=0.8, cmap=cm.ocean)
+    cset = ax.contourf(X, Y, Z, zdir='z', offset=np.min(Z), cmap=cm.ocean)
+    cset = ax.contourf(X, Y, Z, zdir='x', offset=-5, cmap=cm.ocean)
+    cset = ax.contourf(X, Y, Z, zdir='y', offset=5, cmap=cm.ocean)
+
+
+    fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5)
+
+
+    ax.set_xlabel('Azimuth (Degree)')
+    ax.set_ylabel('Elevation (Degree)')
     ax.set_zlabel('Magnitude')
-    locs = ax.get_xticks()
-
-    fig.colorbar(surf, shrink=0.5, aspect=12)
+    ax.set_title('AOA profile')
 
     plt.show()
 
