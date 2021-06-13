@@ -52,9 +52,9 @@ Since visualization cannot be done directly on the robot, we have included this 
 
 1. Copy the relevant csi and trajectory data files to some directory. Make sure to copy the groundtruth_positions.json file there and update the corresponding groundtruth locations of the transmitting robots.
 
-2. Open the debug directly. This is where all the output files are generated. Then run the following shell script
+2. Open the scripts directory. Then run the following shell script
 ```
-cd debug
+cd scripts
 ../viz_latest_output.sh <path_to_directory> <traj_type> '<tx names>'
 
 e.g
