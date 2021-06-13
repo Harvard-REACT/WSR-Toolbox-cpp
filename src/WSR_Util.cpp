@@ -891,11 +891,12 @@ void WSR_Util::writeToFile(nc::NdArray<double>& nd_array, std::string fn)
     {
         for(size_t i = 0; i < nd_array.shape().rows; i++)
         {
-            for(size_t j = 0; j < nd_array.shape().cols; j++) {
+            for(size_t j = 0; j < nd_array.shape().cols-1; j++) {
                 auto value = nd_array(i,j);
                 // std::cout << fixed << value << std::endl;
                 myfile << fixed << value << ",";
             }
+            myfile << fixed << nd_array(i,nd_array.shape().cols-1);
             // break;
             myfile << "\n";
         }
