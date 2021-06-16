@@ -203,6 +203,13 @@ e.g.
 python3.8 viz_traj.py --file ../debug/tx1_2021-03-04_154746_interpl_trajectory.json
 ```
 
+To use matlab visualizer (recommended), run the following script instead
+```
+python3.8 viz_aoa_matlab.py --file ../debug/tx1_2021-03-04_154746_interpl_trajectory.json
+```
+
+Note :If the matlab viewer is used for visualizing the AOA profile, then make sure that the matlab api for python has be installed ([reference](https://www.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html)).
+
 3. To visualize packet distrubution
 ```
 cd scripts
