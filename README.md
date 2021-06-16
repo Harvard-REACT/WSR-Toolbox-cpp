@@ -63,7 +63,7 @@ e.g
 
 The following traj_type is currently tested : gt
 
-Note : Make sure that the tx names are passed as a space separated string as shown in the example.
+Note : Make sure that the tx names are passed as a space separated string as shown in the example. If the matlab viewer is used for visualizing the AOA profile, then make sure that the matlab api for python has be installed ([reference](https://www.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html)).
 
 
 ## Test CSI data using C++ executable
