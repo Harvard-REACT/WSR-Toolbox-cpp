@@ -20,7 +20,8 @@ class WSR_Module
     private:
         double __lambda,__time_offset,__time_threshold,__peak_radius;
         size_t __nphi, __ntheta, __snum_start, __snum_end;
-        std::unordered_map<std::string, double> __perf_aoa_profile_cal_time,__memory_used, __calculated_ts_offset,__channel_phase_diff_mean;
+        std::unordered_map<std::string, double> __perf_aoa_profile_cal_time,__memory_used, __calculated_ts_offset,
+                                                __channel_phase_diff_mean,__channel_phase_diff_stdev;
         std::unordered_map<std::string, int> __paired_pkt_count,__tx_pkt_size,__rx_pkt_size;
         int _topN_count = 1, __max_packets_to_process=500, __min_packets_to_process=10;
         int _phi_min=-180, _phi_max=180, _theta_min = 0,_theta_max=180;
@@ -60,6 +61,7 @@ class WSR_Module
         double get_memory_used(const std::string& tx_mac_id);
         double get_calculated_ts_offset(const std::string& tx_mac_id);
         double get_cpdm (const std::string& tx_mac_id);
+        double get_cpd_stdev (const std::string& tx_mac_id);
 //        std::vector<double> find_topN_phi(nc::NdArray<double> profile);
 //        std::vector<double> find_topN_theta(nc::NdArray<double> profile);
         std::pair<std::vector<double>,std::vector<double>> find_topN();
