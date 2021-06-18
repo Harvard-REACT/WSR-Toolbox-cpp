@@ -152,9 +152,10 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
     std::cout << "============ Starting WSR module ==============" << std::endl;
 
     WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR 
-    nc::NdArray<std::complex<double>> h_list_all;
-    nc::NdArray<double> csi_timestamp_all;
-    double cal_ts_offset, channel_ang_diff_mean,channel_ang_diff_stdev;
+    nc::NdArray<std::complex<double>> h_list_all, h_list_static, h_list;
+    nc::NdArray<double> csi_timestamp_all, csi_timestamp;
+    double cal_ts_offset, moving_channel_ang_diff_mean,moving_channel_ang_diff_stdev,
+            static_channel_ang_mean, static_channel_ang_stdev;
     std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
     debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
 
@@ -220,19 +221,39 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         auto csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
                                                           data_packets_TX,
                                                           __FLAG_interpolate_phase,
-                                                          __FLAG_sub_sample,
-                                                          channel_ang_diff_mean,
-                                                          channel_ang_diff_stdev);
+                                                          __FLAG_sub_sample);
                                                           
-        nc::NdArray<std::complex<double>> h_list = csi_data.first;
-        nc::NdArray<double> csi_timestamp = csi_data.second;
+        h_list_all = csi_data.first;
+        csi_timestamp_all = csi_data.second;
 
-        if (__FLAG_debug)
-        {
-            h_list_all = h_list;
-            csi_timestamp_all = csi_timestamp;
-        }
 
+        /*Get the shifted version of the pose timestamps such that they match exactly with csi timestamps.*/
+        if(__FLAG_debug) std::cout << "log [calculate_AOA_profile]: Removing unused csi data" << std::endl;
+        std::pair<int,int> csi_timestamp_range = utils.returnClosestIndices(csi_timestamp_all, trajectory_timestamp);
+        int start_index = csi_timestamp_range.first, end_index = csi_timestamp_range.second;
+
+        /*Slice the csi_timestamp using the indices to remove unused CSI values
+        * Note: Make sure that the packet transmission freqency is high enough when random_packets is used, 
+        * such that about 400 left after slicing even if the trajectory duration is small. 
+        * */
+        if(__FLAG_debug) std::cout << "log [calculate_AOA_profile]: Slicing CSI timestamps" << std::endl;
+        csi_timestamp = csi_timestamp_all({start_index,end_index},csi_timestamp_all.cSlice());
+        h_list = h_list_all({start_index,end_index},h_list_all.cSlice());
+        h_list_static = h_list_all({0,start_index},h_list_all.cSlice());
+
+        bool moving = true;
+        utils.get_phase_diff_metrics(h_list,
+                                    moving_channel_ang_diff_mean,
+                                    moving_channel_ang_diff_stdev,
+                                    __FLAG_interpolate_phase,
+                                    moving);
+
+        moving = false;
+        utils.get_phase_diff_metrics(h_list_static,
+                                    static_channel_ang_mean,
+                                    static_channel_ang_stdev,
+                                    __FLAG_interpolate_phase,
+                                    moving);
         
         if(h_list.shape().rows < __min_packets_to_process)
         {
@@ -243,19 +264,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         }   
         else
         {
-            /*Get the shifted version of the pose timestamps such that they match exactly with csi timestamps.*/
-            if(__FLAG_debug) std::cout << "log [calculate_AOA_profile]: Removing unused csi data" << std::endl;
-            std::pair<int,int> csi_timestamp_range = utils.returnClosestIndices(csi_timestamp, trajectory_timestamp);
-            int start_index = csi_timestamp_range.first, end_index = csi_timestamp_range.second;
-
-            /*Slice the csi_timestamp using the indices to remove unused CSI values
-            * Note: Make sure that the packet transmission freqency is high enough when random_packets is used, 
-            * such that about 400 left after slicing even if the trajectory duration is small. 
-            * */
-            if(__FLAG_debug) std::cout << "log [calculate_AOA_profile]: Slicing CSI timestamps" << std::endl;
-            csi_timestamp = csi_timestamp({start_index,end_index},csi_timestamp.cSlice());
-            h_list = h_list({start_index,end_index},h_list.cSlice());
-            
+                    
             /*Interpolate the trajectory using the csi data timestamps*/
             if(__FLAG_debug) std::cout << "log [calculate_AOA_profile]: interpolating the trajectory and csi forward-reverse product" << std::endl;
             auto interpolated_data = utils.interpolate(csi_timestamp, trajectory_timestamp, displacement);
@@ -310,8 +319,10 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             __calculated_ts_offset[mac_id_tx[num_tx]] = cal_ts_offset ;
             __rx_pkt_size[mac_id_tx[num_tx]] = data_packets_RX.size();
             __tx_pkt_size[mac_id_tx[num_tx]] = data_packets_TX.size();
-            __channel_phase_diff_mean[mac_id_tx[num_tx]] =  channel_ang_diff_mean;
-            __channel_phase_diff_stdev[mac_id_tx[num_tx]] =  channel_ang_diff_stdev;
+            __channel_phase_diff_mean[mac_id_tx[num_tx]] =  moving_channel_ang_diff_mean;
+            __channel_phase_diff_stdev[mac_id_tx[num_tx]] =  moving_channel_ang_diff_stdev;
+            __static_channel_phase_mean[mac_id_tx[num_tx]] =  static_channel_ang_mean;
+            __static_channel_phase_stdev[mac_id_tx[num_tx]] =  static_channel_ang_stdev;
     
         }
 
@@ -1195,6 +1206,22 @@ double WSR_Module::get_cpd_stdev (const std::string& tx_mac_id) {
  *
  *
  * */
+double WSR_Module::get_scpm (const std::string& tx_mac_id) {
+    return __static_channel_phase_mean[tx_mac_id];
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+double WSR_Module::get_scd_stdev (const std::string& tx_mac_id) {
+    return __static_channel_phase_stdev[tx_mac_id];
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
 int WSR_Module::get_paired_pkt_count(const std::string& tx_mac_id) {
     return __paired_pkt_count[tx_mac_id];
 }
@@ -1229,8 +1256,10 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                 {"time(sec)", get_processing_time(tx_mac_id)},
                 {"memory(GB)", get_memory_used(tx_mac_id)},
                 {"first_forward-reverse_ts_offset(sec)", get_calculated_ts_offset(tx_mac_id)},
-                {"Channel_phase_diff_mean", get_cpdm(tx_mac_id)},
-                {"Channel_phase_diff_stdev", get_cpd_stdev(tx_mac_id)}
+                {"Channel_moving_phase_diff_mean", get_cpdm(tx_mac_id)},
+                {"Channel_moving_phase_diff_stdev", get_cpd_stdev(tx_mac_id)},
+                {"Channel_static_phase_mean", get_scpm(tx_mac_id)},
+                {"Channel_static_phase_stdev", get_scd_stdev(tx_mac_id)}
              }},
             {"c_Info_AOA_Top",{
                 {"Phi(deg)", top_aoa_error[0]},
@@ -1266,7 +1295,10 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
 
     WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR 
     RX_SAR_robot.robot_type = "rx";
-    double cal_ts_offset,channel_ang_diff_mean,channel_ang_diff_stdev;
+    nc::NdArray<std::complex<double>> h_list_all, h_list_static, h_list;
+    nc::NdArray<double> csi_timestamp_all, csi_timestamp;
+    double cal_ts_offset, moving_channel_ang_diff_mean,moving_channel_ang_diff_stdev,
+            static_channel_ang_mean, static_channel_ang_stdev;
     std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
     debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
 
@@ -1327,13 +1359,17 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
         auto csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
                                                           data_packets_TX,
                                                           __FLAG_interpolate_phase,
-                                                          __FLAG_sub_sample,
-                                                          channel_ang_diff_mean,
-                                                          channel_ang_diff_stdev);
+                                                          __FLAG_sub_sample);
 
-        nc::NdArray<std::complex<double>> h_list = csi_data.first;
+        h_list_all = csi_data.first;
+        csi_timestamp_all = csi_data.second;
 
-        nc::NdArray<double> csi_timestamp = csi_data.second;
+        bool moving = true;
+        utils.get_phase_diff_metrics(h_list_all,
+                                    moving_channel_ang_diff_mean,
+                                    moving_channel_ang_diff_stdev,
+                                    __FLAG_interpolate_phase,
+                                    moving);
 
         if(h_list.shape().rows < __min_packets_to_process)
         {
@@ -1366,8 +1402,8 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
             __rx_pkt_size[mac_id_tx[num_tx]] = data_packets_RX.size();
             __tx_pkt_size[mac_id_tx[num_tx]] = data_packets_TX.size();
             __perf_aoa_profile_cal_time[mac_id_tx[num_tx]] = processtime/1000;
-            __channel_phase_diff_mean[mac_id_tx[num_tx]] =  channel_ang_diff_mean;
-            __channel_phase_diff_stdev[mac_id_tx[num_tx]] =  channel_ang_diff_stdev;
+            __channel_phase_diff_mean[mac_id_tx[num_tx]] =  moving_channel_ang_diff_mean;
+            __channel_phase_diff_stdev[mac_id_tx[num_tx]] =  moving_channel_ang_diff_stdev;
         }
 
         //TODO: get azimuth and elevation from beta_profile
