@@ -460,9 +460,7 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                                                                 std::vector<DataPacket> rx_robot,
                                                                 std::vector<DataPacket> tx_robot,
                                                                 bool interpolate_phase,
-                                                                bool sub_sample,
-                                                                double &channel_ang_diff_mean,
-                                                                double &channel_ang_diff_stdev){
+                                                                bool sub_sample){
     int tx_length = int(tx_robot.size()), rx_length = int(rx_robot.size());
     int itr_k=0, itr_l=0;
     double a;
@@ -472,11 +470,9 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
     nc::NdArray<std::complex<double>> forward_reverse_channel_product;
     nc::NdArray<double> csi_timestamp;
     nc::NdArray<std::complex<double>> temp1 = nc::zeros<std::complex<double>>(nc::Shape(1,31));
-    nc::NdArray<std::complex<double>> prev;
     nc::NdArray<double> temp2 = nc::zeros<double>(nc::Shape(1,1));
     double interpolated_phase;
     std::complex<double> interpolated_h;
-    std::vector<double> phase_diff;
 
     while(itr_k < tx_length && itr_l < rx_length)
         {
@@ -524,20 +520,9 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                     forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);
 
                     // if(interpolate_phase)
-                    //     channel_ang_mean = channel_ang_mean + abs((std::arg(prev(0,30)) - std::arg(temp1(0,30))));
-                    // else
-                    //     channel_ang_mean = channel_ang_mean + abs((std::arg(prev(0,15)) - std::arg(temp1(0,15))));
-
-                    if(interpolate_phase)
-                        phase_diff.push_back(abs((std::arg(prev(0,30)) - std::arg(temp1(0,30)))));
-                    else
-                        phase_diff.push_back(abs((std::arg(prev(0,15)) - std::arg(temp1(0,15)))));
-
-                    // if(interpolate_phase)
                     //     forward_reverse_channel_product = nc::append(forward_reverse_channel_product,nc::NdArray<std::complex<double>>{interpolated_h},nc::Axis::ROW);
                                      
                 }
-                prev = temp1;
             }
             else if (tx_robot[itr_k].frame_count < rx_robot[itr_l].frame_count )
                 itr_k += 1;
@@ -546,16 +531,6 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
             
         }
 
-    //Calculate mean of channel phase interelement-spacing
-    double sum = std::accumulate(std::begin(phase_diff), std::end(phase_diff), 0.0);
-    channel_ang_diff_mean =  sum / phase_diff.size();
-
-    double var = 0.0;
-    std::for_each (std::begin(phase_diff), std::end(phase_diff), [&](const double d) {
-        var += (d - channel_ang_diff_mean) * (d - channel_ang_diff_mean);
-    });
-
-    channel_ang_diff_stdev = sqrt(var / (phase_diff.size()-1));
     return std::make_pair(forward_reverse_channel_product, csi_timestamp);
 }
 //=============================================================================================================================
@@ -1380,4 +1355,51 @@ std::string WSR_Util::dec2hex(unsigned int i)
     std::stringstream ss;
     ss << std::hex << std::uppercase << i;
     return ss.str();
+}
+//=============================================================================================================================
+/**
+ * 
+ * 
+ * */
+void WSR_Util::get_phase_diff_metrics(nc::NdArray<std::complex<double>>& channel,
+                            double &mean,
+                            double &stdev,
+                            bool& interpolate_phase,
+                            bool& moving)
+{
+
+    std::vector<double> phase_diff;
+    
+    if(moving)
+    {
+        for(int i=1; i<channel.shape().rows;i++)
+        {
+            if(interpolate_phase)
+                phase_diff.push_back(abs((std::arg(channel(i-1,30)) - std::arg(channel(i,30)))));
+            else
+                phase_diff.push_back(abs((std::arg(channel(i-1,15)) - std::arg(channel(i,15)))));
+        }
+    }
+    else
+    {
+        for(int i=0; i<channel.shape().rows;i++)
+        {
+            if(interpolate_phase)
+                phase_diff.push_back(abs((std::arg(channel(i,30)))));
+            else
+                phase_diff.push_back(abs((std::arg(channel(i,15)))));
+        }
+    }
+
+    
+
+    double sum = std::accumulate(std::begin(phase_diff), std::end(phase_diff), 0.0);
+    mean =  sum / phase_diff.size();
+
+    double var = 0.0;
+    std::for_each (std::begin(phase_diff), std::end(phase_diff), [&](const double d) {
+        var += (d - mean) * (d - mean);
+    });
+
+    stdev = sqrt(var / (phase_diff.size()-1));
 }

@@ -83,9 +83,12 @@ class WSR_Util{
                                                                 std::vector<DataPacket> rx_robot,
                                                                 std::vector<DataPacket> tx_robot,
                                                                 bool interpolate_phase,
-                                                                bool sub_sample,
-                                                                double &channel_ang_diff_mean,
-                                                                double &channel_ang_diff_stdev);
+                                                                bool sub_sample);
+        void get_phase_diff_metrics(nc::NdArray<std::complex<double>>& channel,
+                                    double &channel_ang_diff_mean,
+                                    double &channel_ang_diff_stdev,
+                                    bool& interpolate_phase,
+                                    bool& moving);
 };
 
 

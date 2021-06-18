@@ -11,26 +11,34 @@ namespace fs = std::filesystem;
 int main(int argc, char *argv[])
 {
     
-    string foldername = "/home/weiying/Dropbox (Harvard University)/Harvard/iros2021/wsr-iros-2021/data/Dataset1-REACT_Testbed/1_TX_1_RX/Line-of-Sight/Curved_Planar_Trajectories/RX_SAR_robot_Position_Changing/RX_P1_TX_P0";
-    string dataset_type = "3D_RX";
+    WSR_Util utils;
+
     std::vector<string> csi_tx;
     std::list<std::string> mylist;
     std::set<string> timesset;
     std::list<string> timelist;
 
-    foldername = argv[1];
-    dataset_type = argv[2];
-    string traj_folder = "/"+dataset_type+"_dataset_traj_rx";
-    string csi_folder = "/"+dataset_type+"_dataset_csi_rx_tx";
-    string grountruth_pos_fn = foldername+"/"+"groundtruth_positions.json";
+    string foldername = argv[1];
+    string traj_type = argv[2];
     string rx_csi_pre = "csi_rx_";
     string tx_csi_pre = "csi_";
-    string traj_pre = "rx_trajectory_";
+    string traj_pre; 
+    
+    if (traj_type == "odom")
+        traj_pre = "odom_rx_trajectory_";
+    else if (traj_type == "t265")
+        traj_pre = "t265_rx_trajectory_";
+    else if (traj_type == "gt")
+        traj_pre = "rx_trajectory_";
+    
     string timestmp = "";
+    string grountruth_pos_fn = foldername+"/"+"groundtruth_positions.json";
+    string csi_fn = "csi";
 
     //Read all unique timestamps
-    for (const auto & entry : fs::directory_iterator(foldername+csi_folder)) 
+    for (const auto & entry : fs::directory_iterator(foldername)) 
     {
+        if(entry.path().string().find(csi_fn) == std::string::npos) continue;
         auto end_idx = entry.path().string().rfind(".");
         auto start_idx = end_idx - 17;
         timestmp = entry.path().string().substr(start_idx, 17);
@@ -49,8 +57,6 @@ int main(int argc, char *argv[])
     nlohmann::json TX_gt_positions;
     pos_file >> TX_gt_positions;
 
-    WSR_Util utils;
-
     for (auto ts_it = timelist.begin(); ts_it != timelist.end(); ++ts_it) 
     {
       std::cout << "***********************************************************************************" << std::endl;
@@ -62,8 +68,9 @@ int main(int argc, char *argv[])
 
       std::string output = run_module.__precompute_config["output_aoa_profile_path"]["value"].dump();
       output.erase(remove( output.begin(), output.end(), '\"' ),output.end());
-      std::string rx_robot_csi = foldername + csi_folder + "/" + rx_csi_pre + *ts_it + ".dat";
-      std::string traj_fn_rx = foldername + traj_folder + "/" + traj_pre + *ts_it + "_.csv";      
+      std::string rx_robot_csi = foldername + "/" + rx_csi_pre + *ts_it + ".dat";
+      std::string traj_fn_rx = foldername + "/" + traj_pre + *ts_it + "_.csv";
+      std::cout << "Trajectory fn" << traj_fn_rx << std::endl;
       std::vector<std::vector<double>> trajectory_rx = utils.loadTrajFromCSV(traj_fn_rx); //Robot performing SAR
       nc::NdArray<double> displacement;
       nc::NdArray<double> trajectory_timestamp;
@@ -78,7 +85,7 @@ int main(int argc, char *argv[])
         const string& tx_name =  it.key();
         auto temp =  it.value();
         string tx_mac_id = temp["mac_id"];
-        string csi_data_file = foldername + csi_folder + "/" + tx_csi_pre + tx_name + "_" + *ts_it + ".dat";
+        string csi_data_file = foldername  + "/" + tx_csi_pre + tx_name + "_" + *ts_it + ".dat";
         tx_robot_csi[tx_mac_id] = csi_data_file;
 
         //get timestamp for using to store AOA profile
