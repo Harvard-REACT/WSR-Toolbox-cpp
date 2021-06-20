@@ -1403,3 +1403,12 @@ void WSR_Util::get_phase_diff_metrics(nc::NdArray<std::complex<double>>& channel
 
     stdev = sqrt(var / (phase_diff.size()-1));
 }
+
+double WSR_Util::diff_360(double a, double b) {
+    double tmp = a - b;
+    if (tmp > 180)
+        tmp -= 360;
+    else if(tmp < -180)
+        tmp += 360;
+    return tmp;
+}
