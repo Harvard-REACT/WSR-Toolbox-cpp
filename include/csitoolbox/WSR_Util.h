@@ -89,6 +89,7 @@ class WSR_Util{
                                     double &channel_ang_diff_stdev,
                                     bool& interpolate_phase,
                                     bool& moving);
+        double static diff_360(double a, double b);
 };
 
 

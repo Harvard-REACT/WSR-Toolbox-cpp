@@ -1047,8 +1047,8 @@ double WSR_Module::get_confidence(double phi_ind, double theta_ind) {
     double sigma_f = 0, sigma_n = 0;
     for(size_t ind = 0; ind<=__nphi; ind++){
         for(size_t ind_c = 0; ind_c < __ntheta;ind_c++){
-            sigma_f += abs((ind-phi_ind))*abs((ind_c-theta_ind))*__aoa_profile(phi_ind,theta_ind)/sumf;
-            sigma_n += abs((ind-phi_ind))*abs((ind_c-theta_ind))*sumf/(__ntheta*__nphi);
+            sigma_f += abs(WSR_Util::diff_360(ind,phi_ind))*abs(ind_c-theta_ind)*__aoa_profile(phi_ind,theta_ind)/sumf;
+            sigma_n += abs(WSR_Util::diff_360(ind,phi_ind))*abs(ind_c-theta_ind)*sumf/(__ntheta*__nphi);
         }
     }
     return sigma_f/sigma_n;
