@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     {
         throw std::runtime_error("Unable to open file " + grountruth_pos_fn);
     }
-    nlohmann::json TX_gt_positions, all_stats;
+    nlohmann::json TX_gt_positions;
     int stat_itr = 0 + start_integer;
     pos_file >> TX_gt_positions;
 
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
       nc::NdArray<double> trajectory_timestamp;
       std::unordered_map<std::string,std::string> tx_robot_csi;
       std::unordered_map<std::string,std::string> tx_profile_timestamp;
-
+      nlohmann::json all_stats;
 
       //Get the CSI data files for TX_Neighbor_robot
       for (auto it = run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].begin(); 
