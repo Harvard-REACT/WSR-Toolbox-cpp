@@ -22,7 +22,8 @@ class WSR_Module
         size_t __nphi, __ntheta, __snum_start, __snum_end;
         std::unordered_map<std::string, double> __perf_aoa_profile_cal_time,__memory_used, __calculated_ts_offset,
                                                 __channel_phase_diff_mean,__channel_phase_diff_stdev,
-                                                __static_channel_phase_mean,__static_channel_phase_stdev;
+                                                __static_channel_phase_mean,__static_channel_phase_stdev,
+                                                __closest_peak_confidence, __top_peak_confidence;
         std::unordered_map<std::string, int> __paired_pkt_count,__tx_pkt_size,__rx_pkt_size;
         int _topN_count = 1, __max_packets_to_process=500, __min_packets_to_process=10;
         int _phi_min=-180, _phi_max=180, _theta_min = 0,_theta_max=180;
@@ -41,6 +42,7 @@ class WSR_Module
             __FLAG_interpolate_phase = true, __FLAG_sub_sample = false;
         nc::NdArray<double> __aoa_profile;
         std::unordered_map<std::string, nc::NdArray<double>> __all_aoa_profiles;
+        std::unordered_map<std::string, std::vector<double>> __all_topN_confidence;
         std::unordered_map<std::string, std::pair<std::vector<double>,std::vector<double>>> __TX_top_N_angles;
         EigenDoubleMatrix __eigen_lambda_list, __eigen_precomp_rep_phi, __eigen_precomp_rep_theta,__eigen_rep_theta_sine,
                         __eigen_rep_theta_co, __precomp__eigen_rep_lambda, __precomp__eigen_rep_phi, __precomp__eigen_rep_theta;
@@ -65,6 +67,7 @@ class WSR_Module
         double get_cpd_stdev (const std::string& tx_mac_id);
         double get_scpm (const std::string& tx_mac_id);
         double get_scd_stdev (const std::string& tx_mac_id);
+        double get_top_confidence (const std::string& tx_mac_id);
 //        std::vector<double> find_topN_phi(nc::NdArray<double> profile);
 //        std::vector<double> find_topN_theta(nc::NdArray<double> profile);
         std::pair<std::vector<double>,std::vector<double>> find_topN();
@@ -107,6 +110,7 @@ class WSR_Module
                                           const string& traj_type);
         std::vector<double> get_aoa_error(const std::pair<std::vector<double>,std::vector<double>>& topN_AOA,
                                           std::pair<double,double> groundtruth_angles,
+                                          std::vector<double>top_N_confidence,
                                           const string& traj_type);
         nlohmann::json get_stats(double true_phi,
                                    double true_theta,
@@ -119,6 +123,7 @@ class WSR_Module
         nlohmann::json get_performance_stats(const std::string& tx_mac_id,
                                             const std::string& tx_name);
         std::unordered_map<std::string, int> get_paired_pkt_count();
+        std::unordered_map<std::string, std::vector<double>>get_all_confidence();
 };
 
 
