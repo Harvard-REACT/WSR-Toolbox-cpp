@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
 
     string foldername = argv[1];
     string traj_type = argv[2];
+    int start_integer = std::stoi(argv[3]);
     string rx_csi_pre = "csi_rx_";
     string tx_csi_pre = "csi_";
     string traj_pre; 
@@ -55,7 +56,7 @@ int main(int argc, char *argv[])
         throw std::runtime_error("Unable to open file " + grountruth_pos_fn);
     }
     nlohmann::json TX_gt_positions, all_stats;
-    int stat_itr = 0;
+    int stat_itr = 0 + start_integer;
     pos_file >> TX_gt_positions;
 
     for (auto ts_it = timelist.begin(); ts_it != timelist.end(); ++ts_it) 
@@ -185,13 +186,19 @@ int main(int argc, char *argv[])
                                             top_aoa_error, closest_AOA_error,
                                             tx_id, run_module.tx_name_list[tx_id]);
 
-          // std::cout << stats.dump(4) << std::endl;
-          all_stats.push_back({stat_itr, stats});
+          if(all_stats.size() == 0)
+          {
+            all_stats = {
+              {std::to_string(stat_itr),stats}
+            };
+          }
+          else
+            all_stats.push_back({std::to_string(stat_itr), stats});
+          
           stat_itr+=1;
         }
       }
+      std::cout << all_stats.dump(4) << std::endl;
     }
-    std::cout << all_stats.dump(4) << std::endl;
-    std::ofstream file("output.json");
-    file << all_stats;
+    
 }
