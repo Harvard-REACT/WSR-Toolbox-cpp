@@ -27,9 +27,9 @@ do
     echo "CSI Phase for $csi_phase_fn"
     python3.8 viz_channel_data.py --file ../debug/$csi_phase_fn
 
-    traj_pkt_fn=$(ls -t1 ../debug |  head -n $nrf | grep $tx | grep packet)
-    echo "Packet distribution along the trajectory for $traj_pkt_fn"
-    python3.8 viz_traj.py --file ../debug/$traj_pkt_fn
+    #traj_pkt_fn=$(ls -t1 ../debug |  head -n $nrf | grep $tx | grep packet)
+    #echo "Packet distribution along the trajectory for $traj_pkt_fn"
+    #python3.8 viz_traj.py --file ../debug/$traj_pkt_fn
 
     profile_fn=$(ls -t1 ../debug |  head -n $nrf | grep $tx | grep aoa)
     echo "AOA profile for $profile_fn"
