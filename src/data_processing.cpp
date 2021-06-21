@@ -54,7 +54,8 @@ int main(int argc, char *argv[])
     {
         throw std::runtime_error("Unable to open file " + grountruth_pos_fn);
     }
-    nlohmann::json TX_gt_positions;
+    nlohmann::json TX_gt_positions, all_stats;
+    int stat_itr = 0;
     pos_file >> TX_gt_positions;
 
     for (auto ts_it = timelist.begin(); ts_it != timelist.end(); ++ts_it) 
@@ -76,7 +77,7 @@ int main(int argc, char *argv[])
       nc::NdArray<double> trajectory_timestamp;
       std::unordered_map<std::string,std::string> tx_robot_csi;
       std::unordered_map<std::string,std::string> tx_profile_timestamp;
-      
+
 
       //Get the CSI data files for TX_Neighbor_robot
       for (auto it = run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].begin(); 
@@ -141,6 +142,7 @@ int main(int argc, char *argv[])
       run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
       auto all_aoa_profile = run_module.get_all_aoa_profile();
       auto all_topN_angles = run_module.get_TX_topN_angles();
+      auto all_confidences = run_module.get_all_confidence();
       string trajType = run_module.__precompute_config["trajectory_type"]["value"];
       double true_phi, true_theta;
 
@@ -152,6 +154,7 @@ int main(int argc, char *argv[])
         std::string tx_id = itr.first;
         std::string ts = tx_profile_timestamp[itr.first];
         auto profile = itr.second;
+        std::vector<double> aoa_confidence = all_confidences[tx_id];
 
         if(profile.shape().rows == 1) 
         {
@@ -175,14 +178,20 @@ int main(int argc, char *argv[])
 
           std::vector<double> closest_AOA_error = run_module.get_aoa_error(topN_angles,
                                                                             all_true_AOA[run_module.tx_name_list[tx_id]],
+                                                                            aoa_confidence,
                                                                             trajType);
 
           auto stats = run_module.get_stats(true_phi, true_theta,
                                             top_aoa_error, closest_AOA_error,
                                             tx_id, run_module.tx_name_list[tx_id]);
 
-          std::cout << stats.dump(4) << std::endl;
+          // std::cout << stats.dump(4) << std::endl;
+          all_stats.push_back({stat_itr, stats});
+          stat_itr+=1;
         }
       }
     }
+    std::cout << all_stats.dump(4) << std::endl;
+    std::ofstream file("output.json");
+    file << all_stats;
 }

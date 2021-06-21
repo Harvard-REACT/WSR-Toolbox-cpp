@@ -102,6 +102,7 @@ int main(){
         run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
         auto all_aoa_profile = run_module.get_all_aoa_profile();
         auto all_topN_angles = run_module.get_TX_topN_angles();
+        auto all_confidences = run_module.get_all_confidence();
         string trajType = run_module.__precompute_config["trajectory_type"]["value"];
         double true_phi, true_theta;
 
@@ -113,6 +114,7 @@ int main(){
           std::string tx_id = itr.first;
           std::string ts = run_module.data_sample_ts[tx_id];
           auto profile = itr.second;
+          std::vector<double> aoa_confidence = all_confidences[tx_id];
 
           if(profile.shape().rows == 1) 
           {
@@ -136,6 +138,7 @@ int main(){
 
             std::vector<double> closest_AOA_error = run_module.get_aoa_error(topN_angles,
                                                                              all_true_AOA[run_module.tx_name_list[tx_id]],
+                                                                             aoa_confidence,
                                                                              trajType);
 
             auto stats = run_module.get_stats(true_phi, true_theta,

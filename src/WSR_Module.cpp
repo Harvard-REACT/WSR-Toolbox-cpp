@@ -323,11 +323,12 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             __channel_phase_diff_stdev[mac_id_tx[num_tx]] =  moving_channel_ang_diff_stdev;
             __static_channel_phase_mean[mac_id_tx[num_tx]] =  static_channel_ang_mean;
             __static_channel_phase_stdev[mac_id_tx[num_tx]] =  static_channel_ang_stdev;
-    
+            __top_peak_confidence[mac_id_tx[num_tx]] =  __aoa_confidence[0];
         }
 
         /*Store the aoa_profile*/
         __all_aoa_profiles[mac_id_tx[num_tx]] = __aoa_profile;
+        __all_topN_confidence[mac_id_tx[num_tx]] = __aoa_confidence;
 
         //TODO: get azimuth and elevation from beta_profile
         std::cout << "log [calculate_AOA_profile]: Completed AOA calculation." << std::endl; 
@@ -359,6 +360,16 @@ nc::NdArray<double>WSR_Module::get_aoa_profile()
 std::unordered_map<std::string, nc::NdArray<double>>WSR_Module::get_all_aoa_profile()
 {
     return __all_aoa_profiles;
+}
+//=============================================================================================================================
+/**
+ * Description: Returns all the AOA profiles calculated for multiple RX
+ * Input:
+ * Output:
+ * */
+std::unordered_map<std::string, std::vector<double>>WSR_Module::get_all_confidence()
+{
+    return __all_topN_confidence;
 }
 /**
  * Description: Returns all the AOA profiles calculated for multiple RX
@@ -879,8 +890,8 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
 
     std::vector<double> ret_phi, ret_theta;
     nc::NdArray <double> max_peak = nc::amax(__aoa_profile);
-
     nc::NdArray<double> phi_max = nc::amax(__aoa_profile, nc::Axis::COL);
+    __aoa_confidence.clear();
 //    nc::NdArray<nc::uint32> sortedIdxs_phi = argsort(phi_max); //ascending order
 //    int arr_idx_phi = phi_max.shape().cols - 1;
 //
@@ -900,7 +911,8 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
     auto all_idx_flat = nc::flip(nc::argsort((__aoa_profile.flatten())));
     //n*2 array save coordinates for sorted value in the whole profile
     nc::NdArray<int> sorted_inds(all_idx_flat.size(), 2);
-    for(int i = 0; i < all_idx_flat.size(); i++){
+    for(int i = 0; i < all_idx_flat.size(); i++)
+    {
         sorted_inds.put(i, sorted_inds.cSlice(), utils.unravel_index(all_idx_flat(0, i), __nphi,__ntheta));
     }
     int phi_idx = sorted_inds(0, 0);
@@ -915,7 +927,7 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
                                 << 180 - theta_list(0,theta_idx)*180/M_PI << std::endl;
     ret_theta.push_back(180 - theta_list(0,theta_idx)*180/M_PI);
     double confidence = get_confidence(phi_idx,theta_idx);
-//    double confidence = 0;
+
     __aoa_confidence.push_back(confidence);
 
     if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] confidence " << peak_ind << " : " << confidence << std::endl;
@@ -950,9 +962,9 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
 
 
     //find other peaks
-//    while((itr <__topN_phi_count) && (i_phi < 360))
-    //Iterate all entries in the 2d matrix
+    //while((itr <__topN_phi_count) && (i_phi < 360))
 
+    //Iterate all entries in the 2d matrix
     for(int itr = 1; itr <= all_idx_flat.size()&&peak_ind < _topN_count;itr++) {
 
 //        phi_idx = sortedIdxs_phi(0,arr_idx_phi-i_phi);
@@ -1063,6 +1075,7 @@ double WSR_Module::get_confidence(double phi_ind, double theta_ind) {
  * */
 std::vector<double> WSR_Module::get_aoa_error(const std::pair<std::vector<double>,std::vector<double>>& topN_AOA,
                                               std::pair<double,double> groundtruth_angles,
+                                              std::vector<double>top_N_confidence,
                                               const string& traj_type)
 {
     std::vector<std::pair<double,double>> true_aoa_angles;
@@ -1076,7 +1089,7 @@ std::vector<double> WSR_Module::get_aoa_error(const std::pair<std::vector<double
     double min_phi_error =0, min_theta_error=0;
     double closest_phi=0, closest_theta=0, closest_confidence=0;
 
-    for(int i=0; i<topN_phi.size(); i++)
+    for(int i=1; i<topN_phi.size(); i++)
     {
         //Squared error (as per WSR IJRR paper)
         // phi_error = topN_phi[i]-true_phi;
@@ -1100,7 +1113,7 @@ std::vector<double> WSR_Module::get_aoa_error(const std::pair<std::vector<double
             min_theta_error = theta_error;
             closest_phi = topN_phi[i];
             closest_theta = topN_theta[i];
-            closest_confidence = __aoa_confidence[i];
+            closest_confidence = top_N_confidence[i];
         }
     }
 
@@ -1138,7 +1151,7 @@ std::vector<double> WSR_Module::top_aoa_error(double phi, double theta,
 
     ret.push_back(phi);
     ret.push_back(theta);
-    ret.push_back(__aoa_confidence[0]); //TODO change the format
+    // ret.push_back(__aoa_confidence[0]);
     ret.push_back(err);
     ret.push_back(phi_error);
     ret.push_back(theta_error);
@@ -1230,6 +1243,14 @@ int WSR_Module::get_paired_pkt_count(const std::string& tx_mac_id) {
  *
  *
  * */
+double WSR_Module::get_top_confidence(const std::string& tx_mac_id) {
+    return __top_peak_confidence[tx_mac_id];
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
 nlohmann::json WSR_Module::get_stats(double true_phi,
                            double true_theta,
                            std::vector<double>& top_aoa_error,
@@ -1264,10 +1285,10 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
             {"c_Info_AOA_Top",{
                 {"Phi(deg)", top_aoa_error[0]},
                 {"Theta(deg)", top_aoa_error[1]},
-                {"Confidence", top_aoa_error[2]},
-                {"Total_AOA_Error(deg)", top_aoa_error[3]},
-                {"Phi_Error(deg)", top_aoa_error[4]},
-                {"Theta_Error(deg)", top_aoa_error[5]}
+                {"Confidence", get_top_confidence(tx_mac_id)},
+                {"Total_AOA_Error(deg)", top_aoa_error[2]},
+                {"Phi_Error(deg)", top_aoa_error[3]},
+                {"Theta_Error(deg)", top_aoa_error[4]}
             }},
             {"d_Info_AOA_Closest",{
                 {"Phi(deg)", closest_AOA_error[0]},
