@@ -601,7 +601,8 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_multithread(
 
     auto betaProfileProd = nc::power(nc::abs(result_mat),2);
     auto beta_profile = nc::reshape(betaProfileProd,__ntheta,__nphi);
-    
+
+
     if(__FLAG_normalize_profile)
     {
         auto sum_val = nc::sum(nc::sum(beta_profile)); 
@@ -737,6 +738,8 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_singlethread(
     // auto final_result_mat = nc::prod(result_mat,nc::Axis::COL);
     auto betaProfileProd = nc::power(nc::abs(result_mat),2);
     auto beta_profile = nc::reshape(betaProfileProd,__ntheta,__nphi);
+    
+    
     
     if(__FLAG_normalize_profile)
     {
@@ -1054,18 +1057,18 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
 }
 
 double WSR_Module::get_confidence(double phi_ind, double theta_ind) {
-    double f = __aoa_profile(phi_ind,theta_ind);
+   
     double sumf = __aoa_profile.sum()(0,0);
     double sigma_f = 0, sigma_n = 0;
-    for(size_t ind = 0; ind<=__nphi; ind++){
-        for(size_t ind_c = 0; ind_c < __ntheta;ind_c++){
-            sigma_f += abs(WSR_Util::diff_360(ind,phi_ind))*abs(ind_c-theta_ind)*__aoa_profile(phi_ind,theta_ind)/sumf;
-            sigma_n += abs(WSR_Util::diff_360(ind,phi_ind))*abs(ind_c-theta_ind)*sumf/(__ntheta*__nphi);
+    
+    for(size_t ind_r = 0; ind_r<__nphi; ind_r++){
+        for(size_t ind_c = 0; ind_c < __ntheta;ind_c++)
+        {
+            sigma_f += abs(WSR_Util::diff_360(ind_r,phi_ind))*abs(ind_c-theta_ind)*__aoa_profile(ind_r,ind_c)/sumf;
+            sigma_n += abs(WSR_Util::diff_360(ind_r,phi_ind))*abs(ind_c-theta_ind)*sumf/(__ntheta*__nphi);
         }
     }
     return sigma_f/sigma_n;
-
-
 }
 
 //=============================================================================================================================
