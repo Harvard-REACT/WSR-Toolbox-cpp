@@ -34,9 +34,11 @@ class WSR_Util{
         int formatTrajectory(std::vector<std::vector<double>>& rx_trajectory, 
                             Eigen::MatrixXd& displacement, 
                             Eigen::MatrixXd& trajectory_timestamp);
-        std::pair<nc::NdArray<double>, nc::NdArray<double>> formatTrajectory_v2(std::vector<std::vector<double>>& rx_trajectory);
+        std::pair<nc::NdArray<double>, nc::NdArray<double>> formatTrajectory_v2(std::vector<std::vector<double>>& rx_trajectory,
+                                                                                std::vector<double>& antenna_offset);
         std::pair<nc::NdArray<double>, nc::NdArray<double>> getRelativeTrajectory(std::vector<std::vector<double>>& trajectory_tx,
-                                                                                  std::vector<std::vector<double>>& trajectory_rx);
+                                                                                  std::vector<std::vector<double>>& trajectory_rx,
+                                                                                  std::vector<double>& antenna_offset);
         std::pair<int,int> returnClosestIndices(const nc::NdArray<double>& csi_timestamp,
                                                 const nc::NdArray<double>& trajectory_timestamp);
 

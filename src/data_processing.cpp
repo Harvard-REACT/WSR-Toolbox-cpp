@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
     nlohmann::json TX_gt_positions;
     int stat_itr = 0 + start_integer;
     pos_file >> TX_gt_positions;
+    nlohmann::json all_stats;
 
     for (auto ts_it = timelist.begin(); ts_it != timelist.end(); ++ts_it) 
     {
@@ -78,8 +79,7 @@ int main(int argc, char *argv[])
       nc::NdArray<double> trajectory_timestamp;
       std::unordered_map<std::string,std::string> tx_robot_csi;
       std::unordered_map<std::string,std::string> tx_profile_timestamp;
-      nlohmann::json all_stats;
-
+      
       //Get the CSI data files for TX_Neighbor_robot
       for (auto it = run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].begin(); 
           it != run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].end(); ++it)
@@ -121,17 +121,19 @@ int main(int argc, char *argv[])
       }
 
       std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
+      std::vector<double> antenna_offset = run_module.__precompute_config["antenna_position_offset"]["offset"].get<std::vector<double>>();
+      
       //Get relative trajectory if moving ends
       if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
       {          
         //get relative trajectory
-        auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx);
+        auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset);
         trajectory_timestamp = return_val.first;
         displacement = return_val.second;
       }
       else
       {
-        auto return_val = utils.formatTrajectory_v2(trajectory_rx);
+        auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset);
         trajectory_timestamp = return_val.first;
         displacement = return_val.second;
       }
@@ -198,7 +200,7 @@ int main(int argc, char *argv[])
           stat_itr+=1;
         }
       }
-      std::cout << all_stats.dump(4) << std::endl;
     }
+    std::cout << all_stats.dump(4) << std::endl;
     
 }

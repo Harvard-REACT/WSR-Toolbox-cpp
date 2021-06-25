@@ -74,7 +74,9 @@ int main(){
       std::string traj_fn_tx = utils.__homedir + trajectory_file_tx;
       trajectory_tx = utils.loadTrajFromCSV(traj_fn_tx);
     }
-    
+    std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
+    std::vector<double> antenna_offset = run_module.__precompute_config["antenna_position_offset"]["offset"].get<std::vector<double>>();
+
     /*Calculate AOA*/
     for(int i=0; i<1; i++) //loop added only for testing
     {
@@ -84,13 +86,13 @@ int main(){
         if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
         {          
           //get relative trajectory
-          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx);
+          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
         else
         {
-          auto return_val = utils.formatTrajectory_v2(trajectory_rx);
+          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }

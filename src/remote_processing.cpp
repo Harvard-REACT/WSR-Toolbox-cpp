@@ -101,7 +101,9 @@ int main(int argc, char *argv[])
     //load trajectory
     std::vector<std::vector<double>> trajectory_tx;
     std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
-    auto return_val = utils.formatTrajectory_v2(trajectory_rx);
+    std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
+    std::vector<double> antenna_offset = run_module.__precompute_config["antenna_position_offset"]["offset"].get<std::vector<double>>();
+    auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset);
     trajectory_timestamp = return_val.first;
     displacement = return_val.second;
 

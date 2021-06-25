@@ -279,10 +279,14 @@
     },
     "trajectory_type": {
         "desc" : "Trajectory of robots (2D or 3D). Impacts AOA error calculation",
-        "value": "3D"
+        "value": "2D"
     },
     "sub_sample_channel_data": {
         "desc": "flag for enabling subsampling of channle data to reduce packet count",
         "value": false
+    },
+    "antenna_position_offset": {
+        "desc": "offset between center of displacement center and antenna tip (meters)",
+        "offset":[0.0,0.0,0.06] 
     }
 }

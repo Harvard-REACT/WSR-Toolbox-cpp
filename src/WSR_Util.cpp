@@ -574,14 +574,15 @@ int WSR_Util::formatTrajectory(std::vector<std::vector<double>>& rx_trajectory,
  * */
 std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::getRelativeTrajectory(
                                                     std::vector<std::vector<double>>& trajectory_tx,
-                                                    std::vector<std::vector<double>>& trajectory_rx)
+                                                    std::vector<std::vector<double>>& trajectory_rx,
+                                                    std::vector<double>& antenna_offset)
 {
 
-    auto ret_val = formatTrajectory_v2(trajectory_tx);
+    auto ret_val = formatTrajectory_v2(trajectory_tx,antenna_offset); //Assumes both robots have identical antenna offset to local displacement sensor
     nc::NdArray<double> timestamp_tx = ret_val.first;
     nc::NdArray<double> displacement_tx = ret_val.second;
 
-    auto ret_val2 = formatTrajectory_v2(trajectory_rx);
+    auto ret_val2 = formatTrajectory_v2(trajectory_rx,antenna_offset);
     nc::NdArray<double> timestamp_rx = ret_val2.first;
     nc::NdArray<double> displacement_rx = ret_val2.second;
     
@@ -663,7 +664,8 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::match_trajectory_t
  * 
  * */
 std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v2(
-                            std::vector<std::vector<double>>& rx_trajectory)
+                            std::vector<std::vector<double>>& rx_trajectory,
+                            std::vector<double>& antenna_offset)
 {
     
     nc::NdArray<double> displacement(rx_trajectory.size(),3);
@@ -674,9 +676,9 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     for(int i=0; i<rx_trajectory.size(); i++){
         nsec_timestamp = rx_trajectory[i][0] + rx_trajectory[i][1]*0.000000001;
         trajectory_timestamp(i,0) = nsec_timestamp; //timestamp  //TODO: fix bug #8
-        displacement(i,0) = rx_trajectory[i][2]; //x
-        displacement(i,1) = rx_trajectory[i][3]; //y
-        displacement(i,2) = rx_trajectory[i][4]; //z
+        displacement(i,0) = rx_trajectory[i][2] - antenna_offset[0]; //x
+        displacement(i,1) = rx_trajectory[i][3] - antenna_offset[1]; //y
+        displacement(i,2) = rx_trajectory[i][4] - antenna_offset[2]; //z
     }
 
     nc::NdArray<nc::uint32> sortedIdxs = argsort(trajectory_timestamp);
@@ -734,6 +736,8 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     first_x = sorted_displacement(start_index, 0);
     first_y = sorted_displacement(start_index, 1);
     first_z = sorted_displacement(start_index, 2);
+
+    
     for(int i=start_index; i<end_index+1; i++)
     {
         sorted_displacement.put(i,0,sorted_displacement(i, 0) - first_x);
