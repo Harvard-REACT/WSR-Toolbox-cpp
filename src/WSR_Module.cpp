@@ -1302,7 +1302,7 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                 {"Phi_Error(deg)", closest_AOA_error[4]},
                 {"Theta_Error(deg)", closest_AOA_error[5]}
             }},
-            {"RX_idx", "L8"},
+            {"RX_idx", "L30"},
             {"RX_position",{
                 {"x", mean_pos(0,0)},
                 {"y",mean_pos(0,1)},
