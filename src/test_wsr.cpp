@@ -147,7 +147,7 @@ int main(){
             auto stats = run_module.get_stats(true_phi, true_theta,
                                               top_aoa_error, closest_AOA_error,
                                               tx_id, run_module.tx_name_list[tx_id],
-                                              mean_pos(0,0),mean_pos(0,1));
+                                              mean_pos);
 
             std::cout << stats.dump(4) << std::endl;
 
