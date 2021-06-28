@@ -1092,7 +1092,7 @@ std::vector<double> WSR_Module::get_aoa_error(const std::pair<std::vector<double
     double min_phi_error =0, min_theta_error=0;
     double closest_phi=0, closest_theta=0, closest_confidence=0;
 
-    for(int i=1; i<topN_phi.size(); i++)
+    for(int i=0; i<topN_phi.size(); i++)
     {
         //Squared error (as per WSR IJRR paper)
         // phi_error = topN_phi[i]-true_phi;

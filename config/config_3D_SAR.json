@@ -287,6 +287,6 @@
     },
     "antenna_position_offset": {
         "desc": "offset between center of displacement center and antenna tip (meters)",
-        "offset":[0.0,0.0,0.06] 
+        "offset":[0.0,0.0,0.0] 
     }
 }

@@ -736,8 +736,6 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     first_x = sorted_displacement(start_index, 0);
     first_y = sorted_displacement(start_index, 1);
     first_z = sorted_displacement(start_index, 2);
-
-    
     for(int i=start_index; i<end_index+1; i++)
     {
         sorted_displacement.put(i,0,sorted_displacement(i, 0) - first_x);
