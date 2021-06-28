@@ -578,11 +578,13 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::getRelativeTraject
                                                     std::vector<double>& antenna_offset)
 {
 
-    auto ret_val = formatTrajectory_v2(trajectory_tx,antenna_offset); //Assumes both robots have identical antenna offset to local displacement sensor
+    //TODO : return mean pos for the relative trajectory.
+    nc::NdArray<double> mean_pos1,mean_pos2;
+    auto ret_val = formatTrajectory_v2(trajectory_tx,antenna_offset,mean_pos1); //Assumes both robots have identical antenna offset to local displacement sensor
     nc::NdArray<double> timestamp_tx = ret_val.first;
     nc::NdArray<double> displacement_tx = ret_val.second;
 
-    auto ret_val2 = formatTrajectory_v2(trajectory_rx,antenna_offset);
+    auto ret_val2 = formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos2);
     nc::NdArray<double> timestamp_rx = ret_val2.first;
     nc::NdArray<double> displacement_rx = ret_val2.second;
     
@@ -665,7 +667,8 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::match_trajectory_t
  * */
 std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v2(
                             std::vector<std::vector<double>>& rx_trajectory,
-                            std::vector<double>& antenna_offset)
+                            std::vector<double>& antenna_offset,
+                            nc::NdArray<double>& mean_pos)
 {
     
     nc::NdArray<double> displacement(rx_trajectory.size(),3);
@@ -736,6 +739,8 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     first_x = sorted_displacement(start_index, 0);
     first_y = sorted_displacement(start_index, 1);
     first_z = sorted_displacement(start_index, 2);
+    mean_pos = nc::mean(sorted_displacement({start_index,end_index},sorted_displacement.cSlice()));
+
     for(int i=start_index; i<end_index+1; i++)
     {
         sorted_displacement.put(i,0,sorted_displacement(i, 0) - first_x);

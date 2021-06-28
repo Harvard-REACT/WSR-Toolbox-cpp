@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 
       std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
       std::vector<double> antenna_offset = run_module.__precompute_config["antenna_position_offset"]["offset"].get<std::vector<double>>();
-      
+      nc::NdArray<double> mean_pos;
       //Get relative trajectory if moving ends
       if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
       {          
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
       }
       else
       {
-        auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset);
+        auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos);
         trajectory_timestamp = return_val.first;
         displacement = return_val.second;
       }
@@ -186,7 +186,8 @@ int main(int argc, char *argv[])
 
           auto stats = run_module.get_stats(true_phi, true_theta,
                                             top_aoa_error, closest_AOA_error,
-                                            tx_id, run_module.tx_name_list[tx_id]);
+                                            tx_id, run_module.tx_name_list[tx_id],
+                                            mean_pos(0,0),mean_pos(0,1));
 
           if(all_stats.size() == 0)
           {
