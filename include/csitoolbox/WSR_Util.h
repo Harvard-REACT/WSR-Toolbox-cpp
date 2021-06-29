@@ -93,6 +93,8 @@ class WSR_Util{
                                     bool& interpolate_phase,
                                     bool& moving);
         double static diff_360(double a, double b);
+        std::unordered_map<std::string, std::pair<double,double>> get_true_aoa_v2(nc::NdArray<double>& mean_pos,
+                                                                                 nlohmann::json true_positions_tx);
 };
 
 

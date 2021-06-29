@@ -1152,6 +1152,42 @@ std::unordered_map<std::string, std::pair<double,double>> WSR_Util::get_true_aoa
  *
  *
  * */
+std::unordered_map<std::string, std::pair<double,double>> WSR_Util::get_true_aoa_v2(nc::NdArray<double>& mean_pos,
+                                                                                 nlohmann::json true_positions_tx)
+{
+    std::unordered_map<std::string, std::pair<double,double>> true_aoa_angles;
+    double temp;
+    for (auto tx = true_positions_tx["value"].begin(); tx != true_positions_tx["value"].end(); tx++)
+    {
+        double true_phi=0, true_theta=0, x_diff=0, y_diff=0, z_diff=0;
+        string tx_id = tx.key();
+        nlohmann::json position = tx.value();
+        double gt_x = double(position["position"]["x"]);
+        double gt_y = double(position["position"]["y"]);
+        double gt_z = double(position["position"]["z"]);
+
+        //First position
+        //std::cout << gt_x <<", " << displacement(0,0) << "," << gt_y << "," << displacement(0,1) << std::endl;
+        x_diff = gt_x - mean_pos(0,0);
+        y_diff = gt_y - mean_pos(0,1);
+        z_diff = gt_z - mean_pos(0,2);
+        true_phi = std::atan2 (y_diff,x_diff);
+        temp = std::atan2(z_diff,std::sqrt(std::pow(x_diff,2) + std::pow(y_diff,2)));
+        true_theta += (M_PI/2 - temp);
+
+        true_theta = true_theta * 180/M_PI;
+        true_phi = true_phi * 180/M_PI;
+        true_aoa_angles[tx_id] = std::make_pair(true_phi, true_theta);
+
+    }
+
+    return true_aoa_angles;
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
 nc::NdArray<double> WSR_Util::unwrap(const nc::NdArray<double> &phase_list) {
     auto unwrapped_phase_list = nc::NdArray<double>(phase_list.shape());
     int k = 0;
