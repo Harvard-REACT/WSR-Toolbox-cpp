@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
     nlohmann::json TX_gt_positions;
     pos_file >> TX_gt_positions;
     nlohmann::json true_positions_tx = TX_gt_positions["true_tx_positions"];
-    auto all_true_AOA = utils.get_true_aoa(trajectory_rx, true_positions_tx);
+    auto all_true_AOA = utils.get_true_aoa_v2(mean_pos, true_positions_tx);
 
     run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
     auto all_aoa_profile = run_module.get_all_aoa_profile();
