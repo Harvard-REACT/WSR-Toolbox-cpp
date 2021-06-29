@@ -75,7 +75,15 @@ int main(){
       trajectory_tx = utils.loadTrajFromCSV(traj_fn_tx);
     }
     std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
-    std::vector<double> antenna_offset = run_module.__precompute_config["antenna_position_offset"]["offset"].get<std::vector<double>>();
+    std::vector<double> antenna_offset;
+    std::string traj_type = "gt";
+    if (traj_type == "odom")
+      antenna_offset = run_module.__precompute_config["antenna_position_offset"]["mocap_offset"].get<std::vector<double>>();
+    else if (traj_type == "t265")
+      antenna_offset = run_module.__precompute_config["antenna_position_offset"]["t265_offset"].get<std::vector<double>>();
+    else if (traj_type == "gt")
+      antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
+    
 
     /*Calculate AOA*/
     for(int i=0; i<1; i++) //loop added only for testing

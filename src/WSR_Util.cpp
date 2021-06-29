@@ -679,9 +679,9 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     for(int i=0; i<rx_trajectory.size(); i++){
         nsec_timestamp = rx_trajectory[i][0] + rx_trajectory[i][1]*0.000000001;
         trajectory_timestamp(i,0) = nsec_timestamp; //timestamp  //TODO: fix bug #8
-        displacement(i,0) = rx_trajectory[i][2] - antenna_offset[0]; //x
-        displacement(i,1) = rx_trajectory[i][3] - antenna_offset[1]; //y
-        displacement(i,2) = rx_trajectory[i][4] - antenna_offset[2]; //z
+        displacement(i,0) = rx_trajectory[i][2] + antenna_offset[0]; //x
+        displacement(i,1) = rx_trajectory[i][3] + antenna_offset[1]; //y
+        displacement(i,2) = rx_trajectory[i][4] + antenna_offset[2]; //z
     }
 
     nc::NdArray<nc::uint32> sortedIdxs = argsort(trajectory_timestamp);

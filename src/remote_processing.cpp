@@ -103,7 +103,14 @@ int main(int argc, char *argv[])
     nc::NdArray<double> mean_pos;
     std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
     std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
-    std::vector<double> antenna_offset = run_module.__precompute_config["antenna_position_offset"]["offset"].get<std::vector<double>>();
+    std::vector<double> antenna_offset;
+    if (traj_type == "odom")
+        antenna_offset = run_module.__precompute_config["antenna_position_offset"]["mocap_offset"].get<std::vector<double>>();
+    else if (traj_type == "t265")
+        antenna_offset = run_module.__precompute_config["antenna_position_offset"]["t265_offset"].get<std::vector<double>>();
+    else if (traj_type == "gt")
+        antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
+    
     auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos);
     trajectory_timestamp = return_val.first;
     displacement = return_val.second;
