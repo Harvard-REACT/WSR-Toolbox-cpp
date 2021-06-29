@@ -287,6 +287,8 @@
     },
     "antenna_position_offset": {
         "desc": "offset between center of displacement center and antenna tip (meters)",
-        "offset":[0.0,0.0,0.0] 
+        "mocap_offset":[0.0,0.0,0.0],
+        "t265_offset":[0.0,0.0,-0.06],
+        "odom_offset":[-0.15,-0.07,-0.06]
     }
 }
