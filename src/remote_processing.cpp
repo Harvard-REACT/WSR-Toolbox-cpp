@@ -21,8 +21,9 @@ int main(int argc, char *argv[])
     string traj_type = argv[2];
     string rx_csi_pre = "csi_rx_";
     string tx_csi_pre = "csi_";
-    string traj_pre; 
+    string traj_pre, true_traj_pre; 
     
+    true_traj_pre = "rx_trajectory_";
     if (traj_type == "odom")
         traj_pre = "odom_rx_trajectory_";
     else if (traj_type == "t265")
@@ -62,8 +63,10 @@ int main(int argc, char *argv[])
     output.erase(remove( output.begin(), output.end(), '\"' ),output.end());
     std::string rx_robot_csi = foldername + "/" + rx_csi_pre + latest_ts + ".dat";
     std::string traj_fn_rx = foldername + "/" + traj_pre + latest_ts + "_.csv";
+    std::string true_traj_fn_rx = foldername + "/" + true_traj_pre + latest_ts + "_.csv";
     std::cout << "Trajectory fn" << traj_fn_rx << std::endl;      
     std::vector<std::vector<double>> trajectory_rx = utils.loadTrajFromCSV(traj_fn_rx); //Robot performing SAR
+    std::vector<std::vector<double>> true_trajectory_rx = utils.loadTrajFromCSV(true_traj_fn_rx); //Robot performing SAR
     nc::NdArray<double> displacement;
     nc::NdArray<double> trajectory_timestamp;
     std::unordered_map<std::string,std::string> tx_robot_csi;
@@ -100,7 +103,7 @@ int main(int argc, char *argv[])
 
     //load trajectory
     std::vector<std::vector<double>> trajectory_tx;
-    nc::NdArray<double> mean_pos;
+    nc::NdArray<double> mean_pos,true_mean_pos;
     std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
     std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
     std::vector<double> antenna_offset;
@@ -112,6 +115,7 @@ int main(int argc, char *argv[])
         antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
     
     auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos);
+    auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_mean_pos);
     trajectory_timestamp = return_val.first;
     displacement = return_val.second;
 
@@ -125,7 +129,7 @@ int main(int argc, char *argv[])
     nlohmann::json TX_gt_positions;
     pos_file >> TX_gt_positions;
     nlohmann::json true_positions_tx = TX_gt_positions["true_tx_positions"];
-    auto all_true_AOA = utils.get_true_aoa_v2(mean_pos, true_positions_tx);
+    auto all_true_AOA = utils.get_true_aoa_v2(true_mean_pos, true_positions_tx);
 
     run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
     auto all_aoa_profile = run_module.get_all_aoa_profile();
@@ -172,7 +176,7 @@ int main(int argc, char *argv[])
             auto stats = run_module.get_stats(true_phi, true_theta,
                                             top_aoa_error, closest_AOA_error,
                                             tx_id, run_module.tx_name_list[tx_id],
-                                            mean_pos);
+                                            true_mean_pos);
 
             std::cout << stats.dump(4) << std::endl;
         }
