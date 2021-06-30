@@ -127,16 +127,14 @@ int main(int argc, char *argv[])
       std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
       
       std::vector<double> antenna_offset;
-      if (traj_type == "odom")
+      if (traj_type == "gt")
         antenna_offset = run_module.__precompute_config["antenna_position_offset"]["mocap_offset"].get<std::vector<double>>();
       else if (traj_type == "t265")
         antenna_offset = run_module.__precompute_config["antenna_position_offset"]["t265_offset"].get<std::vector<double>>();
-      else if (traj_type == "gt")
+      else if (traj_type == "odom")
         antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
-      
-       run_module.__precompute_config["antenna_position_offset"]["offset"].get<std::vector<double>>();
-      
-      
+            
+      std::cout << "log [WSR_Module]: Got offset " << std::endl;
       nc::NdArray<double> mean_pos,true_mean_pos;
       //Get relative trajectory if moving ends
       if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))

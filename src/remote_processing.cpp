@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     string rx_csi_pre = "csi_rx_";
     string tx_csi_pre = "csi_";
     string traj_pre, true_traj_pre; 
-    
+
     true_traj_pre = "rx_trajectory_";
     if (traj_type == "odom")
         traj_pre = "odom_rx_trajectory_";
@@ -107,11 +107,11 @@ int main(int argc, char *argv[])
     std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
     std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
     std::vector<double> antenna_offset;
-    if (traj_type == "odom")
+    if (traj_type == "gt")
         antenna_offset = run_module.__precompute_config["antenna_position_offset"]["mocap_offset"].get<std::vector<double>>();
     else if (traj_type == "t265")
         antenna_offset = run_module.__precompute_config["antenna_position_offset"]["t265_offset"].get<std::vector<double>>();
-    else if (traj_type == "gt")
+    else if (traj_type == "odom")
         antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
     
     auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos);
