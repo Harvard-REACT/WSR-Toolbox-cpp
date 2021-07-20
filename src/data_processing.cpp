@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
           auto stats = run_module.get_stats(true_phi, true_theta,
                                             top_aoa_error, closest_AOA_error,
                                             tx_id, run_module.tx_name_list[tx_id],
-                                            mean_pos,loc_idx);
+                                            true_mean_pos,loc_idx);
 
           if(all_stats.size() == 0)
           {

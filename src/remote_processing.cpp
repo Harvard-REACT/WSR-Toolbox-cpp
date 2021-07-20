@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
 
     string foldername = argv[1];
     string traj_type = argv[2];
+    int loc_idx = std::stoi(argv[3]);
     string rx_csi_pre = "csi_rx_";
     string tx_csi_pre = "csi_";
     string traj_pre, true_traj_pre; 
@@ -176,7 +177,7 @@ int main(int argc, char *argv[])
             auto stats = run_module.get_stats(true_phi, true_theta,
                                             top_aoa_error, closest_AOA_error,
                                             tx_id, run_module.tx_name_list[tx_id],
-                                            true_mean_pos);
+                                            true_mean_pos,loc_idx);
 
             std::cout << stats.dump(4) << std::endl;
         }
