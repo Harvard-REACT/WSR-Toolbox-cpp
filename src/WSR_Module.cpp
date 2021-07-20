@@ -1266,7 +1266,7 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                            std::vector<double>& closest_AOA_error,
                            const std::string& tx_mac_id,
                            const std::string& tx_name,
-                           const nc::NdArray<double>& mean_pos)
+                           const nc::NdArray<double>& mean_pos, const int pos_idx)
 {
     nlohmann::json output_stats = {
             {"a_Info_TX",{
@@ -1308,8 +1308,8 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                 {"Phi_Error(deg)", closest_AOA_error[4]},
                 {"Theta_Error(deg)", closest_AOA_error[5]}
             }},
-            {"RX_idx", "L30"},
-            {"True_RX_position",{
+            {"RX_idx", pos_idx},
+            {"RX_position",{
                 {"x", mean_pos(0,0)},
                 {"y",mean_pos(0,1)},
                 {"z",mean_pos(0,2)}
