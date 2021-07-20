@@ -1058,14 +1058,20 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
 
 double WSR_Module::get_confidence(double phi_ind, double theta_ind) {
    
+    auto twod_profile = nc::sum(__aoa_profile, nc::Axis::COL);
+//    std::cout << twod_profile;
+//    std::cout << twod_profile.shape();
     double sumf = __aoa_profile.sum()(0,0);
     double sigma_f = 0, sigma_n = 0;
-    
     for(size_t ind_r = 0; ind_r<__nphi; ind_r++){
         for(size_t ind_c = 0; ind_c < __ntheta;ind_c++)
         {
-            sigma_f += abs(WSR_Util::diff_360(ind_r,phi_ind))*abs(ind_c-theta_ind)*__aoa_profile(ind_r,ind_c)/sumf;
-            sigma_n += abs(WSR_Util::diff_360(ind_r,phi_ind))*abs(ind_c-theta_ind)*sumf/(__ntheta*__nphi);
+//            sigma_f += abs(WSR_Util::diff_360(ind_r,phi_ind))*abs(ind_c-theta_ind)*__aoa_profile(ind_r,ind_c)/sumf;
+//            sigma_n += abs(WSR_Util::diff_360(ind_r,phi_ind))*abs(ind_c-theta_ind)*sumf/(__ntheta*__nphi);
+            sigma_f += (pow((WSR_Util::diff_360(ind_r,phi_ind)),2)+pow(abs(ind_c-theta_ind),2))*__aoa_profile(ind_r,ind_c)/sumf;
+            sigma_n +=  (pow((WSR_Util::diff_360(ind_r,phi_ind)),2)+pow(abs(ind_c-theta_ind),2))*sumf/(__ntheta*__nphi);
+//                sigma_f += pow((WSR_Util::diff_360(ind_r,phi_ind)),2)*twod_profile(0,ind_r)/sumf;
+//            sigma_n +=  pow((WSR_Util::diff_360(ind_r,phi_ind)),2)*sumf/(__nphi);
         }
     }
     return sigma_f/sigma_n;

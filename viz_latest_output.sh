@@ -34,7 +34,8 @@ do
     profile_fn=$(ls -t1 ../debug |  head -n $nrf | grep $tx | grep aoa)
     echo "AOA profile for $profile_fn"
     #python3.8 visualize_aoa_profile.py --file ../debug/$profile_fn
-    python3.8 viz_aoa_matlab.py --file ../debug/$profile_fn
+    #python3.8 viz_aoa_matlab.py --file ../debug/$profile_fn
+    
 
 done
 
