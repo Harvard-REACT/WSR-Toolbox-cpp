@@ -74,23 +74,34 @@ int main(){
       std::string traj_fn_tx = utils.__homedir + trajectory_file_tx;
       trajectory_tx = utils.loadTrajFromCSV(traj_fn_tx);
     }
+    std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
+    std::vector<double> antenna_offset;
+    std::string traj_type = "gt";
+    if (traj_type == "odom")
+      antenna_offset = run_module.__precompute_config["antenna_position_offset"]["mocap_offset"].get<std::vector<double>>();
+    else if (traj_type == "t265")
+      antenna_offset = run_module.__precompute_config["antenna_position_offset"]["t265_offset"].get<std::vector<double>>();
+    else if (traj_type == "gt")
+      antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
     
+
     /*Calculate AOA*/
     for(int i=0; i<1; i++) //loop added only for testing
     {
         
         std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
+        nc::NdArray<double> mean_pos;
         //Get relative trajectory if moving ends
         if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
         {          
           //get relative trajectory
-          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx);
+          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
         else
         {
-          auto return_val = utils.formatTrajectory_v2(trajectory_rx);
+          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
@@ -143,7 +154,8 @@ int main(){
 
             auto stats = run_module.get_stats(true_phi, true_theta,
                                               top_aoa_error, closest_AOA_error,
-                                              tx_id, run_module.tx_name_list[tx_id]);
+                                              tx_id, run_module.tx_name_list[tx_id],
+                                              mean_pos,0);
 
             std::cout << stats.dump(4) << std::endl;
 

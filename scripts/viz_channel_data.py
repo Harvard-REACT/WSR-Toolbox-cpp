@@ -30,7 +30,7 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="Channel data json file")
+    parser.add_argument("--file", help="Channel data file")
     args = parser.parse_args()
         
     f = open(args.file,"r") 
@@ -49,7 +49,6 @@ def main():
                     s=8,
                     marker='x')
     plt.title('RX Robot Channel Phase')
-    plt.ylim([-3.14, 3.14])
     plt.show()
 
     sns.scatterplot(y=traj["timestamp"],

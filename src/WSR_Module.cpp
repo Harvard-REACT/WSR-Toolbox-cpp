@@ -1058,14 +1058,20 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
 
 double WSR_Module::get_confidence(double phi_ind, double theta_ind) {
    
+    auto twod_profile = nc::sum(__aoa_profile, nc::Axis::COL);
+//    std::cout << twod_profile;
+//    std::cout << twod_profile.shape();
     double sumf = __aoa_profile.sum()(0,0);
     double sigma_f = 0, sigma_n = 0;
-    
     for(size_t ind_r = 0; ind_r<__nphi; ind_r++){
         for(size_t ind_c = 0; ind_c < __ntheta;ind_c++)
         {
-            sigma_f += abs(WSR_Util::diff_360(ind_r,phi_ind))*abs(ind_c-theta_ind)*__aoa_profile(ind_r,ind_c)/sumf;
-            sigma_n += abs(WSR_Util::diff_360(ind_r,phi_ind))*abs(ind_c-theta_ind)*sumf/(__ntheta*__nphi);
+//            sigma_f += abs(WSR_Util::diff_360(ind_r,phi_ind))*abs(ind_c-theta_ind)*__aoa_profile(ind_r,ind_c)/sumf;
+//            sigma_n += abs(WSR_Util::diff_360(ind_r,phi_ind))*abs(ind_c-theta_ind)*sumf/(__ntheta*__nphi);
+            sigma_f += (pow((WSR_Util::diff_360(ind_r,phi_ind)),2)+pow(abs(ind_c-theta_ind),2))*__aoa_profile(ind_r,ind_c)/sumf;
+            sigma_n +=  (pow((WSR_Util::diff_360(ind_r,phi_ind)),2)+pow(abs(ind_c-theta_ind),2))*sumf/(__ntheta*__nphi);
+//                sigma_f += pow((WSR_Util::diff_360(ind_r,phi_ind)),2)*twod_profile(0,ind_r)/sumf;
+//            sigma_n +=  pow((WSR_Util::diff_360(ind_r,phi_ind)),2)*sumf/(__nphi);
         }
     }
     return sigma_f/sigma_n;
@@ -1092,7 +1098,7 @@ std::vector<double> WSR_Module::get_aoa_error(const std::pair<std::vector<double
     double min_phi_error =0, min_theta_error=0;
     double closest_phi=0, closest_theta=0, closest_confidence=0;
 
-    for(int i=1; i<topN_phi.size(); i++)
+    for(int i=0; i<topN_phi.size(); i++)
     {
         //Squared error (as per WSR IJRR paper)
         // phi_error = topN_phi[i]-true_phi;
@@ -1259,7 +1265,8 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                            std::vector<double>& top_aoa_error,
                            std::vector<double>& closest_AOA_error,
                            const std::string& tx_mac_id,
-                           const std::string& tx_name)
+                           const std::string& tx_name,
+                           const nc::NdArray<double>& mean_pos, const int pos_idx)
 {
     nlohmann::json output_stats = {
             {"a_Info_TX",{
@@ -1300,6 +1307,12 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                 {"Total_AOA_Error(deg)", closest_AOA_error[3]},
                 {"Phi_Error(deg)", closest_AOA_error[4]},
                 {"Theta_Error(deg)", closest_AOA_error[5]}
+            }},
+            {"RX_idx", pos_idx},
+            {"RX_position",{
+                {"x", mean_pos(0,0)},
+                {"y",mean_pos(0,1)},
+                {"z",mean_pos(0,2)}
             }}
     };
 

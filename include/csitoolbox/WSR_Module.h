@@ -117,7 +117,8 @@ class WSR_Module
                                    std::vector<double>& top_aoa_error,
                                    std::vector<double>& closest_AOA_error,
                                    const std::string& tx_mac_id,
-                                   const std::string& tx_name);
+                                   const std::string& tx_name,
+                                   const nc::NdArray<double>& mean_pos,const int pos_idx);
         int test_csi_data(std::string rx_csi_file, 
                         std::unordered_map<std::string, std::string> tx_csi_file);
         nlohmann::json get_performance_stats(const std::string& tx_mac_id,

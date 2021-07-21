@@ -34,9 +34,12 @@ class WSR_Util{
         int formatTrajectory(std::vector<std::vector<double>>& rx_trajectory, 
                             Eigen::MatrixXd& displacement, 
                             Eigen::MatrixXd& trajectory_timestamp);
-        std::pair<nc::NdArray<double>, nc::NdArray<double>> formatTrajectory_v2(std::vector<std::vector<double>>& rx_trajectory);
+        std::pair<nc::NdArray<double>, nc::NdArray<double>> formatTrajectory_v2(std::vector<std::vector<double>>& rx_trajectory,
+                                                                                std::vector<double>& antenna_offset,
+                                                                                nc::NdArray<double>& mean_pos);
         std::pair<nc::NdArray<double>, nc::NdArray<double>> getRelativeTrajectory(std::vector<std::vector<double>>& trajectory_tx,
-                                                                                  std::vector<std::vector<double>>& trajectory_rx);
+                                                                                  std::vector<std::vector<double>>& trajectory_rx,
+                                                                                  std::vector<double>& antenna_offset);
         std::pair<int,int> returnClosestIndices(const nc::NdArray<double>& csi_timestamp,
                                                 const nc::NdArray<double>& trajectory_timestamp);
 
@@ -90,6 +93,8 @@ class WSR_Util{
                                     bool& interpolate_phase,
                                     bool& moving);
         double static diff_360(double a, double b);
+        std::unordered_map<std::string, std::pair<double,double>> get_true_aoa_v2(nc::NdArray<double>& mean_pos,
+                                                                                 nlohmann::json true_positions_tx);
 };
 
 
