@@ -41,13 +41,19 @@ WIFI_Agent::~WIFI_Agent(void){
  * */
 std::vector<DataPacket> WIFI_Agent::get_wifi_data(std::string mac_id){
     std::vector<DataPacket> temp;
+    std::set<std::string> unique_mac_id;
     for (int i=0;i < wifi_data_packet_array.size();i++)
     {
+        unique_mac_id.insert(mac2str(wifi_data_packet_array[i].mac_real));
         if(mac2str(wifi_data_packet_array[i].mac_real) == mac_id) 
         {
             temp.push_back(wifi_data_packet_array[i]);
         }
     }
+
+    // std::set<std::string>::iterator it;
+    // for(it=unique_mac_id.begin(); it!=unique_mac_id.end(); it++)
+    //     std::cout << *it << std::endl;
 
     return temp;
 }

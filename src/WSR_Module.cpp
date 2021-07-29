@@ -158,6 +158,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             static_channel_ang_mean, static_channel_ang_stdev;
     std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
     debug_dir.erase(remove( debug_dir.begin(), debug_dir.end(), '\"' ),debug_dir.end());
+    int ret_val = 0;
 
     std::cout << "log [calculate_AOA_profile]: Parsing CSI Data " << std::endl;
 
@@ -166,7 +167,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
     // std::vector<std::string> mac_id_tx;
     std::vector<std::string> mac_id_tx; 
 
-    std::cout << "log [calculate_AOA_profile]: Neighbouring TX robot IDs = " <<
+    std::cout << "log [calculate_AOA_profile]: Neighbouring TX robot IDs count = " <<
                 RX_SAR_robot.unique_mac_ids_packets.size() << std::endl;
 
     for(auto key : RX_SAR_robot.unique_mac_ids_packets)
@@ -203,8 +204,14 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         std::cout << "log [calculate_AOA_profile]: Profile for RX_SAR_robot MAC-ID: "<< __RX_SAR_robot_MAC_ID
                   << ", TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
 
-        auto temp2 = utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], 
-                                                            TX_Neighbor_robot,__FLAG_debug);
+        auto temp2 = utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], TX_Neighbor_robot,__FLAG_debug);
+
+        for(auto key : TX_Neighbor_robot.unique_mac_ids_packets)
+        {
+            if(__FLAG_debug) std::cout << "log [calculate_AOA_profile]: Detected MAC ID = " << key.first 
+                                    << ", Packet count: = " << key.second << std::endl;
+            mac_id_tx.push_back(key.first);
+        }
 
         data_packets_RX = RX_SAR_robot.get_wifi_data(mac_id_tx[num_tx]); //Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
         data_packets_TX = TX_Neighbor_robot.get_wifi_data(__RX_SAR_robot_MAC_ID); //Packets only of RX_SAR_robot in a TX_Neighbor_robot's csi file
@@ -226,6 +233,12 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         h_list_all = csi_data.first;
         csi_timestamp_all = csi_data.second;
 
+        if(csi_timestamp_all.size()<__min_packets_to_process)
+        {
+            std::cout << csi_timestamp_all.size() << std::endl;
+            if(__FLAG_debug) std::cout << "log [calculate_AOA_profile]: Very few CSI data packets left after forward-backward product" << std::endl;
+            break;
+        }
 
         /*Get the shifted version of the pose timestamps such that they match exactly with csi timestamps.*/
         if(__FLAG_debug) std::cout << "log [calculate_AOA_profile]: Removing unused csi data" << std::endl;
@@ -339,7 +352,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
     RX_SAR_robot.reset();
     
 
-    return 0;
+    return ret_val;
 }
 //=============================================================================================================================
 /**

@@ -132,55 +132,63 @@ int main(int argc, char *argv[])
     nlohmann::json true_positions_tx = TX_gt_positions["true_tx_positions"];
     auto all_true_AOA = utils.get_true_aoa_v2(true_mean_pos, true_positions_tx);
 
-    run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
-    auto all_aoa_profile = run_module.get_all_aoa_profile();
-    auto all_topN_angles = run_module.get_TX_topN_angles();
-    auto all_confidences = run_module.get_all_confidence();
-    string trajType = run_module.__precompute_config["trajectory_type"]["value"];
-    double true_phi, true_theta;
-
-    std::cout << "Getting AOA profile stats for TX Neighbor robots" << std::endl;
-    for(auto & itr : all_aoa_profile)
+    int ret = run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
+    if(ret == 0)
     {
-        std::cout << "-----------------------------" << std::endl;
-        
-        std::string tx_id = itr.first;
-        std::string ts = tx_profile_timestamp[itr.first];
-        auto profile = itr.second;
-        std::vector<double> aoa_confidence = all_confidences[tx_id];
+        auto all_aoa_profile = run_module.get_all_aoa_profile();
+        auto all_topN_angles = run_module.get_TX_topN_angles();
+        auto all_confidences = run_module.get_all_confidence();
+        string trajType = run_module.__precompute_config["trajectory_type"]["value"];
+        double true_phi, true_theta;
 
-        if(profile.shape().rows == 1) 
+        std::cout << "Getting AOA profile stats for TX Neighbor robots" << std::endl;
+        for(auto & itr : all_aoa_profile)
         {
-            //Dummy profile, error in AOA calculation
-            std::cout << "Phi angle = 0" <<  std::endl;
-            std::cout << "Theta angle = 0" << std::endl;
-        }
-        else
-        {
-            string profile_op_fn = utils.__homedir+output+"/"+run_module.tx_name_list[tx_id]+"_"+ts+"_aoa_profile.csv";
-            utils.writeToFile(profile,profile_op_fn);
+            std::cout << "-----------------------------" << std::endl;
+            
+            std::string tx_id = itr.first;
+            std::string ts = tx_profile_timestamp[itr.first];
+            auto profile = itr.second;
+            std::vector<double> aoa_confidence = all_confidences[tx_id];
 
-            true_phi = all_true_AOA[run_module.tx_name_list[tx_id]].first;
-            true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
+            if(profile.shape().rows == 1) 
+            {
+                //Dummy profile, error in AOA calculation
+                std::cout << "Phi angle = 0" <<  std::endl;
+                std::cout << "Theta angle = 0" << std::endl;
+            }
+            else
+            {
+                string profile_op_fn = utils.__homedir+output+"/"+run_module.tx_name_list[tx_id]+"_"+ts+"_aoa_profile.csv";
+                utils.writeToFile(profile,profile_op_fn);
 
-            auto topN_angles = all_topN_angles[tx_id];
-            std::vector<double> top_aoa_error = run_module.top_aoa_error(topN_angles.first[0],
-                                                                        topN_angles.second[0],
-                                                                        all_true_AOA[run_module.tx_name_list[tx_id]],
-                                                                        trajType);
+                true_phi = all_true_AOA[run_module.tx_name_list[tx_id]].first;
+                true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
 
-            std::vector<double> closest_AOA_error = run_module.get_aoa_error(topN_angles,
+                auto topN_angles = all_topN_angles[tx_id];
+                std::vector<double> top_aoa_error = run_module.top_aoa_error(topN_angles.first[0],
+                                                                            topN_angles.second[0],
                                                                             all_true_AOA[run_module.tx_name_list[tx_id]],
-                                                                            aoa_confidence,
                                                                             trajType);
 
-            auto stats = run_module.get_stats(true_phi, true_theta,
-                                            top_aoa_error, closest_AOA_error,
-                                            tx_id, run_module.tx_name_list[tx_id],
-                                            true_mean_pos,loc_idx);
+                std::vector<double> closest_AOA_error = run_module.get_aoa_error(topN_angles,
+                                                                                all_true_AOA[run_module.tx_name_list[tx_id]],
+                                                                                aoa_confidence,
+                                                                                trajType);
 
-            std::cout << stats.dump(4) << std::endl;
+                auto stats = run_module.get_stats(true_phi, true_theta,
+                                                top_aoa_error, closest_AOA_error,
+                                                tx_id, run_module.tx_name_list[tx_id],
+                                                true_mean_pos,loc_idx);
+
+                std::cout << stats.dump(4) << std::endl;
+            }
         }
     }
-    
+    else
+    {
+        std::cout << "Error processing AOA profile for one or more TX" << std::endl;
+    }
+
+    return 0;
 }
