@@ -652,9 +652,9 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_singlethread(
     nc::NdArray<std::complex<double>> h_list_single_channel;
     
     if(__FLAG_interpolate_phase)
-        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(30,31));
+        h_list_single_channel = h_list(h_list.rSlice(),30);
     else
-        h_list_single_channel = h_list(h_list.rSlice(),nc::Slice(15, 16));
+        h_list_single_channel = h_list(h_list.rSlice(),15);
 
     auto num_poses = nc::shape(pose_list).rows;
     if(h_list_single_channel.shape().cols == 0)
