@@ -164,9 +164,11 @@ int main(int argc, char *argv[])
       string trajType = run_module.__precompute_config["trajectory_type"]["value"];
       double true_phi, true_theta;
 
+      nlohmann::json stats_per_sample;
       std::cout << "Getting AOA profile stats for TX Neighbor robots" << std::endl;
       for(auto & itr : all_aoa_profile)
       {
+        
         std::cout << "-----------------------------" << std::endl;
         
         std::string tx_id = itr.first;
@@ -204,18 +206,20 @@ int main(int argc, char *argv[])
                                             tx_id, run_module.tx_name_list[tx_id],
                                             true_mean_pos,loc_idx);
 
-          if(all_stats.size() == 0)
-          {
-            all_stats = {
-              {std::to_string(stat_itr),stats}
-            };
-          }
-          else
-            all_stats.push_back({std::to_string(stat_itr), stats});
-          
-          stat_itr+=1;
+          stats_per_sample.push_back(stats);
+
         }
       }
+      if(all_stats.size() == 0)
+      {
+        all_stats = {
+          {std::to_string(stat_itr),stats_per_sample}
+        };
+      }
+      else
+        all_stats.push_back({std::to_string(stat_itr), stats_per_sample});
+      
+      stat_itr+=1;
     }
     std::cout << all_stats.dump(4) << std::endl;
     std::cout << stat_itr;
