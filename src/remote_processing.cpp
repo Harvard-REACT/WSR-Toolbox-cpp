@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
     WSR_Module run_module(config);
 
     std::string output = run_module.__precompute_config["output_aoa_profile_path"]["value"].dump();
+    bool __Flag_get_mean_pos = bool(run_module.__precompute_config["get_mean_pose_RX"]["value"]);
     output.erase(remove( output.begin(), output.end(), '\"' ),output.end());
     std::string rx_robot_csi = foldername + "/" + rx_csi_pre + latest_ts + ".dat";
     std::string traj_fn_rx = foldername + "/" + traj_pre + latest_ts + "_.csv";
@@ -115,8 +116,8 @@ int main(int argc, char *argv[])
     else if (traj_type == "odom")
         antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
     
-    auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos);
-    auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_mean_pos);
+    auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos);
+    auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_mean_pos,__Flag_get_mean_pos);
     trajectory_timestamp = return_val.first;
     displacement = return_val.second;
 

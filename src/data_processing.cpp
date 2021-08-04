@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
       WSR_Module run_module(config);
 
       std::string output = run_module.__precompute_config["output_aoa_profile_path"]["value"].dump();
+      bool __Flag_get_mean_pos = bool(run_module.__precompute_config["get_mean_pose_RX"]["value"]);
       output.erase(remove( output.begin(), output.end(), '\"' ),output.end());
       std::string rx_robot_csi = foldername + "/" + rx_csi_pre + *ts_it + ".dat";
       std::string traj_fn_rx = foldername + "/" + traj_pre + *ts_it + "_.csv";
@@ -137,18 +138,19 @@ int main(int argc, char *argv[])
             
       std::cout << "log [WSR_Module]: Got offset " << std::endl;
       nc::NdArray<double> mean_pos,true_mean_pos;
+
       //Get relative trajectory if moving ends
       if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
       {          
         //get relative trajectory
-        auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset);
+        auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos);
         trajectory_timestamp = return_val.first;
         displacement = return_val.second;
       }
       else
       {
-        auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos);
-        auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_mean_pos);
+        auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos);
+        auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_mean_pos,__Flag_get_mean_pos);
         trajectory_timestamp = return_val.first;
         displacement = return_val.second;
       }
