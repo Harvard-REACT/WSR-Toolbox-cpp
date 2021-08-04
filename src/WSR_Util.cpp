@@ -669,7 +669,7 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::match_trajectory_t
 std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v2(
                             std::vector<std::vector<double>>& rx_trajectory,
                             std::vector<double>& antenna_offset,
-                            nc::NdArray<double>& mean_pos,
+                            nc::NdArray<double>& pos,
                             bool __Flag_get_mean_pos)
 {
     
