@@ -39,7 +39,7 @@ class WSR_Module
 
         nc::NdArray<double> phi_list,precomp_rep_phi,theta_list, precomp_rep_theta;
         bool __FLAG_normalize_profile = true, __FLAG_packet_threshold = false, __FLAG_debug = true, __FLAG_threading=false,
-            __FLAG_interpolate_phase = true, __FLAG_sub_sample = false;
+            __FLAG_interpolate_phase = true, __FLAG_sub_sample = false, __FLag_use_packet_id = true;
         nc::NdArray<double> __aoa_profile;
         std::unordered_map<std::string, nc::NdArray<double>> __all_aoa_profiles;
         std::unordered_map<std::string, std::vector<double>> __all_topN_confidence;
@@ -118,7 +118,7 @@ class WSR_Module
                                    std::vector<double>& closest_AOA_error,
                                    const std::string& tx_mac_id,
                                    const std::string& tx_name,
-                                   const nc::NdArray<double>& mean_pos,const int pos_idx);
+                                   const nc::NdArray<double>& mean_pos,const std::string pos_idx);
         int test_csi_data(std::string rx_csi_file, 
                         std::unordered_map<std::string, std::string> tx_csi_file);
         nlohmann::json get_performance_stats(const std::string& tx_mac_id,

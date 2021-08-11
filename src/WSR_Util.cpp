@@ -345,7 +345,7 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
 
     nc::NdArray<std::complex<double>> forward_reverse_channel_product;
     nc::NdArray<double> csi_timestamp;
-    nc::NdArray<std::complex<double>> temp1 = nc::zeros<std::complex<double>>(nc::Shape(1,30));
+    nc::NdArray<std::complex<double>> temp1 = nc::zeros<std::complex<double>>(nc::Shape(1,31));
     nc::NdArray<double> temp2 = nc::zeros<double>(nc::Shape(1,1));
     double interpolated_phase;
     std::complex<double> interpolated_h;
@@ -353,8 +353,8 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
 
     calculated_ts_offset = rx_robot[0].ts-tx_robot[0].ts;
     auto ArrayShape = forward_reverse_channel_product.shape();
-    // std::cout << "Initialized size of NdArray " << ArrayShape << std::endl;
-    // std::cout << "Starting to calulate the product for NdArray" << std::endl;
+    std::cout << "Initialized size of NdArray " << ArrayShape << std::endl;
+    std::cout << "Starting to calulate the product for NdArray" << std::endl;
 
     while(itr_k < tx_length) { //&& not(isempty(receiver{k}))){
         if(itr_l < rx_length){
@@ -380,23 +380,16 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                 if(interpolate_phase) 
                 {
                     auto central_snum = nc::NdArray<double>(1, 1) = 15.5;
-                    auto xp = nc::arange<double>(1, 31);
-                    auto fp = unwrap(nc::angle(temp1(0,temp1.cSlice())));
-//                    std::cout << "Unwrapped phase: " << fp << std::endl;
-//                    std::cout << nc::angle(temp1(0,temp1.cSlice())) << std::endl;
+                    auto xp = nc::arange<double>(0, 30);
+                    auto fp = unwrap(nc::angle(temp1(0,nc::Slice(0,30))));
                     auto mag1 = nc::abs(temp1(0,15));
                     auto mag2 = nc::abs(temp1(0,16));
                     auto fitted =  nc::polynomial::Poly1d<double>::fit(xp.transpose(),fp.transpose(),1);
                     interpolated_phase = nc::unwrap(fitted(central_snum(0,0)));
-//                    std::cout << interpolated_phase << std::endl;
-//                    interpolated_phase = (nc::interp(central_snum, xp, fp))(0,0);
-//                    std::cout << interpolated_phase << std::endl;
-//                    interpolated_phase = std::fmod(interpolated_phase + nc::constants::pi , (2 * nc::constants::pi)) - nc::constants::pi;
-//                    std::cout <<std::complex<double>(0,1)*interpolated_phase<<std::endl;
                     interpolated_h = (mag1+mag2)/2*nc::exp(std::complex<double>(0,1)*interpolated_phase);
-//                    std::cout << interpolated_h << std::endl;
-
-//                temp1.tofile("tempTxt", "\n");
+                    
+                    //Store the interpolated phase as subcarrier 31
+                    temp1(0,30) = interpolated_h;
                 }
 //                std::cout << interpolated_phase << std::endl;
                 assert(temp2(0,0) != rx_robot[itr_l].ts);
@@ -406,11 +399,7 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
 
                 if(first_csi_val)
                 {
-                    if(interpolate_phase)
-                        forward_reverse_channel_product = nc::NdArray<std::complex<double>>{interpolated_h};
-                    else
-                        forward_reverse_channel_product = temp1;
-
+                    forward_reverse_channel_product = temp1;
                     csi_timestamp = temp2;
                     first_csi_val = false;
                 }
@@ -420,10 +409,7 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                     
                     csi_timestamp = nc::append(csi_timestamp, temp2, nc::Axis::ROW);
                     assert(csi_timestamp(-2,0)  < csi_timestamp(-1,0));
-                    if(interpolate_phase)
-                        forward_reverse_channel_product = nc::append(forward_reverse_channel_product,nc::NdArray<std::complex<double>>{interpolated_h},nc::Axis::ROW);
-                    else
-                        forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);
+                    forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);
                                    
                 }
             }
