@@ -69,12 +69,12 @@ Note : Make sure that the tx names are passed as a space separated string as sho
 ## Test CSI data using C++ executable
 1. To process multiple data samples in a directory
 ```
-data_processing <dir_path> <trajectory_type> <json_output_start_index> <RX_location_index>
+data_processing <dir_path> <trajectory_type> <json_output_start_index>
 ```
 e.g
 ```
 cd wsr_build
-./data_processing /home/jadhav/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/2D_1_RX_1_TX_RX_P0_TX_P1/ gt 1 1
+./data_processing /home/jadhav/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/2D_1_RX_1_TX_RX_P0_TX_P1/ gt 1
 ```
 
 2. Make sure that the correct flags and parameters are set during initialization. (This requires that the 'debug' config parameter is enabled):
