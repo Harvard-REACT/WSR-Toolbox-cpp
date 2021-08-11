@@ -41,6 +41,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     __FLAG_interpolate_phase = bool(__precompute_config["interpolate_phase"]["value"]);
     __FLAG_sub_sample = bool(__precompute_config["sub_sample_channel_data"]["value"]);
     __FLAG_normalize_profile = bool(__precompute_config["normalize_profile"]["value"]);
+    __FLag_use_packet_id = bool(__precompute_config["use_packet_id"]["value"]);
     bool __FLAG_use_multiple_sub_carriers =  bool(__precompute_config["multiple_sub_carriers"]["value"]);
     bool __FLAG_use_magic_mac = bool(__precompute_config["use_magic_mac"]["value"]);
     
@@ -192,6 +193,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
     for (int num_tx=0; num_tx<mac_id_tx.size(); num_tx++)
     {
         WIFI_Agent TX_Neighbor_robot; // Neighbouring robots who reply back
+        std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> csi_data;
 
         if(tx_csi_file.find (mac_id_tx[num_tx]) == tx_csi_file.end()) 
         {
@@ -215,14 +217,32 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                       << data_packets_RX.size() << std::endl;
             std::cout << "log [calculate_AOA_profile]: Packets for RX_SAR_robot collected by TX_Neighbor_robot : "
                       << data_packets_TX.size() << std::endl;
-            std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product using Counter " << std::endl;
+            
         }
         
-        auto csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
-                                                          data_packets_TX,
-                                                          __FLAG_interpolate_phase,
-                                                          __FLAG_sub_sample);
-                                                          
+
+        if(__FLag_use_packet_id)
+        {
+            std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product using Counter " << std::endl;
+            csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
+                                                            data_packets_TX,
+                                                            __FLAG_interpolate_phase,
+                                                            __FLAG_sub_sample);
+        }
+        else
+        {
+            std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product using Timestamps " << std::endl;
+            csi_data = utils.getForwardReverseChannel_v2(data_packets_RX,
+                                                            data_packets_TX,
+                                                            __time_offset,
+                                                            __time_threshold,
+                                                            cal_ts_offset,
+                                                            __FLAG_interpolate_phase,
+                                                            __FLAG_sub_sample);
+        }
+
+
+        std::cout << "log [calculate_AOA_profile]: corrected CFO " << std::endl;
         h_list_all = csi_data.first;
         csi_timestamp_all = csi_data.second;
 
@@ -1266,7 +1286,7 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                            std::vector<double>& closest_AOA_error,
                            const std::string& tx_mac_id,
                            const std::string& tx_name,
-                           const nc::NdArray<double>& mean_pos, const int pos_idx)
+                           const nc::NdArray<double>& mean_pos, const std::string pos_idx)
 {
     nlohmann::json output_stats = {
             {"a_Info_TX",{
