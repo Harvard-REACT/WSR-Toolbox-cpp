@@ -20,10 +20,11 @@ int main(int argc, char *argv[])
 
     string foldername = argv[1];
     string traj_type = argv[2];
-    int start_integer = std::stoi(argv[3]);
+    int start_integer = std::stoi(argv[3]), loc_idx=0;
     string rx_csi_pre = "csi_rx_";
     string tx_csi_pre = "csi_";
-    string traj_pre, true_traj_pre, loc_idx; 
+    string traj_pre, true_traj_pre;
+
     
     true_traj_pre = "rx_trajectory_";
     if (traj_type == "odom")
@@ -156,7 +157,7 @@ int main(int argc, char *argv[])
 
       //Get all True AOA angles
       nlohmann::json true_positions_tx = TX_gt_positions["true_tx_positions"];
-      loc_idx = TX_gt_positions["true_rx_position"]["value"].dump();
+      loc_idx = int(TX_gt_positions["true_rx_position"]["value"]);
       auto all_true_AOA = utils.get_true_aoa_v2(true_mean_pos, true_positions_tx);
 
       run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
