@@ -177,15 +177,6 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         mac_id_tx.push_back(key.first);
     }
 
-    // std::cout << "log [calculate_AOA_profile]: Receiving robot IDs = "
-    //           << receiving_robot.unique_mac_ids_packets.size() << std::endl;
-    // for(auto key : receiving_robot.unique_mac_ids_packets)
-    // {
-    //     if(__FLAG_debug) std::cout << "log [calculate_AOA_profile]: MAC ID = "
-    //                                << key.first << ", Packet count: = " << key.second << std::endl;
-    //     mac_id_rx.push_back(key.first);
-    // }
-
     //Get AOA profile for each of the RX neighboring robots
     if(__FLAG_debug) std::cout << "log [calculate_AOA_profile]: Getting AOA profiles" << std::endl;
     std::vector<DataPacket> data_packets_RX, data_packets_TX;
@@ -207,6 +198,13 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
 
         auto temp2 = utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], 
                                                             TX_Neighbor_robot,__FLAG_debug);
+
+        for(auto key : TX_Neighbor_robot.unique_mac_ids_packets)
+        {
+            if(__FLAG_debug) std::cout << "log [calculate_AOA_profile]: Detected RX MAC IDs = " << key.first 
+                                    << ", Packet count: = " << key.second << std::endl;
+            mac_id_tx.push_back(key.first);
+        }
 
         data_packets_RX = RX_SAR_robot.get_wifi_data(mac_id_tx[num_tx]); //Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
         data_packets_TX = TX_Neighbor_robot.get_wifi_data(__RX_SAR_robot_MAC_ID); //Packets only of RX_SAR_robot in a TX_Neighbor_robot's csi file

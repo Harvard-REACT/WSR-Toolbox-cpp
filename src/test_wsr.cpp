@@ -140,8 +140,6 @@ int main(){
 
             string profile_op_fn = utils.__homedir+output+"/"+run_module.tx_name_list[tx_id]+"_aoa_profile_"+ts+".csv";
             utils.writeToFile(profile,profile_op_fn);
-            std::cout << profile_op_fn << std::endl;
-
 
             true_phi = all_true_AOA[run_module.tx_name_list[tx_id]].first;
             true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
