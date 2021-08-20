@@ -1286,7 +1286,7 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                            std::vector<double>& closest_AOA_error,
                            const std::string& tx_mac_id,
                            const std::string& tx_name,
-                           const nc::NdArray<double>& mean_pos, const std::string pos_idx)
+                           const nc::NdArray<double>& mean_pos, const int pos_idx)
 {
     nlohmann::json output_stats = {
             {"a_Info_TX",{

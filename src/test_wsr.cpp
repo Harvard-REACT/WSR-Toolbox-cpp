@@ -91,7 +91,7 @@ int main(){
     {
         
         std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
-        nc::NdArray<double> mean_pos;
+        nc::NdArray<double> mean_pos,true_mean_pos;
         //Get relative trajectory if moving ends
         if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
         {          
@@ -136,23 +136,27 @@ int main(){
           }
           else
           {
+            std::cout << "Writing profile csv data" << std::endl;
+
             string profile_op_fn = utils.__homedir+output+"/"+run_module.tx_name_list[tx_id]+"_aoa_profile_"+ts+".csv";
             utils.writeToFile(profile,profile_op_fn);
+            std::cout << profile_op_fn << std::endl;
+
 
             true_phi = all_true_AOA[run_module.tx_name_list[tx_id]].first;
             true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
 
             auto topN_angles = all_topN_angles[tx_id];
+
             std::vector<double> top_aoa_error = run_module.top_aoa_error(topN_angles.first[0],
                                                                          topN_angles.second[0],
                                                                          all_true_AOA[run_module.tx_name_list[tx_id]],
                                                                          trajType);
-
+            
             std::vector<double> closest_AOA_error = run_module.get_aoa_error(topN_angles,
                                                                              all_true_AOA[run_module.tx_name_list[tx_id]],
                                                                              aoa_confidence,
                                                                              trajType);
-
             auto stats = run_module.get_stats(true_phi, true_theta,
                                               top_aoa_error, closest_AOA_error,
                                               tx_id, run_module.tx_name_list[tx_id],
