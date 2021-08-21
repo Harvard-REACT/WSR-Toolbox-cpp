@@ -180,7 +180,15 @@
         "value":{
             "tx1":{
                 "mac_id":"0FF:FF:FF:FF:FF:FF",
-                "csi_fn":"/Downloads/test_matt_data/csi_tx1.dat"
+                "csi_fn":"/Downloads/test/csi_tx1.dat"
+            },
+            "tx2":{
+                "mac_id":"00:21:6A:3F:17:5A",
+                "csi_fn":"/Downloads/test/csi_tx1.dat"
+            },
+            "tx3":{
+                "mac_id":"00:21:6A:3F:17:5A",
+                "csi_fn":"/Downloads/test/csi_tx1.dat"
             }
         }
     },
@@ -188,12 +196,12 @@
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
         "value":{           
             "mac_id":"00:21:6A:B2:6E:FA",
-            "csi_fn":"/Downloads/test_matt_data/csi_rx.dat"
+            "csi_fn":"/Downloads/test/csi_rx.dat"
         }
     },
     "input_trajectory_csv_fn_rx":{
         "desc":"Trajectory fiile",
-        "value":"/Downloads/test_matt_data/rx_trajectory.csv"
+        "value":"/Downloads/test/rx_trajectory.csv"
     },
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
@@ -271,10 +279,10 @@
     },
     "get_mean_pose_RX": {
         "desc": "Get mean pose of the RX along its sub-trajectory",
-        "value": false
+        "value": true
     },
     "use_packet_id":{
         "desc": "Match forward-reverse packets using packet id instead of timestamps",
-        "value": true
+        "value": false
     }
 }
