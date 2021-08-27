@@ -28,7 +28,7 @@ class WSR_Module
         int _topN_count = 1, __max_packets_to_process=500, __min_packets_to_process=10;
         int _phi_min=-180, _phi_max=180, _theta_min = 0,_theta_max=180;
         std::vector<double> __aoa_confidence;
-        std::string __RX_SAR_robot_MAC_ID;
+        std::string __RX_SAR_robot_MAC_ID, __trajType;
         nc::NdArray<double> compute_profile_bartlett_multithread(
                             const nc::NdArray<std::complex<double>>& h_list, 
                             const nc::NdArray<double>& pose_list);
@@ -103,14 +103,13 @@ class WSR_Module
                             int start, int end, int rows, int cols);  
 
         double  __vm_before=0, __vm_after=0, __rss_before=0, __rss_after=0;
-        double get_confidence(double phi_ind, double theta_ind);
+        float get_profile_variance(double phi_ind, double theta_ind);
         double get_processing_time(const std::string& tx_mac_id);
         std::vector<double> top_aoa_error(double phi, double theta,
                                           std::pair<double,double> groundtruth_angles,
                                           const string& traj_type);
         std::vector<double> get_aoa_error(const std::pair<std::vector<double>,std::vector<double>>& topN_AOA,
                                           std::pair<double,double> groundtruth_angles,
-                                          std::vector<double>top_N_confidence,
                                           const string& traj_type);
         nlohmann::json get_stats(double true_phi,
                                    double true_theta,
