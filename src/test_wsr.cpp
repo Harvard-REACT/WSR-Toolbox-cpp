@@ -153,7 +153,6 @@ int main(){
             
             std::vector<double> closest_AOA_error = run_module.get_aoa_error(topN_angles,
                                                                              all_true_AOA[run_module.tx_name_list[tx_id]],
-                                                                             aoa_confidence,
                                                                              trajType);
             auto stats = run_module.get_stats(true_phi, true_theta,
                                               top_aoa_error, closest_AOA_error,
