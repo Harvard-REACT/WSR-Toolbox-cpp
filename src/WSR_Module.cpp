@@ -45,6 +45,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     bool __FLAG_use_multiple_sub_carriers =  bool(__precompute_config["multiple_sub_carriers"]["value"]);
     bool __FLAG_use_magic_mac = bool(__precompute_config["use_magic_mac"]["value"]);
     
+    
     //calculate channel freqeuency based on channel and subcarrier number
     double centerfreq = (5000 + double(__precompute_config["channel"]["value"])*5)*1e6 + 
                         (double(__precompute_config["subCarrier"]["value"]) - 15.5)*20e6/30;    
@@ -64,7 +65,8 @@ WSR_Module::WSR_Module(std::string config_fn)
     __peak_radius = int(__precompute_config["peak_radius"]["value"]);
     __snum_end = __FLAG_use_multiple_sub_carriers ? int(__precompute_config["scnum_end"]["value"]) : 
                 int(__precompute_config["scnum_start"]["value"])+1; 
-    
+    __trajType = __precompute_config["trajectory_type"]["value"];
+
     if(__FLAG_use_magic_mac)
     {
         __RX_SAR_robot_MAC_ID = __precompute_config["Magic_MAC_ID"]["value"];
@@ -120,7 +122,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     {
         //List of bool flags that impact calculations
         std::cout << "log [Precomp]: Important FLAGS status" << std::endl;
-        std::cout << "  Trajectory Type = " << __precompute_config["trajectory_type"]["value"] << std::endl;
+        std::cout << "  Trajectory Type = " << __trajType << std::endl;
         std::cout << "  WiFi Channel = " << double(__precompute_config["channel"]["value"]) << std::endl;
         std::cout << "  Channel center frequency (GHz) = " << centerfreq << std::endl;
         std::cout << "  __FLAG_packet_threshold = " << utils.bool_to_string(__FLAG_packet_threshold) << std::endl;
@@ -198,13 +200,6 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                   << ", TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
 
         auto temp2 = utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], TX_Neighbor_robot,__FLAG_debug);
-
-        for(auto key : TX_Neighbor_robot.unique_mac_ids_packets)
-        {
-            if(__FLAG_debug) std::cout << "log [calculate_AOA_profile]: Detected MAC ID = " << key.first 
-                                    << ", Packet count: = " << key.second << std::endl;
-            mac_id_tx.push_back(key.first);
-        }
 
         for(auto key : TX_Neighbor_robot.unique_mac_ids_packets)
         {
@@ -960,11 +955,11 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
     if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] Top elevation angle " << peak_ind << " : "
                                 << 180 - theta_list(0,theta_idx)*180/M_PI << std::endl;
     ret_theta.push_back(180 - theta_list(0,theta_idx)*180/M_PI);
-    double confidence = get_confidence(phi_idx,theta_idx);
+    float variance = get_profile_variance(phi_idx,theta_idx);
 
-    __aoa_confidence.push_back(confidence);
+    __aoa_confidence.push_back(variance);
 
-    if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] confidence " << peak_ind << " : " << confidence << std::endl;
+    if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] confidence " << peak_ind << " : " << variance << std::endl;
 //    phi_indexes_stored(0,phi_idx) = 1;
 //    theta_indexes_stored(0,theta_idx) = 1;
 
@@ -1053,10 +1048,6 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
                 std::cout << "log [calculate_AOA_profile] Top elevation angle " << peak_ind << " : "
                           << 180 - theta_list(0, theta_idx) * 180 / M_PI << std::endl;
             ret_theta.push_back(180 - theta_list(0, theta_idx) * 180 / M_PI);
-            confidence = get_confidence(phi_idx, theta_idx);
-            if (__FLAG_debug)
-                std::cout << "log [calculate_AOA_profile] confidence" << peak_ind << " : " << confidence << std::endl;
-            __aoa_confidence.push_back(confidence);
 //            phi_indexes_stored(0,phi_idx) = 1;
 //            theta_indexes_stored(0,theta_idx) = 1;
             for (int i = -radius; i < radius; i++) {
@@ -1087,24 +1078,36 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
     return std::make_pair(ret_phi, ret_theta);
 }
 
-double WSR_Module::get_confidence(double phi_ind, double theta_ind) {
+float WSR_Module::get_profile_variance(double phi_ind, double theta_ind) {
    
+    float sumf = __aoa_profile.sum()(0,0);
     auto twod_profile = nc::sum(__aoa_profile, nc::Axis::COL);
-//    std::cout << twod_profile;
-//    std::cout << twod_profile.shape();
-    double sumf = __aoa_profile.sum()(0,0);
-    double sigma_f = 0, sigma_n = 0;
-    for(size_t ind_r = 0; ind_r<__nphi; ind_r++){
-        for(size_t ind_c = 0; ind_c < __ntheta;ind_c++)
+    // std::cout << twod_profile.shape() << std::endl;
+    float sigma_f = 0, sigma_n = 0, temp1 = 0, temp2;
+    
+    
+    if(__trajType == "2D")
+    {
+        for(size_t ind_r = 0; ind_r<__nphi; ind_r++)
         {
-//            sigma_f += abs(WSR_Util::diff_360(ind_r,phi_ind))*abs(ind_c-theta_ind)*__aoa_profile(ind_r,ind_c)/sumf;
-//            sigma_n += abs(WSR_Util::diff_360(ind_r,phi_ind))*abs(ind_c-theta_ind)*sumf/(__ntheta*__nphi);
-            sigma_f += (pow((WSR_Util::diff_360(ind_r,phi_ind)),2)+pow(abs(ind_c-theta_ind),2))*__aoa_profile(ind_r,ind_c)/sumf;
-            sigma_n +=  (pow((WSR_Util::diff_360(ind_r,phi_ind)),2)+pow(abs(ind_c-theta_ind),2))*sumf/(__ntheta*__nphi);
-//                sigma_f += pow((WSR_Util::diff_360(ind_r,phi_ind)),2)*twod_profile(0,ind_r)/sumf;
-//            sigma_n +=  pow((WSR_Util::diff_360(ind_r,phi_ind)),2)*sumf/(__nphi);
+            temp1 = pow((WSR_Util::diff_360(ind_r,phi_ind)),2);
+            sigma_f += (temp1*twod_profile(0,ind_r)/sumf);
+            sigma_n += (temp1*sumf/(__nphi));
         }
     }
+    else
+    {
+        for(size_t ind_r = 0; ind_r<__nphi; ind_r++){
+            for(size_t ind_c = 0; ind_c < __ntheta;ind_c++)
+            {
+                temp1 = pow((WSR_Util::diff_360(ind_r,phi_ind)),2);
+                temp2 = pow((ind_c-theta_ind),2);
+                sigma_f += ((temp1+temp2)*__aoa_profile(ind_r,ind_c)/sumf);
+                sigma_n += ((temp1+temp2)*sumf/(__ntheta*__nphi));                
+            }
+        }
+    }
+
     return sigma_f/sigma_n;
 }
 
@@ -1115,7 +1118,6 @@ double WSR_Module::get_confidence(double phi_ind, double theta_ind) {
  * */
 std::vector<double> WSR_Module::get_aoa_error(const std::pair<std::vector<double>,std::vector<double>>& topN_AOA,
                                               std::pair<double,double> groundtruth_angles,
-                                              std::vector<double>top_N_confidence,
                                               const string& traj_type)
 {
     std::vector<std::pair<double,double>> true_aoa_angles;
@@ -1127,7 +1129,7 @@ std::vector<double> WSR_Module::get_aoa_error(const std::pair<std::vector<double
     double true_theta=groundtruth_angles.second;
     double min_aoa_error=1000, err=0, phi_error=0, theta_error=0;
     double min_phi_error =0, min_theta_error=0;
-    double closest_phi=0, closest_theta=0, closest_confidence=0;
+    double closest_phi=0, closest_theta=0;
 
     for(int i=0; i<topN_phi.size(); i++)
     {
@@ -1153,14 +1155,12 @@ std::vector<double> WSR_Module::get_aoa_error(const std::pair<std::vector<double
             min_theta_error = theta_error;
             closest_phi = topN_phi[i];
             closest_theta = topN_theta[i];
-            closest_confidence = top_N_confidence[i];
         }
     }
 
     //Store the error values to the closest AOA peak
     aoa_error_metrics.push_back(closest_phi);
     aoa_error_metrics.push_back(closest_theta);
-    aoa_error_metrics.push_back(closest_confidence);
     aoa_error_metrics.push_back(min_aoa_error);
     aoa_error_metrics.push_back(min_phi_error);
     aoa_error_metrics.push_back(min_theta_error);
@@ -1191,7 +1191,6 @@ std::vector<double> WSR_Module::top_aoa_error(double phi, double theta,
 
     ret.push_back(phi);
     ret.push_back(theta);
-    // ret.push_back(__aoa_confidence[0]);
     ret.push_back(err);
     ret.push_back(phi_error);
     ret.push_back(theta_error);
@@ -1334,12 +1333,12 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
             {"d_Info_AOA_Closest",{
                 {"Phi(deg)", closest_AOA_error[0]},
                 {"Theta(deg)", closest_AOA_error[1]},
-                {"Confidence", closest_AOA_error[2]},
-                {"Total_AOA_Error(deg)", closest_AOA_error[3]},
-                {"Phi_Error(deg)", closest_AOA_error[4]},
-                {"Theta_Error(deg)", closest_AOA_error[5]}
+                {"Total_AOA_Error(deg)", closest_AOA_error[2]},
+                {"Phi_Error(deg)", closest_AOA_error[3]},
+                {"Theta_Error(deg)", closest_AOA_error[4]}
             }},
             {"RX_idx", pos_idx},
+            {"RX_displacement", __trajType},
             {"RX_position",{
                 {"x", mean_pos(0,0)},
                 {"y",mean_pos(0,1)},
