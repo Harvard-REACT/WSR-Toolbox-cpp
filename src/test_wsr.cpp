@@ -93,16 +93,19 @@ int main(){
         std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
         nc::NdArray<double> mean_pos,true_mean_pos;
         //Get relative trajectory if moving ends
+        bool __Flag_offset = true;
         if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
         {          
           //get relative trajectory
-          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos);
+          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos,__Flag_offset);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
         else
         {
-          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos);
+
+          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos,__Flag_offset);
+          __Flag_offset = false;
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
