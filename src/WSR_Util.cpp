@@ -562,16 +562,16 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::getRelativeTraject
                                                     std::vector<std::vector<double>>& trajectory_tx,
                                                     std::vector<std::vector<double>>& trajectory_rx,
                                                     std::vector<double>& antenna_offset,
-                                                    bool __Flag_get_mean_pos)
+                                                    bool __Flag_get_mean_pos,bool __Flag_offset)
 {
 
     //TODO : return mean pos for the relative trajectory.
     nc::NdArray<double> mean_pos1,mean_pos2;
-    auto ret_val = formatTrajectory_v2(trajectory_tx,antenna_offset,mean_pos1,__Flag_get_mean_pos); //Assumes both robots have identical antenna offset to local displacement sensor
+    auto ret_val = formatTrajectory_v2(trajectory_tx,antenna_offset,mean_pos1,__Flag_get_mean_pos,__Flag_offset); //Assumes both robots have identical antenna offset to local displacement sensor
     nc::NdArray<double> timestamp_tx = ret_val.first;
     nc::NdArray<double> displacement_tx = ret_val.second;
 
-    auto ret_val2 = formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos2,__Flag_get_mean_pos);
+    auto ret_val2 = formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos2,__Flag_get_mean_pos,__Flag_offset);
     nc::NdArray<double> timestamp_rx = ret_val2.first;
     nc::NdArray<double> displacement_rx = ret_val2.second;
     
@@ -656,22 +656,50 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
                             std::vector<std::vector<double>>& rx_trajectory,
                             std::vector<double>& antenna_offset,
                             nc::NdArray<double>& pos,
-                            bool __Flag_get_mean_pos)
+                            bool __Flag_get_mean_pos,
+                            bool __Flag_offset)
 {
-    
-    nc::NdArray<double> displacement(rx_trajectory.size(),3);
+
+    nc::NdArray<double> displacement(rx_trajectory.size(),4); //x,y,z,yaw
     nc::NdArray<double> trajectory_timestamp(rx_trajectory.size(),1);
     std::cout.precision(9);
     double nsec_timestamp;
+    Eigen::Quaternion<float> q,q_diff;
+    float yaw=0;
+    Eigen::Vector3f ori_now,ori_start;
+    Eigen::Matrix3f rotationMatrix;
+    Eigen::Vector3f offset_vector(antenna_offset[0],antenna_offset[1],antenna_offset[2]), position_vector(antenna_offset[0],antenna_offset[1],antenna_offset[2]);
 
     for(int i=0; i<rx_trajectory.size(); i++){
         nsec_timestamp = rx_trajectory[i][0] + rx_trajectory[i][1]*0.000000001;
         trajectory_timestamp(i,0) = nsec_timestamp; //timestamp  //TODO: fix bug #8
-        displacement(i,0) = rx_trajectory[i][2] + antenna_offset[0]; //x
-        displacement(i,1) = rx_trajectory[i][3] + antenna_offset[1]; //y
-        displacement(i,2) = rx_trajectory[i][4] + antenna_offset[2]; //z
-    }
+        
+        
+        if(__Flag_offset)
+        {
+            q.x() = rx_trajectory[i][5];
+            q.y() = rx_trajectory[i][6];
+            q.z() = rx_trajectory[i][7];
+            q.w() = rx_trajectory[i][8];
+            ori_now = q.toRotationMatrix().eulerAngles(0, 1, 2);//r,p,y
+            if(i>0) yaw = wrapNegPitoPi(ori_now[2]-ori_start[2]);
+            else ori_start = ori_now;
+            q_diff = Eigen::AngleAxisf(0, Eigen::Vector3f::UnitX()) * 
+                     Eigen::AngleAxisf(0, Eigen::Vector3f::UnitY())* 
+                     Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitZ());
+            rotationMatrix = q_diff.normalized().toRotationMatrix();
+            position_vector = rotationMatrix*offset_vector;
+        }
 
+        displacement(i,0) = rx_trajectory[i][2] + position_vector[0]; //x
+        displacement(i,1) = rx_trajectory[i][3] + position_vector[1]; //y
+        displacement(i,2) = rx_trajectory[i][4] + position_vector[2]; //z
+        if(rx_trajectory[i].size()>5)
+            displacement(i,3) = get_yaw(rx_trajectory[i][5],rx_trajectory[i][6],rx_trajectory[i][7],rx_trajectory[i][8]);
+        else
+            displacement(i,3) = 0;
+    }
+    std::cout << "Displacement updated" << std::endl;
     nc::NdArray<nc::uint32> sortedIdxs = argsort(trajectory_timestamp);
     nc::NdArray<double> sorted_trajectory_timestamp(trajectory_timestamp.size(),1);
     nc::NdArray<double> sorted_displacement;
@@ -746,10 +774,10 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     }
 
     // std::cout << sorted_trajectory_timestamp({start_index,end_index},sorted_trajectory_timestamp.cSlice()).shape() <<std::endl;
-    // std::cout << "sorted traj shape " << sorted_displacement({start_index,end_index},sorted_displacement.cSlice()).shape() << std::endl;
+    //std::cout << "sorted traj shape " << sorted_displacement({start_index,end_index},nc::Slice(0, 3)).shape() << std::endl;
 
     return std::make_pair(sorted_trajectory_timestamp({start_index,end_index},sorted_trajectory_timestamp.cSlice()), 
-                         sorted_displacement({start_index,end_index},sorted_displacement.cSlice()));
+                         sorted_displacement({start_index,end_index},nc::Slice(0, 3)));
 }
 
 
@@ -1149,7 +1177,7 @@ std::unordered_map<std::string, std::pair<double,double>> WSR_Util::get_true_aoa
  *
  *
  * */
-std::unordered_map<std::string, std::pair<double,double>> WSR_Util::get_true_aoa_v2(nc::NdArray<double>& mean_pos,
+std::unordered_map<std::string, std::pair<double,double>> WSR_Util::get_true_aoa_v2(nc::NdArray<double>& pos,
                                                                                  nlohmann::json true_positions_tx)
 {
     std::unordered_map<std::string, std::pair<double,double>> true_aoa_angles;
@@ -1165,9 +1193,9 @@ std::unordered_map<std::string, std::pair<double,double>> WSR_Util::get_true_aoa
 
         //First position
         //std::cout << gt_x <<", " << displacement(0,0) << "," << gt_y << "," << displacement(0,1) << std::endl;
-        x_diff = gt_x - mean_pos(0,0);
-        y_diff = gt_y - mean_pos(0,1);
-        z_diff = gt_z - mean_pos(0,2);
+        x_diff = gt_x - pos(0,0);
+        y_diff = gt_y - pos(0,1);
+        z_diff = gt_z - pos(0,2);
         true_phi = std::atan2 (y_diff,x_diff);
         temp = std::atan2(z_diff,std::sqrt(std::pow(x_diff,2) + std::pow(y_diff,2)));
         true_theta += (M_PI/2 - temp);
@@ -1455,4 +1483,35 @@ double WSR_Util::diff_360(double a, double b) {
     else if(tmp < -180)
         tmp += 360;
     return tmp;
+}
+//=============================================================================================================================
+/**
+ * 
+ * 
+ * */
+float WSR_Util::wrapNegPitoPi(float val) {
+    val = fmod(val + PI, 2*PI);
+
+    if (val < 0)
+        val += 2*PI;
+
+    return val - PI;
+} 
+//=============================================================================================================================
+/**
+ * 
+ * 
+ * */
+double WSR_Util::get_yaw(double& x, double& y, double& z, double& w)
+{
+    Eigen::Quaternion<float> q;
+    double yaw=0;
+    Eigen::Vector3f ori_now;
+    q.x() = x;
+    q.y() = y;
+    q.z() = z;
+    q.w() = w;
+    ori_now = q.toRotationMatrix().eulerAngles(0, 1, 2);//r,p,y
+    yaw = wrapNegPitoPi(ori_now[2]);
+    return yaw;
 }
