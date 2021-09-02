@@ -116,8 +116,10 @@ int main(int argc, char *argv[])
     else if (traj_type == "odom")
         antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
     
-    auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos);
-    auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_mean_pos,__Flag_get_mean_pos);
+    bool __Flag_offset = false;
+    auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos,__Flag_offset);
+    __Flag_offset = false;
+    auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_mean_pos,__Flag_get_mean_pos,__Flag_offset);
     trajectory_timestamp = return_val.first;
     displacement = return_val.second;
 

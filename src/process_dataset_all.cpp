@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
         traj_pre = "rx_trajectory_";
     
     int stat_itr = 0 + start_integer;
-    nlohmann::json all_stats;
+    nlohmann::json all_stats, all_stats2;
 
     //Process the dataset one subfolder at a time
     for (const auto & entry : fs::directory_iterator(dataset))
@@ -141,20 +141,22 @@ int main(int argc, char *argv[])
           antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
               
         std::cout << "log [WSR_Module]: Got offset " << std::endl;
-        nc::NdArray<double> mean_pos,true_mean_pos;
+        nc::NdArray<double> pos,true_pos;
 
         //Get relative trajectory if moving ends
+        bool __Flag_offset = false;
         if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
         {          
           //get relative trajectory
-          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos);
+          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos,__Flag_offset);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
         else
         {
-          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos);
-          auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_mean_pos,__Flag_get_mean_pos);
+          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,pos,__Flag_get_mean_pos,__Flag_offset);
+          bool __Flag_offset = false;
+          auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_pos,__Flag_get_mean_pos,__Flag_offset);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
@@ -162,7 +164,7 @@ int main(int argc, char *argv[])
         //Get all True AOA angles
         nlohmann::json true_positions_tx = TX_gt_positions["true_tx_positions"];
         loc_idx = int(TX_gt_positions["true_rx_position"]["value"]);
-        auto all_true_AOA = utils.get_true_aoa_v2(true_mean_pos, true_positions_tx);
+        auto all_true_AOA = utils.get_true_aoa_v2(true_pos, true_positions_tx);
 
         run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
         auto all_aoa_profile = run_module.get_all_aoa_profile();
@@ -171,7 +173,7 @@ int main(int argc, char *argv[])
         string trajType = run_module.__precompute_config["trajectory_type"]["value"];
         double true_phi, true_theta;
 
-        nlohmann::json stats_per_sample;
+        nlohmann::json stats_per_sample,stats_per_sample2;
         std::cout << "Getting AOA profile stats for TX Neighbor robots" << std::endl;
         for(auto & itr : all_aoa_profile)
         {
@@ -207,12 +209,22 @@ int main(int argc, char *argv[])
                                                                               all_true_AOA[run_module.tx_name_list[tx_id]],
                                                                               trajType);
 
+            std::vector<vector<float>> top_peaks_AOA_Error = run_module.get_aoa_error_top_peaks(topN_angles,
+                                                                  all_true_AOA[run_module.tx_name_list[tx_id]],
+                                                                  trajType);
+            
             auto stats = run_module.get_stats(true_phi, true_theta,
                                               top_aoa_error, closest_AOA_error,
                                               tx_id, run_module.tx_name_list[tx_id],
-                                              true_mean_pos,loc_idx);
+                                              true_pos,loc_idx);
+
+            auto stats2 = run_module.get_stats_top_peaks(true_phi, true_theta,
+                                                        top_peaks_AOA_Error,
+                                                        tx_id, run_module.tx_name_list[tx_id],
+                                                        true_pos,loc_idx);
 
             stats_per_sample.push_back(stats);
+            stats_per_sample2.push_back(stats2);
 
           }
         }
@@ -221,10 +233,15 @@ int main(int argc, char *argv[])
           all_stats = {
             {std::to_string(stat_itr),stats_per_sample}
           };
+          all_stats2 = {
+            {std::to_string(stat_itr),stats_per_sample2}
+          };
         }
         else
+        {
           all_stats.push_back({std::to_string(stat_itr), stats_per_sample});
-        
+          all_stats2.push_back({std::to_string(stat_itr), stats_per_sample2});
+        }
         stat_itr+=1;
       }
     }
@@ -232,4 +249,6 @@ int main(int argc, char *argv[])
     std::cout << stat_itr;
     std::ofstream file("key.json");
     file << all_stats;
+    std::ofstream file2("top_peak_error.json");
+    file2 << all_stats2;
 }

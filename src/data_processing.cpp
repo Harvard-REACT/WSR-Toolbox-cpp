@@ -139,21 +139,24 @@ int main(int argc, char *argv[])
       std::cout << "log [WSR_Module]: Got offset " << std::endl;
       nc::NdArray<double> mean_pos,true_mean_pos;
 
-      //Get relative trajectory if moving ends
-      if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
-      {          
-        //get relative trajectory
-        auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos);
-        trajectory_timestamp = return_val.first;
-        displacement = return_val.second;
-      }
-      else
-      {
-        auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos);
-        auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_mean_pos,__Flag_get_mean_pos);
-        trajectory_timestamp = return_val.first;
-        displacement = return_val.second;
-      }
+        //Get relative trajectory if moving ends
+        bool __Flag_offset = true;
+        if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
+        {          
+          //get relative trajectory
+          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos,__Flag_offset);
+          trajectory_timestamp = return_val.first;
+          displacement = return_val.second;
+        }
+        else
+        {
+
+          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos,__Flag_offset);
+          __Flag_offset = false;
+          auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_mean_pos,__Flag_get_mean_pos,__Flag_offset);
+          trajectory_timestamp = return_val.first;
+          displacement = return_val.second;
+        }
 
       //Get all True AOA angles
       nlohmann::json true_positions_tx = TX_gt_positions["true_tx_positions"];
