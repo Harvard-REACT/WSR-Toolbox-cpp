@@ -37,11 +37,11 @@ class WSR_Util{
         std::pair<nc::NdArray<double>, nc::NdArray<double>> formatTrajectory_v2(std::vector<std::vector<double>>& rx_trajectory,
                                                                                 std::vector<double>& antenna_offset,
                                                                                 nc::NdArray<double>& mean_pos,
-                                                                                bool __Flag_get_mean_pos);
+                                                                                bool __Flag_get_mean_pos,bool __Flag_offset);
         std::pair<nc::NdArray<double>, nc::NdArray<double>> getRelativeTrajectory(std::vector<std::vector<double>>& trajectory_tx,
                                                                                   std::vector<std::vector<double>>& trajectory_rx,
                                                                                   std::vector<double>& antenna_offset,
-                                                                                  bool __Flag_get_mean_pos);
+                                                                                  bool __Flag_get_mean_pos, bool __Flag_offset);
         std::pair<int,int> returnClosestIndices(const nc::NdArray<double>& csi_timestamp,
                                                 const nc::NdArray<double>& trajectory_timestamp);
 
@@ -97,6 +97,8 @@ class WSR_Util{
         double static diff_360(double a, double b);
         std::unordered_map<std::string, std::pair<double,double>> get_true_aoa_v2(nc::NdArray<double>& mean_pos,
                                                                                  nlohmann::json true_positions_tx);
+        float wrapNegPitoPi(float val);
+        double get_yaw(double& x, double& y, double& z, double& w);
 };
 
 
