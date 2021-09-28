@@ -26,8 +26,8 @@ class WSR_Module
                                                 __closest_peak_confidence, __top_peak_confidence;
         std::unordered_map<std::string, int> __paired_pkt_count,__tx_pkt_size,__rx_pkt_size;
         int _topN_count = 1, __max_packets_to_process=500, __min_packets_to_process=10;
-        int _phi_min=-180, _phi_max=180, _theta_min = 0,_theta_max=180;
-        std::vector<double> __aoa_confidence;
+        int _phi_min=-180, _phi_max=180, _theta_min = 0,_theta_max=180, __relative_magnitude_threshold=40;
+        std::vector<double> __aoa_profile_variance;
         std::string __RX_SAR_robot_MAC_ID, __trajType;
         nc::NdArray<double> compute_profile_bartlett_multithread(
                             const nc::NdArray<std::complex<double>>& h_list, 
@@ -108,13 +108,12 @@ class WSR_Module
         std::vector<double> top_aoa_error(double phi, double theta,
                                           std::pair<double,double> groundtruth_angles,
                                           const string& traj_type);
-        std::vector<double> get_aoa_error(const std::pair<std::vector<double>,std::vector<double>>& topN_AOA,
+        std::vector<std::vector<float>> get_aoa_error(const std::pair<std::vector<double>,std::vector<double>>& topN_AOA,
                                           std::pair<double,double> groundtruth_angles,
                                           const string& traj_type);
         nlohmann::json get_stats(double true_phi,
                                    double true_theta,
-                                   std::vector<double>& top_aoa_error,
-                                   std::vector<double>& closest_AOA_error,
+                                   std::vector<std::vector<float>>& aoa_error,
                                    const std::string& tx_mac_id,
                                    const std::string& tx_name,
                                    const nc::NdArray<double>& mean_pos,const int pos_idx);

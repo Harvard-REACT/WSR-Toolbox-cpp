@@ -66,6 +66,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     __snum_end = __FLAG_use_multiple_sub_carriers ? int(__precompute_config["scnum_end"]["value"]) : 
                 int(__precompute_config["scnum_start"]["value"])+1; 
     __trajType = __precompute_config["trajectory_type"]["value"];
+    __relative_magnitude_threshold = int(__precompute_config["top_N_magnitude"]["value"]);
 
     if(__FLAG_use_magic_mac)
     {
@@ -342,12 +343,12 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             __channel_phase_diff_stdev[mac_id_tx[num_tx]] =  moving_channel_ang_diff_stdev;
             __static_channel_phase_mean[mac_id_tx[num_tx]] =  static_channel_ang_mean;
             __static_channel_phase_stdev[mac_id_tx[num_tx]] =  static_channel_ang_stdev;
-            __top_peak_confidence[mac_id_tx[num_tx]] =  __aoa_confidence[0];
+            __top_peak_confidence[mac_id_tx[num_tx]] =  __aoa_profile_variance[0];
         }
 
         /*Store the aoa_profile*/
         __all_aoa_profiles[mac_id_tx[num_tx]] = __aoa_profile;
-        __all_topN_confidence[mac_id_tx[num_tx]] = __aoa_confidence;
+        __all_topN_confidence[mac_id_tx[num_tx]] = __aoa_profile_variance;
 
         //TODO: get azimuth and elevation from beta_profile
         std::cout << "log [calculate_AOA_profile]: Completed AOA calculation." << std::endl; 
@@ -913,7 +914,12 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
     std::vector<double> ret_phi, ret_theta;
     nc::NdArray <double> max_peak = nc::amax(__aoa_profile);
     nc::NdArray<double> phi_max = nc::amax(__aoa_profile, nc::Axis::COL);
-    __aoa_confidence.clear();
+    __aoa_profile_variance.clear();
+    int peak_ind = 1, phi_idx = 0, theta_idx = 0;
+    bool check_peak = false;
+    
+    // radius to define local maxima as per the config file
+    const int radius = __peak_radius;
 //    nc::NdArray<nc::uint32> sortedIdxs_phi = argsort(phi_max); //ascending order
 //    int arr_idx_phi = phi_max.shape().cols - 1;
 //
@@ -924,126 +930,180 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
 //    int phi_idx=sortedIdxs_phi(0,arr_idx_phi);
 //    int theta_idx = sortedIdxs_theta(0,arr_idx_theta);
 //    int itr=1, i_phi=1, i_theta=1;
-    int peak_ind = 1;
-    bool check_peak = false;
+
 
     //Track indices of peaks which are stored or have been skipped
 //    auto phi_indexes_stored = nc::zeros<double>(1, 360);
 //    auto theta_indexes_stored = nc::zeros<double>(1, 180);
-    auto all_idx_flat = nc::flip(nc::argsort((__aoa_profile.flatten())));
-    //n*2 array save coordinates for sorted value in the whole profile
-    nc::NdArray<int> sorted_inds(all_idx_flat.size(), 2);
-    for(int i = 0; i < all_idx_flat.size(); i++)
+    
+    if(__trajType=="2D")
     {
-        sorted_inds.put(i, sorted_inds.cSlice(), utils.unravel_index(all_idx_flat(0, i), __nphi,__ntheta));
-    }
-    int phi_idx = sorted_inds(0, 0);
-    int theta_idx = sorted_inds(0, 1);
+        nc::NdArray<double> aoa_profile_phi = nc::sum(__aoa_profile, nc::Axis::COL);
+        nc::NdArray <double> max_peak_2D = nc::amax(aoa_profile_phi);
+        auto twod_profile = nc::flip(nc::argsort(aoa_profile_phi));
+        phi_idx = twod_profile(0, 0);
+        float peak_val_azimuth = 0;
+        
+        //Get the top AOA peak
+        if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] Top azimuth angle " << peak_ind
+                                    << " : " << phi_list(0,phi_idx)*180/M_PI << std::endl;
+        ret_phi.push_back(phi_list(0,phi_idx)*180/M_PI);
+        ret_theta.push_back(-400); // Dummy value as elevation is ignored for 2D
+  
+        float variance = get_profile_variance(phi_idx,0);
+        __aoa_profile_variance.push_back(variance);
+        if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] profile variance " << peak_ind << " : " << variance << std::endl;
 
-    //Get the peak AOA
-    if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] Top azimuth angle " << peak_ind
-                                << " : " << phi_list(0,phi_idx)*180/M_PI << std::endl;
-    ret_phi.push_back(phi_list(0,phi_idx)*180/M_PI);
-
-    if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] Top elevation angle " << peak_ind << " : "
-                                << 180 - theta_list(0,theta_idx)*180/M_PI << std::endl;
-    ret_theta.push_back(180 - theta_list(0,theta_idx)*180/M_PI);
-    float variance = get_profile_variance(phi_idx,theta_idx);
-
-    __aoa_confidence.push_back(variance);
-
-    if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] confidence " << peak_ind << " : " << variance << std::endl;
-//    phi_indexes_stored(0,phi_idx) = 1;
-//    theta_indexes_stored(0,theta_idx) = 1;
-
-    // 2d matrix to label the searched index
-    auto ind_profile = nc::zeros<bool>(__nphi,__ntheta);
-
-    // radius to define local maxima
-    const int radius = __peak_radius;
-    // Assign true to all neighbor region
-    for(int i = -radius; i < radius; i++) {
-        int tmp_row=0, tmp_col=0;
-        if(phi_idx+i<0)
-            tmp_row = __nphi +i;
-        else if(phi_idx + i>=__nphi)
-            tmp_row = (phi_idx +i)% __nphi;
-        else
-            tmp_row = i + phi_idx;
-        for(int j = -radius; j < radius; j++){
-            if(theta_idx+j<0)
-                tmp_row = __ntheta +j;
-            else if(theta_idx + j>=__ntheta)
-                tmp_row = (__ntheta +j)% __ntheta;
-            else
-                tmp_col = theta_idx + j;
-            ind_profile(tmp_row, tmp_col) = true;
-        }
-    }
-
-
-
-    //find other peaks
-    //while((itr <__topN_phi_count) && (i_phi < 360))
-
-    //Iterate all entries in the 2d matrix
-    for(int itr = 1; itr <= all_idx_flat.size()&&peak_ind < _topN_count;itr++) {
-
-//        phi_idx = sortedIdxs_phi(0,arr_idx_phi-i_phi);
-//        theta_idx = sortedIdxs_theta(0,arr_idx_theta-i_theta); //NJ: Potential bug here since size of the two arrays is different
-        phi_idx = sorted_inds(itr, 0);
-        theta_idx = sorted_inds(itr, 1);
-        float relative_peak_magnitude = 100 * (std::pow(max_peak(0, 0), 2) -
-                                               std::pow(__aoa_profile(phi_idx, theta_idx), 2)) /
-                                        std::pow(max_peak(0, 0), 2);
-
-        //check if this is 1-unit near to other peaks already obtained
-//        check_peak = (phi_idx+1  < 360 && phi_indexes_stored(0,phi_idx+1)   == 0) &&
-//                     (phi_idx-1   > 0   && phi_indexes_stored(0,phi_idx-1)   == 0) &&
-//                     (theta_idx+1 < 180 && theta_indexes_stored(0,theta_idx+1) == 0) &&
-//                     (theta_idx-1 > 0   && theta_indexes_stored(0,theta_idx-1) == 0) &&
-//                     (relative_peak_magnitude >= 40);
-        if(relative_peak_magnitude >= 40)
-            check_peak = true;
-        else
-            check_peak = false;
-        for (int i = -radius; i < radius && check_peak; i++) {
-            int tmp_row=0, tmp_col=0;
-            if (phi_idx + i < 0)
-                tmp_row = __nphi + i;
-            else if (phi_idx + i >= __nphi)
-                tmp_row = (phi_idx + i) % __nphi;
+        // 1D matrix to label the searched index
+        auto ind_profile_2d = nc::zeros<bool>(__nphi,1);
+        
+        // Assign checked as true to all neighboring peaks around the top peak i.e ignore them.
+        for(int i = -radius; i < radius; i++) 
+        {
+            if(i == 0) continue;
+            int tmp_row=0;
+            if(phi_idx+i<0) //wrap
+                tmp_row = __nphi +i;
+            else if(phi_idx + i>=__nphi) //wrap
+                tmp_row = (phi_idx +i)% __nphi;
             else
                 tmp_row = phi_idx + i;
-            for (int j = -radius; j < radius && check_peak; j++) {
-                if (theta_idx + j < 0)
-                    tmp_row = __ntheta + j;
-                else if (theta_idx + j >= __ntheta)
-                    tmp_row = (__ntheta + j) % __ntheta;
+            ind_profile_2d(tmp_row, 0) = true;
+        }
+
+        //Iterate all entries in the 1D matrix
+        for(int itr = 1; itr < twod_profile.size() && peak_ind < _topN_count; itr++) //
+        {
+
+            phi_idx = twod_profile(0, itr);
+            float relative_peak_magnitude = 100 * std::pow(aoa_profile_phi(0, phi_idx), 2)/std::pow(max_peak_2D(0, 0), 2);
+            if(relative_peak_magnitude >= __relative_magnitude_threshold)
+                check_peak = true;
+            else
+                check_peak = false;
+            
+            for (int i = -radius; i < radius && check_peak; i++) 
+            {
+                if(i == 0) continue;
+                int tmp_row=0;
+                if (phi_idx + i < 0)
+                    tmp_row = __nphi + i;
+                else if (phi_idx + i >= __nphi)
+                    tmp_row = (phi_idx + i) % __nphi;
                 else
-                    tmp_col = theta_idx + j;
-                //if the nearby pos is checked before or value is greater than current peak value
-                if (ind_profile(tmp_row, tmp_col) ||
-                    __aoa_profile(tmp_col, tmp_row) > __aoa_profile(phi_idx, theta_idx) ) {
+                    tmp_row = phi_idx + i;
+
+                //Check if the nearby peak is checked before or magnitude is greater than current peak value
+                if (ind_profile_2d(tmp_row, 0) || aoa_profile_phi(0, tmp_row) > aoa_profile_phi(0,phi_idx) ) 
+                {
                     check_peak = false;
                     break;
                 }
             }
+            if (check_peak) 
+            {
+                peak_ind++;
+                peak_val_azimuth = phi_list(0, phi_idx) * 180 / M_PI ;
+
+                if (__FLAG_debug)
+                    std::cout << "log [calculate_AOA_profile] Top azimuth angle " << peak_ind
+                            << " : " << peak_val_azimuth << std::endl;
+                
+                ret_phi.push_back(peak_val_azimuth);
+                ret_theta.push_back(-400); //Dummy value
+                
+                for (int i = -radius; i < radius; i++) 
+                {
+                    if(i == 0) continue;
+                    int tmp_row=0, tmp_col=0;
+                    if (phi_idx + i < 0)
+                        tmp_row = __nphi + i;
+                    else if (phi_idx + i >= __nphi)
+                        tmp_row = (phi_idx + i) % __nphi;
+                    else
+                        tmp_row = phi_idx + i;
+
+                    //Set the nearby peaks as checked
+                    ind_profile_2d(tmp_row, 0) = true;
+                }
+            }
         }
-//
-        if (check_peak) {
-            peak_ind++;
-            if (__FLAG_debug)
-                std::cout << "log [calculate_AOA_profile] Top azimuth angle " << peak_ind
-                          << " : " << phi_list(0, phi_idx) * 180 / M_PI << std::endl;
-            ret_phi.push_back(phi_list(0, phi_idx) * 180 / M_PI);
-            if (__FLAG_debug)
-                std::cout << "log [calculate_AOA_profile] Top elevation angle " << peak_ind << " : "
-                          << 180 - theta_list(0, theta_idx) * 180 / M_PI << std::endl;
-            ret_theta.push_back(180 - theta_list(0, theta_idx) * 180 / M_PI);
-//            phi_indexes_stored(0,phi_idx) = 1;
-//            theta_indexes_stored(0,theta_idx) = 1;
-            for (int i = -radius; i < radius; i++) {
+    }
+    else //3D
+    {
+        auto all_idx_flat = nc::flip(nc::argsort((__aoa_profile.flatten())));
+        //n*2 array save coordinates for sorted value in the whole profile
+        nc::NdArray<int> sorted_inds(all_idx_flat.size(), 2);
+        for(int i = 0; i < all_idx_flat.size(); i++)
+        {
+            sorted_inds.put(i, sorted_inds.cSlice(), utils.unravel_index(all_idx_flat(0, i), __nphi,__ntheta));
+        }
+        phi_idx = sorted_inds(0, 0);
+        theta_idx = sorted_inds(0, 1);
+
+        //Get the peak AOA
+        if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] Top azimuth angle " << peak_ind
+                                    << " : " << phi_list(0,phi_idx)*180/M_PI << std::endl;
+        ret_phi.push_back(phi_list(0,phi_idx)*180/M_PI);
+
+        if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] Top elevation angle " << peak_ind << " : "
+                                    << 180 - theta_list(0,theta_idx)*180/M_PI << std::endl;
+        ret_theta.push_back(180 - theta_list(0,theta_idx)*180/M_PI);
+        
+        float variance = get_profile_variance(phi_idx,theta_idx);
+        __aoa_profile_variance.push_back(variance);
+
+        if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] profile variance " << peak_ind << " : " << variance << std::endl;
+    //    phi_indexes_stored(0,phi_idx) = 1;
+    //    theta_indexes_stored(0,theta_idx) = 1;
+
+        // 2d matrix to label the searched index
+        auto ind_profile = nc::zeros<bool>(__nphi,__ntheta);
+
+        // Assign true to all neighbor region
+        for(int i = -radius; i < radius; i++) {
+            int tmp_row=0, tmp_col=0;
+            if(phi_idx+i<0)
+                tmp_row = __nphi +i;
+            else if(phi_idx + i>=__nphi)
+                tmp_row = (phi_idx +i)% __nphi;
+            else
+                tmp_row = i + phi_idx;
+            for(int j = -radius; j < radius; j++){
+                if(theta_idx+j<0)
+                    tmp_col = __ntheta +j;
+                else if(theta_idx + j>=__ntheta)
+                    tmp_col = (__ntheta +j)% __ntheta;
+                else
+                    tmp_col = theta_idx + j;
+                ind_profile(tmp_row, tmp_col) = true;
+            }
+        }
+
+        //find other peaks
+        //while((itr <__topN_phi_count) && (i_phi < 360))
+
+        //Iterate all entries in the 2d matrix
+        for(int itr = 1; itr < all_idx_flat.size()&&peak_ind < _topN_count;itr++) 
+        {
+
+    //        phi_idx = sortedIdxs_phi(0,arr_idx_phi-i_phi);
+    //        theta_idx = sortedIdxs_theta(0,arr_idx_theta-i_theta);
+            phi_idx = sorted_inds(itr, 0);
+            theta_idx = sorted_inds(itr, 1);
+            float relative_peak_magnitude = 100 * std::pow(__aoa_profile(phi_idx, theta_idx), 2)/std::pow(max_peak(0, 0), 2);
+
+            //check if this is 1-unit near to other peaks already obtained
+    //        check_peak = (phi_idx+1  < 360 && phi_indexes_stored(0,phi_idx+1)   == 0) &&
+    //                     (phi_idx-1   > 0   && phi_indexes_stored(0,phi_idx-1)   == 0) &&
+    //                     (theta_idx+1 < 180 && theta_indexes_stored(0,theta_idx+1) == 0) &&
+    //                     (theta_idx-1 > 0   && theta_indexes_stored(0,theta_idx-1) == 0) &&
+    //                     (relative_peak_magnitude >= 40);
+            if(relative_peak_magnitude >= __relative_magnitude_threshold)
+                check_peak = true;
+            else
+                check_peak = false;
+            for (int i = -radius; i < radius && check_peak; i++) {
                 int tmp_row=0, tmp_col=0;
                 if (phi_idx + i < 0)
                     tmp_row = __nphi + i;
@@ -1051,15 +1111,52 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
                     tmp_row = (phi_idx + i) % __nphi;
                 else
                     tmp_row = phi_idx + i;
-                for (int j = -radius; j < radius; j++) {
+                for (int j = -radius; j < radius && check_peak; j++) {
                     if (theta_idx + j < 0)
-                        tmp_row = __ntheta + j;
+                        tmp_col = __ntheta + j;
                     else if (theta_idx + j >= __ntheta)
-                        tmp_row = (__ntheta + j) % __ntheta;
+                        tmp_col = (__ntheta + j) % __ntheta;
                     else
                         tmp_col = theta_idx + j;
                     //if the nearby pos is checked before or value is greater than current peak value
-                    ind_profile(tmp_row, tmp_col) = true;
+                    if (ind_profile(tmp_row, tmp_col) ||
+                        __aoa_profile(tmp_col, tmp_row) > __aoa_profile(phi_idx, theta_idx) ) { //BUG?
+                        check_peak = false;
+                        break;
+                    }
+                }
+            }
+    //
+            if (check_peak) {
+                peak_ind++;
+                if (__FLAG_debug)
+                    std::cout << "log [calculate_AOA_profile] Top azimuth angle " << peak_ind
+                            << " : " << phi_list(0, phi_idx) * 180 / M_PI << std::endl;
+                ret_phi.push_back(phi_list(0, phi_idx) * 180 / M_PI);
+                if (__FLAG_debug)
+                    std::cout << "log [calculate_AOA_profile] Top elevation angle " << peak_ind << " : "
+                            << 180 - theta_list(0, theta_idx) * 180 / M_PI << std::endl;
+                ret_theta.push_back(180 - theta_list(0, theta_idx) * 180 / M_PI);
+    //            phi_indexes_stored(0,phi_idx) = 1;
+    //            theta_indexes_stored(0,theta_idx) = 1;
+                for (int i = -radius; i < radius; i++) {
+                    int tmp_row=0, tmp_col=0;
+                    if (phi_idx + i < 0)
+                        tmp_row = __nphi + i;
+                    else if (phi_idx + i >= __nphi)
+                        tmp_row = (phi_idx + i) % __nphi;
+                    else
+                        tmp_row = phi_idx + i;
+                    for (int j = -radius; j < radius; j++) {
+                        if (theta_idx + j < 0)
+                            tmp_row = __ntheta + j;
+                        else if (theta_idx + j >= __ntheta)
+                            tmp_row = (__ntheta + j) % __ntheta;
+                        else
+                            tmp_col = theta_idx + j;
+                        //if the nearby pos is checked before or value is greater than current peak value
+                        ind_profile(tmp_row, tmp_col) = true;
+                    }
                 }
             }
         }
@@ -1068,6 +1165,12 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
 //        i_phi++;
 //        i_theta++;
 
+    //Push dummy values to maintain size of return vals in the code. 
+    for(int i=peak_ind; i < _topN_count; i++)
+    {
+        ret_phi.push_back(-400);
+        ret_theta.push_back(-400);
+    }
     return std::make_pair(ret_phi, ret_theta);
 }
 
@@ -1109,60 +1212,58 @@ float WSR_Module::get_profile_variance(double phi_ind, double theta_ind) {
  *
  *
  * */
-std::vector<double> WSR_Module::get_aoa_error(const std::pair<std::vector<double>,std::vector<double>>& topN_AOA,
+std::vector<std::vector<float>> WSR_Module::get_aoa_error(const std::pair<std::vector<double>,std::vector<double>>& topN_AOA,
                                               std::pair<double,double> groundtruth_angles,
                                               const string& traj_type)
 {
-    std::vector<std::pair<double,double>> true_aoa_angles;
+    std::vector<std::pair<float,float>> true_aoa_angles;
     std::vector<double> topN_phi = topN_AOA.first;
     std::vector<double> topN_theta = topN_AOA.second;
-    std::vector<double> aoa_error_metrics;
+    std::vector<std::vector<float>> aoa_error_metrics;
 
-    double true_phi= groundtruth_angles.first;
-    double true_theta=groundtruth_angles.second;
-    double min_aoa_error=1000, err=0, phi_error=0, theta_error=0;
-    double min_phi_error =0, min_theta_error=0;
-    double closest_phi=0, closest_theta=0;
+    float true_phi= groundtruth_angles.first;
+    float true_theta=groundtruth_angles.second;
+    float min_aoa_error=1000, err=0;
+    float min_phi_error =0, min_theta_error=0;
+    float closest_phi=0, closest_theta=0;
 
     for(int i=0; i<topN_phi.size(); i++)
     {
-        //Squared error (as per WSR IJRR paper)
-        // phi_error = topN_phi[i]-true_phi;
-        // theta_error = topN_theta[i]-true_theta;
+        std::vector<float> temp;
+        float phi_error=0, theta_error=0, theta_angle=0;
+
+        if(topN_phi[i] == -400)
+            continue;
+
         phi_error = utils.anglediff(true_phi, topN_phi[i]);
-        theta_error = utils.anglediff(true_theta, topN_theta[i]);
+          
         if(traj_type == "3D")
         {
+            //Squared error (as per WSR paper)
+            theta_angle = topN_theta[i];
+            theta_error = utils.anglediff(true_theta, theta_angle);
             err = std::sqrt( std::pow(phi_error,2) + std::pow(theta_error,2));
         }
         else
         {
             err = phi_error;
         }
+        
+        temp.push_back(topN_phi[i]);
+        temp.push_back(theta_angle);
+        temp.push_back(err);//Total Error
+        temp.push_back(phi_error);
+        temp.push_back(theta_error);
 
-
-        if(abs(min_aoa_error) > abs(err))
-        {
-            min_aoa_error = err;
-            min_phi_error = phi_error;
-            min_theta_error = theta_error;
-            closest_phi = topN_phi[i];
-            closest_theta = topN_theta[i];
-        }
+        aoa_error_metrics.push_back(temp);
+        temp.clear();
     }
 
-    //Store the error values to the closest AOA peak
-    aoa_error_metrics.push_back(closest_phi);
-    aoa_error_metrics.push_back(closest_theta);
-    aoa_error_metrics.push_back(min_aoa_error);
-    aoa_error_metrics.push_back(min_phi_error);
-    aoa_error_metrics.push_back(min_theta_error);
-    
     return aoa_error_metrics;
 }
 //=============================================================================================================================
 /**
- *
+ *@Deprecated
  *
  * */
 std::vector<double> WSR_Module::top_aoa_error(double phi, double theta,
@@ -1284,61 +1385,77 @@ double WSR_Module::get_top_confidence(const std::string& tx_mac_id) {
  *
  * */
 nlohmann::json WSR_Module::get_stats(double true_phi,
-                           double true_theta,
-                           std::vector<double>& top_aoa_error,
-                           std::vector<double>& closest_AOA_error,
+                           double true_theta,std::vector<vector<float>>& aoa_error,
                            const std::string& tx_mac_id,
                            const std::string& tx_name,
                            const nc::NdArray<double>& pos, const int pos_idx)
 {
-    nlohmann::json output_stats = {
-            {"a_Info_TX",{
-                {"TruePhi",true_phi},
-                {"Truetheta",true_theta},
-                {"TX_Name",tx_name},
-                {"TX_MAC_ID",tx_mac_id}
+    nlohmann::json output_stats = 
+    {
+            {"a_INFO_Transmitting_robot",{
+                {"Name",tx_name},
+                {"MAC_ID",tx_mac_id},
+                {"groundtruth_position",{
+                    {"x", pos(0,0)},
+                    {"y",pos(0,1)},
+                    {"z",pos(0,2)},
+                    {"yaw",pos(0,3)}
+	            }},
+                {"groundtruth_azimuth",true_phi},
+                {"groundtruth_elevation",true_theta}
             }},
-            {"b_INFO_Profile_Resolution",{
-                {"nphi",__nphi},
-                {"ntheta",__ntheta},
-            }},
-            {"e_INFO_Performance",
-             {
+            {"b_INFO_Receiving_robot",{
+                {"id", pos_idx},
+	            {"displacement_type", __trajType},
+                {"estimated_start_position_",{
+                    {"x", pos(0,0)},
+                    {"y",pos(0,1)},
+                    {"z",pos(0,2)},
+                    {"yaw",pos(0,3)}
+                }},
+                {"groundtruth_start_position",{
+                    {"x", pos(0,0)},
+                    {"y",pos(0,1)},
+                    {"z",pos(0,2)},
+                    {"yaw",pos(0,3)}
+                }}
+             }},
+            {"c_INFO_Performance",{
+                {"azimuth_profile_resolution",__nphi},
+                {"elevation_profile_resolution",__ntheta},
                 {"Forward_channel_packets", get_tx_pkt_count(tx_mac_id)},
                 {"Reverse_channel_packets", get_rx_pkt_count(tx_mac_id)},
                 {"Packets_Used", get_paired_pkt_count(tx_mac_id)},
                 {"time(sec)", get_processing_time(tx_mac_id)},
-                {"memory(GB)", get_memory_used(tx_mac_id)},
-                {"first_forward-reverse_ts_offset(sec)", get_calculated_ts_offset(tx_mac_id)},
-                {"Channel_moving_phase_diff_mean", get_cpdm(tx_mac_id)},
-                {"Channel_moving_phase_diff_stdev", get_cpd_stdev(tx_mac_id)},
-                {"Channel_static_phase_mean", get_scpm(tx_mac_id)},
-                {"Channel_static_phase_stdev", get_scd_stdev(tx_mac_id)}
+                {"memory(GB)", get_memory_used(tx_mac_id)}
              }},
-            {"c_Info_AOA_Top",{
-                {"Phi(deg)", top_aoa_error[0]},
-                {"Theta(deg)", top_aoa_error[1]},
-                {"Confidence", get_top_confidence(tx_mac_id)},
-                {"Total_AOA_Error(deg)", top_aoa_error[2]},
-                {"Phi_Error(deg)", top_aoa_error[3]},
-                {"Theta_Error(deg)", top_aoa_error[4]}
-            }},
-            {"d_Info_AOA_Closest",{
-                {"Phi(deg)", closest_AOA_error[0]},
-                {"Theta(deg)", closest_AOA_error[1]},
-                {"Total_AOA_Error(deg)", closest_AOA_error[2]},
-                {"Phi_Error(deg)", closest_AOA_error[3]},
-                {"Theta_Error(deg)", closest_AOA_error[4]}
-            }},
-            {"RX_idx", pos_idx},
-            {"RX_displacement", __trajType},
-            {"RX_position",{
-                {"x", pos(0,0)},
-                {"y",pos(0,1)},
-                {"z",pos(0,2)},
-                {"yaw",pos(0,3)}
+            {"d_INFO_AOA_profile",{
+                {"Profile_variance", get_top_confidence(tx_mac_id)},
+                {"Top_N_peaks",{
+                    {"1",{
+                        {"estimated_azimuth", aoa_error[0][0]},
+                        {"estimated_elevation", aoa_error[0][1]},
+                        {"Total_AOA_Error", aoa_error[0][2]},
+                        {"azimuth_error", aoa_error[0][3]},
+                        {"elevation_error", aoa_error[0][4]}
+                    }}
+                }}
             }}
     };
+
+
+    for(int i=1; i<aoa_error.size(); i++)
+    {
+        std::string itr = std::to_string(i+1);
+        output_stats["d_INFO_AOA_profile"]["Top_N_peaks"][itr]["estimated_azimuth"]=aoa_error[i][0];
+        output_stats["d_INFO_AOA_profile"]["Top_N_peaks"][itr]["estimated_elevation"]=aoa_error[i][1];
+        output_stats["d_INFO_AOA_profile"]["Top_N_peaks"][itr]["Total_AOA_Error"]=aoa_error[i][2];
+        output_stats["d_INFO_AOA_profile"]["Top_N_peaks"][itr]["azimuth_error"]=aoa_error[i][3];
+        output_stats["d_INFO_AOA_profile"]["Top_N_peaks"][itr]["elevation_error"]=aoa_error[i][4];
+    }
+
+    //TODO loop through the vector of top N peak stats and append to the final json output.
+    //Delete get_stats_top_peaks() after this.
 
     return output_stats;
 }
@@ -1576,10 +1693,10 @@ std::vector<vector<float>> WSR_Module::get_aoa_error_top_peaks(const std::pair<s
         }
 
         temp.push_back(err);
-        temp.push_back(phi_error);
-        temp.push_back(theta_error);
         temp.push_back(topN_phi[i]);
+        temp.push_back(phi_error);
         temp.push_back(topN_theta[i]);
+        temp.push_back(theta_error);
         aoa_error_metrics.push_back(temp);
     }
     
@@ -1609,6 +1726,13 @@ nlohmann::json WSR_Module::get_stats_top_peaks(double true_phi,
                 {"ntheta",__ntheta},
             }},
             {"c_top_peak_Phi_error",{
+                {"peak_1", top_peaks_error[0][2]},
+                {"peak_2", top_peaks_error[1][2]},
+                {"peak_3", top_peaks_error[2][2]},
+                {"peak_4", top_peaks_error[3][2]},
+                {"peak_5", top_peaks_error[4][2]}
+            }},
+            {"d_top_peaks_Phi",{
                 {"peak_1", top_peaks_error[0][1]},
                 {"peak_2", top_peaks_error[1][1]},
                 {"peak_3", top_peaks_error[2][1]},
