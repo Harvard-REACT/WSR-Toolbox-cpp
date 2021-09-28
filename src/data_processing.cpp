@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
         antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
             
       std::cout << "log [WSR_Module]: Got offset " << std::endl;
-      nc::NdArray<double> mean_pos,true_mean_pos;
+      nc::NdArray<double> mean_pos,true_pos;
 
         //Get relative trajectory if moving ends
         bool __Flag_offset = true;
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 
           auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos,__Flag_offset);
           __Flag_offset = false;
-          auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_mean_pos,__Flag_get_mean_pos,__Flag_offset);
+          auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_pos,__Flag_get_mean_pos,__Flag_offset);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
       //Get all True AOA angles
       nlohmann::json true_positions_tx = TX_gt_positions["true_tx_positions"];
       loc_idx = int(TX_gt_positions["true_rx_position"]["value"]);
-      auto all_true_AOA = utils.get_true_aoa_v2(true_mean_pos, true_positions_tx);
+      auto all_true_AOA = utils.get_true_aoa_v2(true_pos, true_positions_tx);
 
       run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
       auto all_aoa_profile = run_module.get_all_aoa_profile();
@@ -197,19 +197,18 @@ int main(int argc, char *argv[])
           true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
 
           auto topN_angles = all_topN_angles[tx_id];
-          std::vector<double> top_aoa_error = run_module.top_aoa_error(topN_angles.first[0],
-                                                                        topN_angles.second[0],
-                                                                        all_true_AOA[run_module.tx_name_list[tx_id]],
-                                                                        trajType);
+          // std::vector<double> top_aoa_error = run_module.top_aoa_error(topN_angles.first[0],
+          //                                                               topN_angles.second[0],
+          //                                                               all_true_AOA[run_module.tx_name_list[tx_id]],
+          //                                                               trajType);
 
-          std::vector<double> closest_AOA_error = run_module.get_aoa_error(topN_angles,
+          std::vector<std::vector<float>> aoa_error = run_module.get_aoa_error(topN_angles,
                                                                             all_true_AOA[run_module.tx_name_list[tx_id]],
                                                                             trajType);
-
-          auto stats = run_module.get_stats(true_phi, true_theta,
-                                            top_aoa_error, closest_AOA_error,
+                                                                            
+          auto stats = run_module.get_stats(true_phi, true_theta, aoa_error,
                                             tx_id, run_module.tx_name_list[tx_id],
-                                            true_mean_pos,loc_idx);
+                                            true_pos,loc_idx);
 
           stats_per_sample.push_back(stats);
 

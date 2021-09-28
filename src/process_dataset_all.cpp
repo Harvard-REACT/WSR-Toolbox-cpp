@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
         nc::NdArray<double> pos,true_pos;
 
         //Get relative trajectory if moving ends
-        bool __Flag_offset = false;
+        bool __Flag_offset = true;
         if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
         {          
           //get relative trajectory
@@ -200,12 +200,12 @@ int main(int argc, char *argv[])
             true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
 
             auto topN_angles = all_topN_angles[tx_id];
-            std::vector<double> top_aoa_error = run_module.top_aoa_error(topN_angles.first[0],
-                                                                          topN_angles.second[0],
-                                                                          all_true_AOA[run_module.tx_name_list[tx_id]],
-                                                                          trajType);
+            // std::vector<double> top_aoa_error = run_module.top_aoa_error(topN_angles.first[0],
+            //                                                               topN_angles.second[0],
+            //                                                               all_true_AOA[run_module.tx_name_list[tx_id]],
+            //                                                               trajType);
 
-            std::vector<double> closest_AOA_error = run_module.get_aoa_error(topN_angles,
+            std::vector<std::vector<float>> aoa_error = run_module.get_aoa_error(topN_angles,
                                                                               all_true_AOA[run_module.tx_name_list[tx_id]],
                                                                               trajType);
 
@@ -213,8 +213,7 @@ int main(int argc, char *argv[])
                                                                   all_true_AOA[run_module.tx_name_list[tx_id]],
                                                                   trajType);
             
-            auto stats = run_module.get_stats(true_phi, true_theta,
-                                              top_aoa_error, closest_AOA_error,
+            auto stats = run_module.get_stats(true_phi, true_theta, aoa_error,
                                               tx_id, run_module.tx_name_list[tx_id],
                                               true_pos,loc_idx);
 
