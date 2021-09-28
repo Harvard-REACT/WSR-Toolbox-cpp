@@ -13,7 +13,7 @@
     },
     "channel": {
         "desc": "wireless channel used in the 5.0 GHz range",
-        "value": 108
+        "value": 104
     },
     "subCarrier": {
         "desc": "subcarrier for the channel [1,..,30]. Default is 15.5 that corresponds to the center freqency.",
@@ -185,7 +185,7 @@
             },
             "tx1":{
                 "mac_id_val":"0:33:106:62:245:126",
-                "mac_id":"00:21:6A:3E:F5:7E",
+                "mac_id":"00:21:6A:C0:D0:1A",
                 "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset2-REACT_testbed/static_dataset_MR_P2_P5_set2/csi_tx1_2021-04-19_172137.dat"
                 },
             "tx2":{
@@ -208,7 +208,7 @@
     "input_RX_channel_csi_fn":{
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
         "value":{           
-            "mac_id":"00:21:6A:C5:FC:0",
+            "mac_id":"00:21:6A:53:89:D2",
             "mac_id_val":"00:16:EA:12:34:56",
             "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0610/csi_rx_2021-06-10_115700.dat"
         }
@@ -279,7 +279,7 @@
     },
     "trajectory_type": {
         "desc" : "Trajectory of robots (2D or 3D). Impacts AOA error calculation",
-        "value": "3D"
+        "value": "2D"
     },
     "sub_sample_channel_data": {
         "desc": "flag for enabling subsampling of channle data to reduce packet count",
@@ -289,14 +289,18 @@
         "desc": "offset between center of displacement center and antenna tip (meters)",
         "mocap_offset":[0.0,0.0,0.0],
         "t265_offset":[0.0,0.0,0.06],
-        "odom_offset":[-0.15,-0.07,0.06]
+        "odom_offset":[0.0,0.16,0.14]
     },
     "get_mean_pose_RX": {
         "desc": "Get mean pose of the RX along its sub-trajectory",
-        "value": true
+        "value": false
     },
     "use_packet_id":{
         "desc": "Match forward-reverse packets using packet id instead of timestamps",
-        "value": false
+        "value": true
+    },
+    "top_N_magnitude":{
+        "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
+        "value": 70
     }
 }

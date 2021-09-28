@@ -750,8 +750,13 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     
     int start_index = std::min(std::min(start_x_val,start_y_val), start_z_val);
     int end_index = std::max(std::max(end_x_val,end_y_val), end_z_val); 
+    int mid_index = (start_index + end_index) / 2;
+    // //normalize based on first moving pose
+    // first_x = sorted_displacement(start_index, 0);
+    // first_y = sorted_displacement(start_index, 1);
+    // first_z = sorted_displacement(start_index, 2);
 
-    //normalize based on first moving pose
+    //normalize based on last moving pose
     first_x = sorted_displacement(start_index, 0);
     first_y = sorted_displacement(start_index, 1);
     first_z = sorted_displacement(start_index, 2);
@@ -762,6 +767,7 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     }
     else
     {
+        // pos = sorted_displacement(start_index, sorted_displacement.cSlice());
         pos = sorted_displacement(start_index, sorted_displacement.cSlice());
         std::cout << pos << std::endl;
     }
@@ -1486,7 +1492,7 @@ double WSR_Util::diff_360(double a, double b) {
 }
 //=============================================================================================================================
 /**
- * 
+ * Bug here?
  * 
  * */
 float WSR_Util::wrapNegPitoPi(float val) {
@@ -1512,6 +1518,6 @@ double WSR_Util::get_yaw(double& x, double& y, double& z, double& w)
     q.z() = z;
     q.w() = w;
     ori_now = q.toRotationMatrix().eulerAngles(0, 1, 2);//r,p,y
-    yaw = wrapNegPitoPi(ori_now[2]);
+    yaw = wrapNegPitoPi(ori_now[2]); //Bug here
     return yaw;
 }
