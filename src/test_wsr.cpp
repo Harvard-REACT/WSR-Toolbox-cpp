@@ -148,17 +148,12 @@ int main(){
             true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
 
             auto topN_angles = all_topN_angles[tx_id];
-
-            std::vector<double> top_aoa_error = run_module.top_aoa_error(topN_angles.first[0],
-                                                                         topN_angles.second[0],
-                                                                         all_true_AOA[run_module.tx_name_list[tx_id]],
-                                                                         trajType);
             
-            std::vector<double> closest_AOA_error = run_module.get_aoa_error(topN_angles,
-                                                                             all_true_AOA[run_module.tx_name_list[tx_id]],
-                                                                             trajType);
-            auto stats = run_module.get_stats(true_phi, true_theta,
-                                              top_aoa_error, closest_AOA_error,
+            std::vector<std::vector<float>> aoa_error = run_module.get_aoa_error(topN_angles,
+                                                                              all_true_AOA[run_module.tx_name_list[tx_id]],
+                                                                              trajType);
+
+            auto stats = run_module.get_stats(true_phi, true_theta, aoa_error,
                                               tx_id, run_module.tx_name_list[tx_id],
                                               mean_pos,0);
 
@@ -169,3 +164,4 @@ int main(){
 
     }
 }
+
