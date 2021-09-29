@@ -123,16 +123,6 @@ class WSR_Module
                                             const std::string& tx_name);
         std::unordered_map<std::string, int> get_paired_pkt_count();
         std::unordered_map<std::string, std::vector<double>>get_all_confidence();
-        std::vector<vector<float>> get_aoa_error_top_peaks(const std::pair<std::vector<double>,
-                                                             std::vector<double>>& topN_AOA,
-                                                             std::pair<double,double> groundtruth_angles,
-                                                            const string& traj_type);
-        nlohmann::json get_stats_top_peaks(double true_phi,
-                                             double true_theta,
-                                             std::vector<vector<float>>& top_peaks_error,
-                                             const std::string& tx_mac_id,
-                                             const std::string& tx_name,
-                                             const nc::NdArray<double>& pos, const int pos_idx);
 };
 
 

@@ -1172,12 +1172,6 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
 //        i_phi++;
 //        i_theta++;
 
-    //Push dummy values to maintain size of return vals in the code. 
-    for(int i=peak_ind; i < _topN_count; i++)
-    {
-        ret_phi.push_back(-400);
-        ret_theta.push_back(-400);
-    }
     return std::make_pair(ret_phi, ret_theta);
 }
 
@@ -1238,9 +1232,6 @@ std::vector<std::vector<float>> WSR_Module::get_aoa_error(const std::pair<std::v
     {
         std::vector<float> temp;
         float phi_error=0, theta_error=0, theta_angle=0;
-
-        if(topN_phi[i] == -400)
-            continue;
 
         phi_error = utils.anglediff(true_phi, topN_phi[i]);
           
@@ -1661,99 +1652,4 @@ nlohmann::json WSR_Module::get_performance_stats( const std::string& tx_mac_id,
 std::unordered_map<std::string, int> WSR_Module::get_paired_pkt_count()
 {
     return __paired_pkt_count;
-}
-//=============================================================================================================================
-/**
- *
- *
- * */
-std::vector<vector<float>> WSR_Module::get_aoa_error_top_peaks(const std::pair<std::vector<double>,std::vector<double>>& topN_AOA,
-                                              std::pair<double,double> groundtruth_angles,
-                                              const string& traj_type)
-{
-    std::vector<std::pair<double,double>> true_aoa_angles;
-    std::vector<double> topN_phi = topN_AOA.first;
-    std::vector<double> topN_theta = topN_AOA.second;
-    std::vector<vector<float>> aoa_error_metrics;
-
-    float true_phi= groundtruth_angles.first;
-    float true_theta=groundtruth_angles.second;
-    float min_aoa_error=1000, err=0, phi_error=0, theta_error=0;
-    float min_phi_error =0, min_theta_error=0;
-    float closest_phi=0, closest_theta=0;
-
-    for(int i=0; i<topN_phi.size(); i++)
-    {
-        //Squared error (as per WSR IJRR paper)
-        // phi_error = topN_phi[i]-true_phi;
-        // theta_error = topN_theta[i]-true_theta;
-        std::vector<float> temp;
-        phi_error = utils.anglediff(true_phi, topN_phi[i]);
-        theta_error = utils.anglediff(true_theta, topN_theta[i]);
-        if(traj_type == "3D")
-        {
-            err = std::sqrt( std::pow(phi_error,2) + std::pow(theta_error,2));
-        }
-        else
-        {
-            err = phi_error;
-        }
-
-        temp.push_back(err);
-        temp.push_back(topN_phi[i]);
-        temp.push_back(phi_error);
-        temp.push_back(topN_theta[i]);
-        temp.push_back(theta_error);
-        aoa_error_metrics.push_back(temp);
-    }
-    
-    return aoa_error_metrics;
-}
-//=============================================================================================================================
-/**
- *
- *
- * */
-nlohmann::json WSR_Module::get_stats_top_peaks(double true_phi,
-                                             double true_theta,
-                                             std::vector<vector<float>>& top_peaks_error,
-                                             const std::string& tx_mac_id,
-                                             const std::string& tx_name,
-                                             const nc::NdArray<double>& pos, const int pos_idx)
-{
-    nlohmann::json output_stats = {
-            {"a_Info_TX",{
-                {"TruePhi",true_phi},
-                {"Truetheta",true_theta},
-                {"TX_Name",tx_name},
-                {"TX_MAC_ID",tx_mac_id}
-            }},
-            {"b_INFO_Profile_Resolution",{
-                {"nphi",__nphi},
-                {"ntheta",__ntheta},
-            }},
-            {"c_top_peak_Phi_error",{
-                {"peak_1", top_peaks_error[0][2]},
-                {"peak_2", top_peaks_error[1][2]},
-                {"peak_3", top_peaks_error[2][2]},
-                {"peak_4", top_peaks_error[3][2]},
-                {"peak_5", top_peaks_error[4][2]}
-            }},
-            {"d_top_peaks_Phi",{
-                {"peak_1", top_peaks_error[0][1]},
-                {"peak_2", top_peaks_error[1][1]},
-                {"peak_3", top_peaks_error[2][1]},
-                {"peak_4", top_peaks_error[3][1]},
-                {"peak_5", top_peaks_error[4][1]}
-            }},
-            {"RX_idx", pos_idx},
-            {"RX_displacement", __trajType},
-            {"RX_position",{
-                {"x", pos(0,0)},
-                {"y",pos(0,1)},
-                {"z",pos(0,2)}
-            }}
-    };
-
-    return output_stats;
 }
