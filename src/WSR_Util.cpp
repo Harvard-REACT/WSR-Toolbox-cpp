@@ -670,12 +670,13 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     Eigen::Matrix3f rotationMatrix;
     Eigen::Vector3f offset_vector(antenna_offset[0],antenna_offset[1],antenna_offset[2]), position_vector(antenna_offset[0],antenna_offset[1],antenna_offset[2]);
 
+    std::cout << rx_trajectory.size() << std::endl;
     for(int i=0; i<rx_trajectory.size(); i++){
         nsec_timestamp = rx_trajectory[i][0] + rx_trajectory[i][1]*0.000000001;
         trajectory_timestamp(i,0) = nsec_timestamp; //timestamp  //TODO: fix bug #8
-        
-        
-        if(__Flag_offset)
+        displacement(i,3) = 0;
+
+        if(__Flag_offset && rx_trajectory[i].size()>5) //Released Dataset for gt does not have orientatio values.
         {
             q.x() = rx_trajectory[i][5];
             q.y() = rx_trajectory[i][6];
@@ -689,22 +690,19 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
                      Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitZ());
             rotationMatrix = q_diff.normalized().toRotationMatrix();
             position_vector = rotationMatrix*offset_vector;
+            displacement(i,3) = get_yaw(rx_trajectory[i][5],rx_trajectory[i][6],rx_trajectory[i][7],rx_trajectory[i][8]); //Yaw
         }
 
         displacement(i,0) = rx_trajectory[i][2] + position_vector[0]; //x
         displacement(i,1) = rx_trajectory[i][3] + position_vector[1]; //y
         displacement(i,2) = rx_trajectory[i][4] + position_vector[2]; //z
-        if(rx_trajectory[i].size()>5)
-            displacement(i,3) = get_yaw(rx_trajectory[i][5],rx_trajectory[i][6],rx_trajectory[i][7],rx_trajectory[i][8]);
-        else
-            displacement(i,3) = 0;
+        
     }
     std::cout << "Displacement updated" << std::endl;
     nc::NdArray<nc::uint32> sortedIdxs = argsort(trajectory_timestamp);
     nc::NdArray<double> sorted_trajectory_timestamp(trajectory_timestamp.size(),1);
     nc::NdArray<double> sorted_displacement;
     nc::uint32 counter = 0;
-    
 
     for (auto Idx : sortedIdxs)
     {
@@ -713,7 +711,6 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
         sorted_displacement = nc::vstack({sorted_displacement, displacement(Idx,displacement.cSlice())});
         counter++;
     }
-    
 
     //Find first and last moving index
     //@TODO : Figure out for z_displacment when 3D traj (vertical motion)
@@ -725,7 +722,7 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     nc::NdArray<double> temp4 = abs(sorted_displacement(sorted_displacement.rSlice(),0)-lastX);
     nc::NdArray<double> temp5 = abs(sorted_displacement(sorted_displacement.rSlice(),1)-lastY);
     nc::NdArray<double> temp6 = abs(sorted_displacement(sorted_displacement.rSlice(),2)-lastZ);
-    
+
     auto start_x = nc::argwhere(temp1 > 0.006);
     auto start_y = nc::argwhere(temp2 > 0.006);
     auto start_z = nc::argwhere(temp3 > 0.006);
@@ -760,16 +757,14 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     first_x = sorted_displacement(start_index, 0);
     first_y = sorted_displacement(start_index, 1);
     first_z = sorted_displacement(start_index, 2);
-    
     if(__Flag_get_mean_pos)
     {
         pos = nc::mean(sorted_displacement({start_index,end_index},sorted_displacement.cSlice()),nc::Axis::ROW);
     }
     else
     {
-        // pos = sorted_displacement(start_index, sorted_displacement.cSlice());
         pos = sorted_displacement(start_index, sorted_displacement.cSlice());
-        std::cout << pos << std::endl;
+        // std::cout << pos << std::endl;
     }
 
     for(int i=start_index; i<end_index+1; i++)
