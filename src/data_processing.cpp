@@ -126,34 +126,35 @@ int main(int argc, char *argv[])
         trajectory_tx = utils.loadTrajFromCSV(traj_fn_tx);
       }
 
-      std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
+      std::cout << "log [WSR_Module]: Preprocessing Displacement " << std::endl;
       
-      std::vector<double> antenna_offset;
+      std::vector<double> antenna_offset, antenna_offset_true;
+      antenna_offset_true = run_module.__precompute_config["antenna_position_offset"]["mocap_offset"].get<std::vector<double>>(); 
+
       if (traj_type == "gt")
-        antenna_offset = run_module.__precompute_config["antenna_position_offset"]["mocap_offset"].get<std::vector<double>>();
+        antenna_offset = antenna_offset_true;
       else if (traj_type == "t265")
         antenna_offset = run_module.__precompute_config["antenna_position_offset"]["t265_offset"].get<std::vector<double>>();
       else if (traj_type == "odom")
         antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
+
             
       std::cout << "log [WSR_Module]: Got offset " << std::endl;
       nc::NdArray<double> mean_pos,true_pos;
 
         //Get relative trajectory if moving ends
-        bool __Flag_offset = true;
         if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
         {          
           //get relative trajectory
-          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos,__Flag_offset);
+          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos,true);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
         else
         {
 
-          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos,__Flag_offset);
-          __Flag_offset = false;
-          auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset,true_pos,__Flag_get_mean_pos,__Flag_offset);
+          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos,true);
+          auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset_true,true_pos,__Flag_get_mean_pos,true);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }

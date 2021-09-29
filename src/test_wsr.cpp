@@ -4,13 +4,14 @@
 #include <unordered_map>
 #include <chrono>
 
-int main(){
+int main(int argc, char *argv[]){
     
     WSR_Util utils;
     // struct passwd *pw = getpwuid(getuid());
     // std::string homedir = pw->pw_dir;
     // std::string folder = "";
     // std::string config = utils.__homedir+"/catkin_ws/src/csitoolbox/config/config_3D_SAR.json";
+    string traj_type = argv[2];
     std::string config = "../config/config_3D_SAR.json";
     WSR_Module run_module(config);
     
@@ -75,14 +76,16 @@ int main(){
       std::string traj_fn_tx = utils.__homedir + trajectory_file_tx;
       trajectory_tx = utils.loadTrajFromCSV(traj_fn_tx);
     }
-    std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
-    std::vector<double> antenna_offset;
-    std::string traj_type = "gt";
-    if (traj_type == "odom")
-      antenna_offset = run_module.__precompute_config["antenna_position_offset"]["mocap_offset"].get<std::vector<double>>();
+    std::cout << "log [WSR_Module]: Preprocessing Displacement " << std::endl;
+    
+    std::vector<double> antenna_offset, antenna_offset_true;
+    antenna_offset_true = run_module.__precompute_config["antenna_position_offset"]["mocap_offset"].get<std::vector<double>>(); 
+
+    if (traj_type == "gt")
+      antenna_offset = antenna_offset_true;
     else if (traj_type == "t265")
       antenna_offset = run_module.__precompute_config["antenna_position_offset"]["t265_offset"].get<std::vector<double>>();
-    else if (traj_type == "gt")
+    else if (traj_type == "odom")
       antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
     
 
@@ -93,19 +96,16 @@ int main(){
         std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
         nc::NdArray<double> mean_pos;
         //Get relative trajectory if moving ends
-        bool __Flag_offset = true;
         if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
         {          
           //get relative trajectory
-          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos,__Flag_offset);
+          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos,true);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
         else
         {
-
-          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos,__Flag_offset);
-          __Flag_offset = false;
+          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos,true);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
