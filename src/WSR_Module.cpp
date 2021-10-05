@@ -1386,18 +1386,21 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                            double true_theta,std::vector<vector<float>>& aoa_error,
                            const std::string& tx_mac_id,
                            const std::string& tx_name,
-                           const nc::NdArray<double>& pos, const int pos_idx)
+                           const nc::NdArray<double>& rx_pos_est, 
+                           const nc::NdArray<double>& rx_pos_true,
+                           nlohmann::json true_positions_tx,
+                           const int pos_idx)
 {
+    nlohmann::json position = true_positions_tx["value"][tx_name];
     nlohmann::json output_stats = 
     {
             {"a_INFO_Transmitting_robot",{
                 {"Name",tx_name},
                 {"MAC_ID",tx_mac_id},
                 {"groundtruth_position",{
-                    {"x", pos(0,0)},
-                    {"y",pos(0,1)},
-                    {"z",pos(0,2)},
-                    {"yaw",pos(0,3)}
+                    {"x", float(position["position"]["x"])},
+                    {"y", float(position["position"]["y"])},
+                    {"z", float(position["position"]["z"])}
 	            }},
                 {"groundtruth_azimuth",true_phi},
                 {"groundtruth_elevation",true_theta}
@@ -1405,17 +1408,17 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
             {"b_INFO_Receiving_robot",{
                 {"id", pos_idx},
 	            {"displacement_type", __trajType},
-                {"estimated_start_position_",{
-                    {"x", pos(0,0)},
-                    {"y",pos(0,1)},
-                    {"z",pos(0,2)},
-                    {"yaw",pos(0,3)}
+                {"estimated_start_position",{
+                    {"x", rx_pos_est(0,0)}, //Will be same as true positin when using gt flag
+                    {"y",rx_pos_est(0,1)},
+                    {"z",rx_pos_est(0,2)},
+                    {"yaw",rx_pos_est(0,3)}
                 }},
                 {"groundtruth_start_position",{
-                    {"x", pos(0,0)},
-                    {"y",pos(0,1)},
-                    {"z",pos(0,2)},
-                    {"yaw",pos(0,3)}
+                    {"x", rx_pos_true(0,0)},
+                    {"y",rx_pos_true(0,1)},
+                    {"z",rx_pos_true(0,2)},
+                    {"yaw",rx_pos_true(0,3)}
                 }}
              }},
             {"c_INFO_Performance",{

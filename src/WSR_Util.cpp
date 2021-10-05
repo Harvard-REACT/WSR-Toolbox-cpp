@@ -676,7 +676,7 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
         trajectory_timestamp(i,0) = nsec_timestamp; //timestamp  //TODO: fix bug #8
         displacement(i,3) = 0;
 
-        if(__Flag_offset && rx_trajectory[i].size()>5) //Released Dataset for gt does not have orientatio values.
+        if(__Flag_offset && rx_trajectory[i].size()>5) //Released Dataset for gt does not have orientation values.
         {
             q.x() = rx_trajectory[i][5];
             q.y() = rx_trajectory[i][6];
@@ -764,7 +764,7 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     else
     {
         pos = sorted_displacement(start_index, sorted_displacement.cSlice());
-        // std::cout << pos << std::endl;
+        std::cout << pos << std::endl;
     }
 
     for(int i=start_index; i<end_index+1; i++)
@@ -1503,16 +1503,48 @@ float WSR_Util::wrapNegPitoPi(float val) {
  * 
  * 
  * */
-double WSR_Util::get_yaw(double& x, double& y, double& z, double& w)
+float WSR_Util::get_yaw(double& x, double& y, double& z, double& w)
 {
     Eigen::Quaternion<float> q;
-    double yaw=0;
     Eigen::Vector3f ori_now;
     q.x() = x;
     q.y() = y;
     q.z() = z;
     q.w() = w;
-    ori_now = q.toRotationMatrix().eulerAngles(0, 1, 2);//r,p,y
-    yaw = wrapNegPitoPi(ori_now[2]); //Bug here
-    return yaw;
+    // ori_now = q.toRotationMatrix().eulerAngles(0, 1, 2);//r,p,y //Eigen has bug
+    Eigen::Matrix3f rm= q.toRotationMatrix();
+    ori_now =  rotationMatrixToEulerAngles(rm);
+    return ori_now[2];
+    
+}
+/*
+// Calculates rotation matrix to euler angles
+// The result is the same as MATLAB except the order
+// of the euler angles ( x and z are swapped ).
+//https://learnopencv.com/rotation-matrix-to-euler-angles/
+*/
+Eigen::Vector3f  WSR_Util::rotationMatrixToEulerAngles(Eigen::Matrix3f &R)
+{
+
+    //assert(isRotationMatrix(R));
+
+    float sy = sqrt(R(0,0) * R(0,0) +  R(1,0) * R(1,0) );
+
+    bool singular = sy < 1e-6; // If
+
+    float x, y, z;
+    if (!singular)
+    {
+        x = atan2(R(2,1) , R(2,2));
+        y = atan2(-R(2,0), sy);
+        z = atan2(R(1,0), R(0,0));
+    }
+    else
+    {
+        x = atan2(-R(1,2), R(1,1));
+        y = atan2(-R(2,0), sy);
+        z = 0;
+    }
+    return Eigen::Vector3f(x, y, z);
+
 }
