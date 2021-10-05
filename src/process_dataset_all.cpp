@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
             
             auto stats = run_module.get_stats(true_phi, true_theta, aoa_error,
                                               tx_id, run_module.tx_name_list[tx_id],
-                                              true_pos,loc_idx);
+                                              pos,true_pos,true_positions_tx,loc_idx);
 
             stats_per_sample.push_back(stats);
 
