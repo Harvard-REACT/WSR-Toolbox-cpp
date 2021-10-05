@@ -98,7 +98,8 @@ class WSR_Util{
         std::unordered_map<std::string, std::pair<double,double>> get_true_aoa_v2(nc::NdArray<double>& mean_pos,
                                                                                  nlohmann::json true_positions_tx);
         float wrapNegPitoPi(float val);
-        double get_yaw(double& x, double& y, double& z, double& w);
+        float get_yaw(double& x, double& y, double& z, double& w);
+        Eigen::Vector3f rotationMatrixToEulerAngles(Eigen::Matrix3f &R);
 };
 
 

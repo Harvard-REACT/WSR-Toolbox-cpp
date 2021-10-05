@@ -91,7 +91,7 @@ int main(){
     {
         
         std::cout << "log [WSR_Module]: Preprocessing Trajectory " << std::endl;
-        nc::NdArray<double> mean_pos,true_mean_pos;
+        nc::NdArray<double> pos;
         //Get relative trajectory if moving ends
         bool __Flag_offset = true;
         if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
@@ -103,9 +103,7 @@ int main(){
         }
         else
         {
-
-          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos,__Flag_get_mean_pos,__Flag_offset);
-          __Flag_offset = false;
+          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,pos,__Flag_get_mean_pos,true);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
@@ -155,7 +153,7 @@ int main(){
 
             auto stats = run_module.get_stats(true_phi, true_theta, aoa_error,
                                               tx_id, run_module.tx_name_list[tx_id],
-                                              mean_pos,0);
+                                              pos,pos,true_positions_tx,0); // True_pos is used only when compiling aggregate results.
 
             std::cout << stats.dump(4) << std::endl;
 
