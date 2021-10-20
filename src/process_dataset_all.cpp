@@ -214,6 +214,10 @@ int main(int argc, char *argv[])
                                               tx_id, run_module.tx_name_list[tx_id],
                                               pos,true_pos,true_positions_tx,loc_idx);
 
+            // auto stats = run_module.get_stats_old_json(true_phi, true_theta, aoa_error,
+            //                                   tx_id, run_module.tx_name_list[tx_id],
+            //                                   pos,true_pos,true_positions_tx,loc_idx);
+
             stats_per_sample.push_back(stats);
 
           }
