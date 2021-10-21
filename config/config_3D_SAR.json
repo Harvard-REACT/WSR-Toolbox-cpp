@@ -283,7 +283,7 @@
     },
     "sub_sample_channel_data": {
         "desc": "flag for enabling subsampling of channle data to reduce packet count",
-        "value": false
+        "value": true
     },
     "antenna_position_offset": {
         "desc": "offset between center of displacement center and antenna tip (meters)",
@@ -302,5 +302,9 @@
     "top_N_magnitude":{
         "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
         "value": 70
+    },
+    "offboard_computation":{
+        "desc":"Perform computation offboard with high number of CPU cores",
+        "value":true
     }
 }
