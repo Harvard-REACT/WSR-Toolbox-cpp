@@ -123,6 +123,14 @@ class WSR_Module
                                 const nc::NdArray<double>& rx_pos_est,
                                 nlohmann::json true_positions_tx,
                                 const int pos_idx);
+        nlohmann::json get_stats_old_json(double true_phi,
+                                double true_theta,std::vector<vector<float>>& aoa_error,
+                                const std::string& tx_mac_id,
+                                const std::string& tx_name,
+                                const nc::NdArray<double>& rx_pos_true, 
+                                const nc::NdArray<double>& rx_pos_est,
+                                nlohmann::json true_positions_tx,
+                                const int pos_idx);                                
         int test_csi_data(std::string rx_csi_file, 
                         std::unordered_map<std::string, std::string> tx_csi_file);
         nlohmann::json get_performance_stats(const std::string& tx_mac_id,

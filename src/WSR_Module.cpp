@@ -949,7 +949,8 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
 //    auto theta_indexes_stored = nc::zeros<double>(1, 180);
     
     if(__trajType=="2D")
-    {
+    {        
+        
         nc::NdArray<double> aoa_profile_phi = nc::sum(__aoa_profile, nc::Axis::COL);
         nc::NdArray <double> max_peak_2D = nc::amax(aoa_profile_phi);
         auto twod_profile = nc::flip(nc::argsort(aoa_profile_phi));
@@ -965,7 +966,7 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
         float variance = get_profile_variance(phi_idx,0);
         __aoa_profile_variance.push_back(variance);
         if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] profile variance " << peak_ind << " : " << variance << std::endl;
-
+        
         // 1D matrix to label the searched index
         auto ind_profile_2d = nc::zeros<bool>(__nphi,1);
         
@@ -1066,6 +1067,7 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
         __aoa_profile_variance.push_back(variance);
 
         if (__FLAG_debug) std::cout << "log [calculate_AOA_profile] profile variance " << peak_ind << " : " << variance << std::endl;
+    
     //    phi_indexes_stored(0,phi_idx) = 1;
     //    theta_indexes_stored(0,theta_idx) = 1;
 
@@ -1899,3 +1901,71 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
 
     return beta_profile;
 }
+nlohmann::json WSR_Module::get_stats_old_json(double true_phi,
+                           double true_theta,std::vector<vector<float>>& aoa_error,
+                           const std::string& tx_mac_id,
+                           const std::string& tx_name,
+                           const nc::NdArray<double>& rx_pos_est, 
+                           const nc::NdArray<double>& rx_pos_true,
+                           nlohmann::json true_positions_tx,
+                           const int pos_idx)
+{
+    
+    std::cout << "Getting json" << std::endl;
+    nlohmann::json output_stats = {
+            {"a_Info_TX",{
+                {"TruePhi",true_phi},
+                {"Truetheta",true_theta},
+                {"TX_Name",tx_name},
+                {"TX_MAC_ID",tx_mac_id}
+            }},
+            {"b_INFO_Profile_Resolution",{
+                {"nphi",__nphi},
+                {"ntheta",__ntheta},
+            }},
+            {"e_INFO_Performance",
+             {{"Forward_channel_packets", get_tx_pkt_count(tx_mac_id)},
+                {"Reverse_channel_packets", get_rx_pkt_count(tx_mac_id)},
+                {"Packets_Used", get_paired_pkt_count(tx_mac_id)},
+                {"time(sec)", get_processing_time(tx_mac_id)},
+                {"memory(GB)", get_memory_used(tx_mac_id)},
+                {"first_forward-reverse_ts_offset(sec)", get_calculated_ts_offset(tx_mac_id)},
+                {"Channel_moving_phase_diff_mean", get_cpdm(tx_mac_id)},
+                {"Channel_moving_phase_diff_stdev", get_cpd_stdev(tx_mac_id)},
+                {"Channel_static_phase_mean", get_scpm(tx_mac_id)},
+                {"Channel_static_phase_stdev", get_scd_stdev(tx_mac_id)}
+             }},
+            {"c_Info_AOA_Top",{
+                {"Phi(deg)", aoa_error[0][0]},
+                {"Theta(deg)", aoa_error[0][1]},
+                {"Confidence", get_top_confidence(tx_mac_id)},
+                {"Total_AOA_Error(deg)", aoa_error[0][2]},
+                {"Phi_Error(deg)", aoa_error[0][3]},
+                {"Theta_Error(deg)", aoa_error[0][4]}
+            }},
+            {"d_Info_AOA_Closest",{
+                {"Phi(deg)", 0},
+                {"Theta(deg)", 0},
+                {"Total_AOA_Error(deg)", 0},
+                {"Phi_Error(deg)",0},
+                {"Theta_Error(deg)", 0}
+            }},
+            {"RX_idx", pos_idx},
+            {"RX_displacement", __trajType},
+            {"RX_position",{
+                {"x", rx_pos_true(0,0)},
+                {"y",rx_pos_true(0,1)},
+                {"z",rx_pos_true(0,2)},
+                {"yaw",rx_pos_true(0,3)}
+            }}
+    };
+    
+    std::cout << "Got json" << std::endl;
+    return output_stats;
+}
+
+/*
+,
+
+
+*/
