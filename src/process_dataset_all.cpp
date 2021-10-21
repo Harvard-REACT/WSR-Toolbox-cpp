@@ -233,6 +233,8 @@ int main(int argc, char *argv[])
           all_stats.push_back({std::to_string(stat_itr), stats_per_sample});
         }
         stat_itr+=1;
+        std::cout << stats_per_sample.dump(4) << std::endl;
+        std::cout << stat_itr;
       }
     }
     std::cout << all_stats.dump(4) << std::endl;

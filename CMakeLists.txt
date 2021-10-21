@@ -2,12 +2,13 @@ cmake_minimum_required(VERSION 3.15)
 project(wsr-toolbox-cpp)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++17 -pthread 
-                    -Wno-unused-result -Wsign-compare 
-                    -DNDEBUG -g -fwrapv -O3 -Wall 
-                    -g -fstack-protector-strong 
-                    -Wformat -Werror=format-security 
-                    -g -Wdate-time -D_FORTIFY_SOURCE=2 -fPIC )
+add_compile_options(-std=c++17 -pthread
+                    -Wno-unused-result -Wsign-compare
+                    -DNDEBUG -fwrapv -O3
+                    -fstack-protector-strong
+                    -Wformat -Werror=format-security
+                    -Wdate-time -D_FORTIFY_SOURCE=2 -fPIC
+                    )
 
 
 ## System dependencies are found with CMake's conventions
@@ -65,19 +66,19 @@ add_executable(remote_processing src/remote_processing.cpp src/WIFI_Agent.cpp sr
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(test_wsr
-   -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
+   -Wl,--no-as-needed -lgomp -lpthread -lm -ldl -lblas
    ${BOOST_LIBRARIES}
  )
 target_link_libraries(data_processing
- -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
+ -Wl,--no-as-needed -lgomp -lpthread -lm -ldl -lblas
  ${BOOST_LIBRARIES}
 )
 target_link_libraries(remote_processing
- -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
+ -Wl,--no-as-needed -lgomp -lpthread -lm -ldl -lblas
  ${BOOST_LIBRARIES}
 )
 target_link_libraries(process_dataset_all
- -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
+ -Wl,--no-as-needed -lgomp -lpthread -lm -ldl -lblas
  ${BOOST_LIBRARIES}
 )
 
