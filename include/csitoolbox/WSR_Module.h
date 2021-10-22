@@ -43,7 +43,8 @@ class WSR_Module
 
         nc::NdArray<double> phi_list,precomp_rep_phi,theta_list, precomp_rep_theta;
         bool __FLAG_normalize_profile = true, __FLAG_packet_threshold = false, __FLAG_debug = true, __FLAG_threading=false,
-            __FLAG_interpolate_phase = true, __FLAG_sub_sample = false, __FLag_use_packet_id = true, __FLAG_offboard=false;
+            __FLAG_interpolate_phase = true, __FLAG_sub_sample = false, __FLag_use_packet_id = true, __FLAG_offboard=false,
+            __FLAG_openmp=false;
         nc::NdArray<double> __aoa_profile;
         std::unordered_map<std::string, nc::NdArray<double>> __all_aoa_profiles;
         std::unordered_map<std::string, std::vector<double>> __all_topN_confidence;
@@ -83,6 +84,9 @@ class WSR_Module
         std::unordered_map<std::string, std::pair<std::vector<double>,std::vector<double>>> get_TX_topN_angles();
         std::pair<double,double> get_phi_theta();
         void get_eigen_rep_angle_trig(EigenDoubleMatrix& output, 
+                                      EigenDoubleMatrix& input,
+                                      std::string trig_operation);
+        void get_eigen_rep_angle_trig_openmp(EigenDoubleMatrix& output, 
                                       EigenDoubleMatrix& input,
                                       std::string trig_operation);
         void get_repmat(EigenDoubleMatrix& output, 

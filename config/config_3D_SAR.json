@@ -283,7 +283,7 @@
     },
     "sub_sample_channel_data": {
         "desc": "flag for enabling subsampling of channle data to reduce packet count",
-        "value": true
+        "value": false
     },
     "antenna_position_offset": {
         "desc": "offset between center of displacement center and antenna tip (meters)",
@@ -305,6 +305,10 @@
     },
     "offboard_computation":{
         "desc":"Perform computation offboard with high number of CPU cores",
+        "value":true
+    },
+    "openmp":{
+        "desc":"Enable openmp usage for elementwise operation",
         "value":true
     }
 }

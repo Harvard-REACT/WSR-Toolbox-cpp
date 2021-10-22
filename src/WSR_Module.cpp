@@ -4,6 +4,7 @@
 */
 
 #include "csitoolbox/WSR_Module.h"
+#include <omp.h>
 
 WSR_Util utils;
 constexpr bool __takeOwnership = true;
@@ -43,6 +44,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     __FLAG_sub_sample = bool(__precompute_config["sub_sample_channel_data"]["value"]);
     __FLAG_normalize_profile = bool(__precompute_config["normalize_profile"]["value"]);
     __FLag_use_packet_id = bool(__precompute_config["use_packet_id"]["value"]);
+    __FLAG_openmp = bool(__precompute_config["openmp"]["value"]);
     bool __FLAG_use_multiple_sub_carriers =  bool(__precompute_config["multiple_sub_carriers"]["value"]);
     bool __FLAG_use_magic_mac = bool(__precompute_config["use_magic_mac"]["value"]);
     
@@ -97,9 +99,9 @@ WSR_Module::WSR_Module(std::string config_fn)
 
   if(__FLAG_threading || __FLAG_offboard)
     {
-        std::thread t1 (&WSR_Module::get_repmat, this, 
-                                    std::ref(__precomp__eigen_rep_lambda), 
-                                    std::ref(__eigen_lambda_list), __nphi*__ntheta, __max_packets_to_process);
+        // std::thread t1 (&WSR_Module::get_repmat, this, 
+        //                             std::ref(__precomp__eigen_rep_lambda), 
+        //                             std::ref(__eigen_lambda_list), __nphi*__ntheta, __max_packets_to_process);
 
         std::thread t2 (&WSR_Module::get_repmat, this, 
                                 std::ref(__precomp__eigen_rep_phi), 
@@ -109,13 +111,13 @@ WSR_Module::WSR_Module(std::string config_fn)
                                     std::ref(__precomp__eigen_rep_theta), 
                                     std::ref(__eigen_precomp_rep_theta), 1, __max_packets_to_process);                                                            
 
-        t1.join();
+        // t1.join();
         t2.join();
         t3.join();
     }
     else
     {
-        get_repmat(__precomp__eigen_rep_lambda, __eigen_lambda_list,__nphi*__ntheta, __max_packets_to_process);
+        // get_repmat(__precomp__eigen_rep_lambda, __eigen_lambda_list,__nphi*__ntheta, __max_packets_to_process);
         get_repmat(__precomp__eigen_rep_phi, __eigen_precomp_rep_phi,1, __max_packets_to_process);
         get_repmat(__precomp__eigen_rep_theta, __eigen_precomp_rep_theta,1, __max_packets_to_process);
     }
@@ -875,6 +877,37 @@ void WSR_Module::get_eigen_rep_angle_trig(EigenDoubleMatrix& output,
  * Description: 
  * Input:
  * Output:
+ * */
+void WSR_Module::get_eigen_rep_angle_trig_openmp(EigenDoubleMatrix& output, 
+                                        EigenDoubleMatrix& input,
+                                        std::string trig_operation)
+{
+      int max_threads = 64;
+        int j;
+        int n_per = input.rows()/max_threads;
+    if(trig_operation == "sin"){
+#pragma omp parallel for shared(input, output) private(j) schedule(dynamic, n_per)
+          for(j = 0; j<input.rows();j++){
+              for(int k = 0; k < input.cols();k++){
+                  output(j,k) = sin(input(j,k));
+              }
+          }
+      }
+    else{
+#pragma omp parallel for shared(input, output) private(j) schedule(dynamic, n_per)
+          for(j = 0; j<input.rows();j++){
+              for(int k = 0; k < input.cols();k++){
+                  output(j,k) = cos(input(j,k));
+
+              }
+          }
+      }
+}
+//=============================================================================================================================
+/**
+ * Description: 
+ * Input:
+ * Output:
 std::vector<double> WSR_Module::find_topN_phi(nc::NdArray<double> profile)
 {
     std::vector<double> ret;
@@ -1011,30 +1044,6 @@ std::pair<std::vector<double>,std::vector<double>> WSR_Module::find_topN()
                 {
                     check_peak = false;
                     break;
-                }
-            }
-            if (check_peak) 
-            {
-                peak_ind++;
-                peak_val_azimuth = phi_list(0, phi_idx) * 180 / M_PI ;
-
-                if (__FLAG_debug)
-                    std::cout << "log [calculate_AOA_profile] Top azimuth angle " << peak_ind
-                            << " : " << peak_val_azimuth << std::endl;
-                
-                ret_phi.push_back(peak_val_azimuth);
-                ret_theta.push_back(-400); //Dummy value
-                
-                for (int i = -radius; i < radius; i++) 
-                {
-                    if(i == 0) continue;
-                    int tmp_row=0, tmp_col=0;
-                    if (phi_idx + i < 0)
-                        tmp_row = __nphi + i;
-                    else if (phi_idx + i >= __nphi)
-                        tmp_row = (phi_idx + i) % __nphi;
-                    else
-                        tmp_row = phi_idx + i;
 
                     //Set the nearby peaks as checked
                     ind_profile_2d(tmp_row, 0) = true;
@@ -1672,12 +1681,10 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
     const nc::NdArray<std::complex<double>>& input_h_list, 
     const nc::NdArray<double>& input_pose_list)
 {   
+
     EigencdMatrix eigen_eterm_3DAdjustment,e_term_prod;
-    EigenDoubleMatrix eigen_rep_lambda, eigen_rep_phi, eigen_rep_theta, 
-                      e_sin_rep_theta, e_cos_rep_pitch, e_sin_rep_pitch, 
-                      e_cos_rep_theta, diff_phi_yaw, e_cos_rep_phi_rep_yaw,
-                      eigen_rep_yaw, eigen_rep_pitch, eigen_rep_rho;
-    
+    EigenDoubleMatrix eigen_rep_lambda, eigen_rep_phi, eigen_rep_theta, diff_phi_yaw, eigen_rep_yaw, eigen_rep_pitch, eigen_rep_rho;
+
     int total_packets = input_h_list.shape().rows;
     if(total_packets != input_pose_list.shape().rows){
         THROW_CSI_INVALID_ARGUMENT_ERROR("number of CSI and poses are different.\n");
@@ -1774,7 +1781,8 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
                         std::ref(eigen_rep_rho), 
                         std::ref(eigen_rho_list), __nphi*__ntheta, 1);
 
-    
+   
+
    
     phi_repmat.join();
     theta_repmat.join();
@@ -1785,35 +1793,61 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
     if(__FLAG_debug) std::cout << "log [compute_AOA] : Element-wise sin and cos for theta,pitch" << std::endl;
     diff_phi_yaw = eigen_rep_phi-eigen_rep_yaw;
 
-    std::thread phi_yaw_cos (&WSR_Module::get_eigen_rep_angle_trig, this, 
-                            std::ref(e_cos_rep_phi_rep_yaw), std::ref(diff_phi_yaw), "cos");
 
-    std::thread theta_sin (&WSR_Module::get_eigen_rep_angle_trig, this, 
-                            std::ref(e_sin_rep_theta), std::ref(eigen_rep_theta), "sin");
+    EigenDoubleMatrix e_sin_rep_theta, e_cos_rep_pitch, e_sin_rep_pitch,  e_cos_rep_theta, e_cos_rep_phi_rep_yaw;
+
+    if(__FLAG_openmp)
+    {
+        //===========Openmp implementation 0.2 sec faster =============.
+        // auto start = std::chrono::high_resolution_clock::now();
+            // for openMp
+        e_cos_rep_phi_rep_yaw = EigenDoubleMatrix::Zero(diff_phi_yaw.rows(),diff_phi_yaw.cols());
+        e_sin_rep_theta = EigenDoubleMatrix::Zero(diff_phi_yaw.rows(),diff_phi_yaw.cols());
+        e_cos_rep_pitch = EigenDoubleMatrix::Zero(diff_phi_yaw.rows(),diff_phi_yaw.cols());
+        e_sin_rep_pitch = EigenDoubleMatrix::Zero(diff_phi_yaw.rows(),diff_phi_yaw.cols());
+        e_cos_rep_theta = EigenDoubleMatrix::Zero(diff_phi_yaw.rows(),diff_phi_yaw.cols());
     
-    std::thread pitch_cos (&WSR_Module::get_eigen_rep_angle_trig, this, 
-                            std::ref(e_cos_rep_pitch), std::ref(eigen_rep_pitch), "cos");
+        get_eigen_rep_angle_trig_openmp(std::ref(e_cos_rep_phi_rep_yaw), std::ref(diff_phi_yaw), "cos");
+        get_eigen_rep_angle_trig_openmp(std::ref(e_sin_rep_theta), std::ref(eigen_rep_theta), "sin");
+        get_eigen_rep_angle_trig_openmp(std::ref(e_cos_rep_pitch), std::ref(eigen_rep_pitch), "cos");
+        get_eigen_rep_angle_trig_openmp(std::ref(e_sin_rep_pitch), std::ref(eigen_rep_pitch), "sin");
+        get_eigen_rep_angle_trig_openmp(std::ref(e_cos_rep_theta), std::ref(eigen_rep_theta), "cos");
 
-    // phi_yaw_cos.join();
-    std::thread pitch_sin (&WSR_Module::get_eigen_rep_angle_trig, this, 
-                            std::ref(e_sin_rep_pitch), std::ref(eigen_rep_pitch), "sin");
+        //  auto end = std::chrono::high_resolution_clock::now();
+        //  std::cout << " Time elapsed for element wise operation: " << (end-start)/std::chrono::milliseconds(1) << std::endl;
+        //===========Openmp implementation=============.
+    }
+    else
+    {
+        
+        //For regular parallelization
+        
+        std::thread phi_yaw_cos (&WSR_Module::get_eigen_rep_angle_trig, this, 
+                                std::ref(e_cos_rep_phi_rep_yaw), std::ref(diff_phi_yaw), "cos");
 
-    // theta_sin.join();
-    std::thread theta_cos (&WSR_Module::get_eigen_rep_angle_trig, this, 
-                            std::ref(e_cos_rep_theta), std::ref(eigen_rep_theta), "cos");
+        std::thread theta_sin (&WSR_Module::get_eigen_rep_angle_trig, this, 
+                                std::ref(e_sin_rep_theta), std::ref(eigen_rep_theta), "sin");
+            
 
-    // pitch_cos.join();
-    // if(__FLAG_debug) std::cout << "log [compute_AOA] : calculating eterm_3DAdjustment" << std::endl;
-    
-    // lambda_repmat.join();
-    // std::thread eterm3D (&WSR_Module::get_eterm_3DAdjustment, this, 
-    //                         std::ref(eigen_eterm_3DAdjustment), std::ref(eigen_rep_lambda));
+        std::thread pitch_cos (&WSR_Module::get_eigen_rep_angle_trig, this, 
+                                std::ref(e_cos_rep_pitch), std::ref(eigen_rep_pitch), "cos");
+        
 
-    phi_yaw_cos.join();
-    theta_sin.join();
-    pitch_cos.join();
-    pitch_sin.join();
-    theta_cos.join();
+        std::thread pitch_sin (&WSR_Module::get_eigen_rep_angle_trig, this, 
+                                std::ref(e_sin_rep_pitch), std::ref(eigen_rep_pitch), "sin");
+        
+
+        std::thread theta_cos (&WSR_Module::get_eigen_rep_angle_trig, this, 
+                                std::ref(e_cos_rep_theta), std::ref(eigen_rep_theta), "cos");
+        
+
+        phi_yaw_cos.join();
+        theta_sin.join();
+        pitch_cos.join();
+        pitch_sin.join();
+        theta_cos.join();
+    }
+
     
     if(__FLAG_debug) std::cout << "log [compute_AOA] : calculating steering vector" << std::endl;
     
@@ -1871,10 +1905,6 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
        e_term_exp.block(itr*block_row_size, block_col,block_row_size,block_col_size) = emat[itr];
     }
 
-    // std::cout << e_term_exp.size() << std::endl;
-    // exit(1);    
-    // e_term_exp = e_term_prod.array().exp();
-
 
     std::complex<double>* cddataPtr = new std::complex<double>[e_term_exp.rows() * e_term_exp.cols()];
     EigencdMatrixMap(cddataPtr, e_term_exp.rows(), e_term_exp.cols()) = e_term_exp;
@@ -1901,6 +1931,11 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
 
     return beta_profile;
 }
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
 nlohmann::json WSR_Module::get_stats_old_json(double true_phi,
                            double true_theta,std::vector<vector<float>>& aoa_error,
                            const std::string& tx_mac_id,

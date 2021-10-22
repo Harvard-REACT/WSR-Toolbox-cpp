@@ -21,6 +21,7 @@ set(BOOST_LIBRARIES "$ENV{HOME}/Downloads/boost_1_68_0/stage/lib")
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 # catkin_python_setup()
 
+find_package(OpenMP REQUIRED)
 
 ###########
 ## Build ##
@@ -66,20 +67,20 @@ add_executable(remote_processing src/remote_processing.cpp src/WIFI_Agent.cpp sr
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(test_wsr
-   -Wl,--no-as-needed -lgomp -lpthread -lm -ldl -lblas
-   ${BOOST_LIBRARIES}
+   -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
+   ${BOOST_LIBRARIES} OpenMP::OpenMP_CXX
  )
 target_link_libraries(data_processing
- -Wl,--no-as-needed -lgomp -lpthread -lm -ldl -lblas
- ${BOOST_LIBRARIES}
+ -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
+ ${BOOST_LIBRARIES} OpenMP::OpenMP_CXX
 )
 target_link_libraries(remote_processing
- -Wl,--no-as-needed -lgomp -lpthread -lm -ldl -lblas
- ${BOOST_LIBRARIES}
+ -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
+ ${BOOST_LIBRARIES} OpenMP::OpenMP_CXX
 )
 target_link_libraries(process_dataset_all
- -Wl,--no-as-needed -lgomp -lpthread -lm -ldl -lblas
- ${BOOST_LIBRARIES}
+ -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
+ ${BOOST_LIBRARIES} OpenMP::OpenMP_CXX
 )
 
 #############
