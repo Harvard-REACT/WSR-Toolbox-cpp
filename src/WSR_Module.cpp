@@ -890,6 +890,7 @@ void WSR_Module::get_eigen_rep_angle_trig_openmp(EigenDoubleMatrix& output,
           for(j = 0; j<input.rows();j++){
               for(int k = 0; k < input.cols();k++){
                   output(j,k) = sin(input(j,k));
+                  printf("Thread %d works on elemets %d", omp_get_thread_num(),j);
               }
           }
       }
@@ -1736,7 +1737,7 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
                                 std::ref(eigen_rep_theta), 
                                 std::ref(__precomp__eigen_rep_theta), __nphi*__ntheta, num_poses);
 
-
+    auto start = std::chrono::high_resolution_clock::now();
     if(__FLAG_debug)  std::cout << "log [compute_AOA] : get yaw, pitch and rho values" << std::endl;
     auto pose_x = pose_list(pose_list.rSlice(),0);
     auto pose_y = pose_list(pose_list.rSlice(),1);
@@ -1780,9 +1781,6 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
     std::thread rho_repmat (&WSR_Module::get_repmat, this, 
                         std::ref(eigen_rep_rho), 
                         std::ref(eigen_rho_list), __nphi*__ntheta, 1);
-
-   
-
    
     phi_repmat.join();
     theta_repmat.join();
@@ -1790,16 +1788,19 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
     pitch_repmat.join();
     rho_repmat.join();
 
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << " Time elapsed for element wise operation: " << (end-start)/std::chrono::milliseconds(1) << std::endl;
+
     if(__FLAG_debug) std::cout << "log [compute_AOA] : Element-wise sin and cos for theta,pitch" << std::endl;
     diff_phi_yaw = eigen_rep_phi-eigen_rep_yaw;
 
 
     EigenDoubleMatrix e_sin_rep_theta, e_cos_rep_pitch, e_sin_rep_pitch,  e_cos_rep_theta, e_cos_rep_phi_rep_yaw;
-
+    start = std::chrono::high_resolution_clock::now();
     if(__FLAG_openmp)
     {
         //===========Openmp implementation 0.2 sec faster =============.
-        // auto start = std::chrono::high_resolution_clock::now();
+        
             // for openMp
         e_cos_rep_phi_rep_yaw = EigenDoubleMatrix::Zero(diff_phi_yaw.rows(),diff_phi_yaw.cols());
         e_sin_rep_theta = EigenDoubleMatrix::Zero(diff_phi_yaw.rows(),diff_phi_yaw.cols());
@@ -1813,8 +1814,8 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
         get_eigen_rep_angle_trig_openmp(std::ref(e_sin_rep_pitch), std::ref(eigen_rep_pitch), "sin");
         get_eigen_rep_angle_trig_openmp(std::ref(e_cos_rep_theta), std::ref(eigen_rep_theta), "cos");
 
-        //  auto end = std::chrono::high_resolution_clock::now();
-        //  std::cout << " Time elapsed for element wise operation: " << (end-start)/std::chrono::milliseconds(1) << std::endl;
+         
+         
         //===========Openmp implementation=============.
     }
     else
@@ -1847,10 +1848,12 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
         pitch_sin.join();
         theta_cos.join();
     }
+    end = std::chrono::high_resolution_clock::now();
+    std::cout << " Time elapsed for element wise operation: " << (end-start)/std::chrono::milliseconds(1) << std::endl;
 
-    
     if(__FLAG_debug) std::cout << "log [compute_AOA] : calculating steering vector" << std::endl;
-    
+
+    start = std::chrono::high_resolution_clock::now();    
     // auto temp1 = e_sin_rep_theta.cwiseProduct(e_cos_rep_pitch);
     EigenDoubleMatrix temp1, temp2, temp3, eigen_bterm_rep2;
     std::thread temp1_cwp (&WSR_Module::get_cwiseProduct, this, std::ref(temp1),
@@ -1871,11 +1874,16 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
     // auto e_term_exp = bterm_rep2*eterm_3DAdjustment;
     // eterm3D.join();
     get_cwiseProduct_cd(e_term_prod,eigen_bterm_rep2,eigen_eterm_3DAdjustment); 
+
+    end = std::chrono::high_resolution_clock::now();
+    std::cout << " Time elapsed for steering vector " << (end-start)/std::chrono::milliseconds(1) << std::endl;
+
         
     if(__FLAG_debug) std::cout << "log [compute_AOA] : calculating eterm elementwise exp" << std::endl;
     // auto e_term = nc::exp(e_term_exp);
     // std::cout << e_term_prod.rows() << "," << e_term_prod.cols() << std::endl; 
-    
+
+    start = std::chrono::high_resolution_clock::now();
     EigencdMatrix e_term_exp(__nphi*__ntheta, num_poses);
     
     //Does not work on the UP board
@@ -1906,9 +1914,13 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
     }
 
 
+
     std::complex<double>* cddataPtr = new std::complex<double>[e_term_exp.rows() * e_term_exp.cols()];
     EigencdMatrixMap(cddataPtr, e_term_exp.rows(), e_term_exp.cols()) = e_term_exp;
     auto e_term = nc::NdArray<std::complex<double>>(cddataPtr, e_term_exp.rows(), e_term_exp.cols(), __takeOwnership); 
+
+    end = std::chrono::high_resolution_clock::now();
+    std::cout << " Time elapsed for eterm:  " << (end-start)/std::chrono::milliseconds(1) << std::endl;
 
     if(__FLAG_debug) std::cout << "log [compute_AOA] : getting profile using matmul" << std::endl;
 
