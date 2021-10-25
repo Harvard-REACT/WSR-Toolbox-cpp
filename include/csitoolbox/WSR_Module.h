@@ -89,6 +89,9 @@ class WSR_Module
         void get_eigen_rep_angle_trig_openmp(EigenDoubleMatrix& output, 
                                       EigenDoubleMatrix& input,
                                       std::string trig_operation);
+        void get_cwiseProduct_openmp(EigenDoubleMatrix& output, 
+                                  EigenDoubleMatrix& input1,
+                                  EigenDoubleMatrix& input2);
         void get_repmat(EigenDoubleMatrix& output, 
                         EigenDoubleMatrix& input,
                         int rows, int cols);
@@ -106,6 +109,8 @@ class WSR_Module
 
         void get_eterm_3DAdjustment(EigencdMatrix& output, 
                                     EigenDoubleMatrix& input);
+        void get_bterm_all(EigencdMatrix& e_term_exp, EigenDoubleMatrix &e_rep_theta, 
+                            EigenDoubleMatrix &e_rep_pitch,EigenDoubleMatrix &diff_phi_yaw,EigenDoubleMatrix &rep_rho);
         void get_block_exp(EigencdMatrix& output, 
                             EigencdMatrix& input,
                             int start, int end, int rows, int cols);  

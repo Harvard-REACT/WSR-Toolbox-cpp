@@ -8,6 +8,7 @@ add_compile_options(-std=c++17 -pthread
                     -fstack-protector-strong
                     -Wformat -Werror=format-security
                     -Wdate-time -D_FORTIFY_SOURCE=2 -fPIC
+                    -fopenmp
                     )
 
 
