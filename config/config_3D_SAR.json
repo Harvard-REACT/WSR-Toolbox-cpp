@@ -223,7 +223,7 @@
     },
     "output_aoa_profile_path":{
         "desc":"AOA profile",
-        "value":"/REACT-Projects/WSR-Toolbox-cpp/debug"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/debug"
     },
     "max_packets_to_process":{
         "desc":"Maximum number of csi packets to process",
@@ -239,11 +239,11 @@
     },
     "debug":{
         "desc":"Flag to enable/disbale max packet threshold",
-        "value":true
+        "value":false
     },
     "debug_dir":{
         "desc":"dir to save intermediate data files for debugging",
-        "value":"/REACT-Projects/WSR-Toolbox-cpp/debug"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/debug"
     },
     "use_relative_trajectory":{
         "desc":"Flag to enable/disbale usage of relative trajectory",
