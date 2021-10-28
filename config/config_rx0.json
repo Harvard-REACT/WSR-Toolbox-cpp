@@ -178,30 +178,10 @@
     "input_TX_channel_csi_fn":{
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
-            "tx0":{
-                "mac_id_val":"00:16:EA:12:34:56",
-                "mac_id":"00:21:6A:C5:FC:00",
-                "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_tx0_2021-03-03_192000.dat"
-            },
-            "tx1":{
-                "mac_id_val":"0:33:106:62:245:126",
-                "mac_id":"00:21:6A:C0:D0:1A",
-                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset2-REACT_testbed/static_dataset_MR_P2_P5_set2/csi_tx1_2021-04-19_172137.dat"
-                },
             "tx2":{
                 "mac_id_val":"0:33:106:63:23:90",
                 "mac_id":"00:21:6A:3F:17:5A",
                 "csi_fn":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/Moving_ends_sample/csi_tx2.dat"
-            },
-            "tx3":{
-                "mac_id_val":"0:33:106:48:210:60",
-                "mac_id":"00:21:6A:30:D2:3C",
-                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset3-Multirobot-Counter-TDMA/0610/csi_tx3_2021-06-10_115700.dat"
-            },
-            "tx4":{
-                "mac_id_val":"0:33:106:178:110:250",
-                "mac_id":"00:21:6A:B2:6E:FA",
-                "csi_fn":"/REACT-Projects/WSR-IROS-2021/DataSet/Dataset2-REACT_testbed/static_dataset_MR_P2_P5_set2/csi_tx4_2021-04-19_172137.dat"
             }
         }
     },
@@ -216,6 +196,14 @@
     "input_trajectory_csv_fn_rx":{
         "desc":"Trajectory fiile",
         "value":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/Moving_ends_sample/rx_trajectory.csv"
+    },
+    "input_trajectory_csv_fn_rx_t265":{
+        "desc":"Trajectory fiile",
+        "value":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/Moving_ends_sample/t265_rx_trajectory.csv"
+    },
+    "input_trajectory_csv_fn_rx_odom":{
+        "desc":"Trajectory fiile",
+        "value":"/REACT-Projects/WSR-Toolbox-cpp/data/Line-of-Sight/Moving_ends_sample/odom_rx_trajectory.csv"
     },
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
@@ -247,7 +235,7 @@
     },
     "use_relative_trajectory":{
         "desc":"Flag to enable/disbale usage of relative trajectory",
-        "value":false
+        "value":true
     },
     "input_dir":{
         "desc":"AOA profile",

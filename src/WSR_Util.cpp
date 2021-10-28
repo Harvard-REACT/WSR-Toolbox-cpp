@@ -559,47 +559,56 @@ int WSR_Util::formatTrajectory(std::vector<std::vector<double>>& rx_trajectory,
  * 
  * */
 std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::getRelativeTrajectory(
-                                                    std::vector<std::vector<double>>& trajectory_tx,
-                                                    std::vector<std::vector<double>>& trajectory_rx,
+                                                    std::vector<std::vector<double>>& sar_robot_traj,
+                                                    std::vector<std::vector<double>>& neighbor_robot_traj,
+                                                    nc::NdArray<double>& pos_sar_robot,
                                                     std::vector<double>& antenna_offset,
                                                     bool __Flag_get_mean_pos,bool __Flag_offset)
 {
 
     //TODO : return mean pos for the relative trajectory.
-    nc::NdArray<double> mean_pos1,mean_pos2;
-    auto ret_val = formatTrajectory_v2(trajectory_tx,antenna_offset,mean_pos1,__Flag_get_mean_pos,__Flag_offset); //Assumes both robots have identical antenna offset to local displacement sensor
-    nc::NdArray<double> timestamp_tx = ret_val.first;
-    nc::NdArray<double> displacement_tx = ret_val.second;
 
-    auto ret_val2 = formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos2,__Flag_get_mean_pos,__Flag_offset);
-    nc::NdArray<double> timestamp_rx = ret_val2.first;
-    nc::NdArray<double> displacement_rx = ret_val2.second;
+    //TODO:  Check how to correctly set pos_sar_robot;
+
+    nc::NdArray<double> pos_neighbor_robot;
+    auto ret_val = formatTrajectory_v2(sar_robot_traj,antenna_offset,pos_sar_robot,__Flag_get_mean_pos,__Flag_offset); //Assumes both robots have identical antenna offset to local displacement sensor
+    nc::NdArray<double> timestamp_r1 = ret_val.first;
+    nc::NdArray<double> displacement_r1 = ret_val.second;
+
+    auto ret_val2 = formatTrajectory_neighbor(neighbor_robot_traj,pos_neighbor_robot,timestamp_r1);
+    nc::NdArray<double> timestamp_r2 = ret_val2.first;
+    nc::NdArray<double> displacement_r2 = ret_val2.second;
     
+    // std::cout << timestamp_r1.shape() << std::endl;
+    // std::cout << displacement_r1.shape() << std::endl;
+    // std::cout << timestamp_r2.shape() << std::endl; 
+    // std::cout << displacement_r2.shape() << std::endl;
+
     nc::NdArray<double> displacement, timestamp;
 
-    if(displacement_tx.shape().rows != displacement_rx.shape().rows)
+    if(displacement_r1.shape().rows != displacement_r1.shape().rows)
     {
+        //TODO: Possible BUG
         std::cout << "Mismatch of poses for moving ends" << std::endl;
-        auto ret = match_trajectory_timestamps(timestamp_tx,
-                                               displacement_tx,
-                                               timestamp_rx,
-                                               displacement_rx);
+        auto ret = match_trajectory_timestamps(timestamp_r1,
+                                               displacement_r1,
+                                               timestamp_r2,
+                                               displacement_r2);
         displacement = ret.first;
         timestamp = ret.second;
         
     }
     else
     {
-        for(int i =0;i<displacement_tx.shape().rows;i++)
+        for(int i =0;i<displacement_r1.shape().rows;i++)
         {
-            displacement_tx.put(i,0,displacement_tx(i,0)-displacement_rx(i,0));
-            displacement_tx.put(i,1,displacement_tx(i,1)-displacement_rx(i,1));
-            displacement_tx.put(i,2,displacement_tx(i,2)-displacement_rx(i,2));
+            displacement_r1.put(i,0,displacement_r1(i,0)-displacement_r2(i,0));
+            displacement_r1.put(i,1,displacement_r1(i,1)-displacement_r2(i,1));
+            displacement_r1.put(i,2,displacement_r1(i,2)-displacement_r2(i,2));
         }
-        displacement = displacement_tx;
-        timestamp = timestamp_tx;
+        displacement = displacement_r1;
+        timestamp = timestamp_r1;
     }
-    
 
     //Keep the timestamp of tx which performs SAR
     return std::make_pair(timestamp,displacement);
@@ -699,18 +708,23 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
         
     }
     std::cout << "Displacement updated" << std::endl;
-    nc::NdArray<nc::uint32> sortedIdxs = argsort(trajectory_timestamp);
-    nc::NdArray<double> sorted_trajectory_timestamp(trajectory_timestamp.size(),1);
-    nc::NdArray<double> sorted_displacement;
-    nc::uint32 counter = 0;
+    
+    //Sometime sorting leads to potential data corrpution, observed for moving ends.
+    // nc::NdArray<nc::uint32> sortedIdxs = argsort(trajectory_timestamp);
+    // nc::NdArray<double> sorted_trajectory_timestamp(trajectory_timestamp.size(),1);
+    // nc::NdArray<double> sorted_displacement;
+    // nc::uint32 counter = 0;
 
-    for (auto Idx : sortedIdxs)
-    {
-        // std::cout << counter << std::endl;
-        sorted_trajectory_timestamp.put(counter,0,trajectory_timestamp(Idx,0));
-        sorted_displacement = nc::vstack({sorted_displacement, displacement(Idx,displacement.cSlice())});
-        counter++;
-    }
+    // for (auto Idx : sortedIdxs)
+    // {
+    //     // std::cout << counter << std::endl;
+    //     sorted_trajectory_timestamp.put(counter,0,trajectory_timestamp(Idx,0));
+    //     sorted_displacement = nc::vstack({sorted_displacement, displacement(Idx,displacement.cSlice())});
+    //     counter++;
+    // }
+
+    nc::NdArray<double> sorted_trajectory_timestamp = trajectory_timestamp ;
+    nc::NdArray<double> sorted_displacement = displacement;
 
     //Find first and last moving index
     //@TODO : Figure out for z_displacment when 3D traj (vertical motion)
@@ -780,7 +794,65 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     return std::make_pair(sorted_trajectory_timestamp({start_index,end_index},sorted_trajectory_timestamp.cSlice()), 
                          sorted_displacement({start_index,end_index},nc::Slice(0, 3)));
 }
+//=============================================================================================================================
+/**
+ * 
+ * 
+ * */
+std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_neighbor(
+                            std::vector<std::vector<double>>& trajectory,
+                            nc::NdArray<double>& pos,
+                            nc::NdArray<double> timestamp_sar_robot)
+{
 
+    nc::NdArray<double> displacement(trajectory.size(),4); //x,y,z,yaw
+    nc::NdArray<double> trajectory_timestamp(trajectory.size(),1);
+    std::cout.precision(9);
+    double nsec_timestamp;
+    Eigen::Quaternion<float> q,q_diff;
+    float yaw=0;
+    int start_index=-1, end_index=-1;
+
+    std::cout << trajectory.size() << std::endl;
+    for(int i=0; i<trajectory.size(); i++){
+        nsec_timestamp = trajectory[i][0] + trajectory[i][1]*0.000000001;
+
+        //TODO fix: This works without ntp for now because trajectory data files are collected by sar robot only using mocap topic 
+        if(nsec_timestamp < timestamp_sar_robot[0]) continue;
+        if(nsec_timestamp > timestamp_sar_robot.back())
+        {
+            end_index = i-1;
+            break;
+        }
+
+        if(start_index==-1) start_index = i;
+        
+        trajectory_timestamp(i,0) = nsec_timestamp; //timestamp  //TODO: fix bug #8
+        displacement(i,3) = 0;
+        displacement(i,0) = trajectory[i][2]; //x
+        displacement(i,1) = trajectory[i][3]; //y
+        displacement(i,2) = trajectory[i][4]; //z
+    }
+    std::cout << "Displacement updated" << std::endl;
+
+    nc::NdArray<double> sorted_trajectory_timestamp = trajectory_timestamp ;
+    nc::NdArray<double> sorted_displacement = displacement;
+    double first_x = sorted_displacement(start_index, 0), first_y = sorted_displacement(start_index, 1), first_z = sorted_displacement(start_index, 2);
+    pos = sorted_displacement(start_index, sorted_displacement.cSlice());
+    std::cout << pos << std::endl;
+    
+    std::cout << first_x << ", " << first_y << ", " << first_z << "," << std::endl;
+    //Get the trajectory of the neighbor robot with respect to its first pose
+    for(int i=start_index; i<end_index; i++)
+    {
+        sorted_displacement.put(i,0,sorted_displacement(i, 0) - first_x);
+        sorted_displacement.put(i,1,sorted_displacement(i, 1) - first_y);
+        sorted_displacement.put(i,2,sorted_displacement(i, 2) - first_z);
+    }
+
+    return std::make_pair(sorted_trajectory_timestamp({start_index,end_index},sorted_trajectory_timestamp.cSlice()), 
+                         sorted_displacement({start_index,end_index},nc::Slice(0, 3)));
+}
 
 //=============================================================================================================================
 /**
@@ -1057,7 +1129,7 @@ void WSR_Util::writeTrajToFile(nc::NdArray<double>& rx_trajectory, const std::st
 std::vector<std::vector<double>> WSR_Util::loadTrajFromCSV(std::string traj_fn)
 {
     std::vector<std::vector<double>> rx_trajectory;
-
+    std::cout << traj_fn << std::endl;
     // File pointer 
     fstream traj_file;
     traj_file.open( traj_fn.c_str() , ios::in );
@@ -1066,7 +1138,7 @@ std::vector<std::vector<double>> WSR_Util::loadTrajFromCSV(std::string traj_fn)
         traj_file.close();
         exit (1);
     }
-
+    std::cout << "OPened ifle " << std::endl;
     std::string line, temp, word;
     std::vector<double> traj_temp;
 
@@ -1075,6 +1147,7 @@ std::vector<std::vector<double>> WSR_Util::loadTrajFromCSV(std::string traj_fn)
         traj_temp.clear();
         std::stringstream s(temp); 
         while (std::getline(s, word, ',')) { 
+
             traj_temp.push_back(std::stod(word)); 
         }
         rx_trajectory.push_back(traj_temp); 
@@ -1082,6 +1155,7 @@ std::vector<std::vector<double>> WSR_Util::loadTrajFromCSV(std::string traj_fn)
 
 
     traj_file.close();
+    std::cout << rx_trajectory.size() << std::endl;
     return rx_trajectory;
 }
 //=============================================================================================================================

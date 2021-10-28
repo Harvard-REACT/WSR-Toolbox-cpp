@@ -183,10 +183,15 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         std::cout << "log [calculate_AOA_profile]: Getting AOA profiles" << std::endl;
     std::vector<DataPacket> data_packets_RX, data_packets_TX;
 
+
     for (int num_tx = 0; num_tx < mac_id_tx.size(); num_tx++)
     {
         WIFI_Agent TX_Neighbor_robot; // Neighbouring robots who reply back
         std::pair<nc::NdArray<std::complex<double>>, nc::NdArray<double>> csi_data;
+        
+        std::cout << "log [calculate_AOA_profile]: =========================" << std::endl;
+        std::cout << "log [calculate_AOA_profile]: Profile for RX_SAR_robot MAC-ID: " << __RX_SAR_robot_MAC_ID
+                  << ", TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
 
         if (tx_csi_file.find(mac_id_tx[num_tx]) == tx_csi_file.end())
         {
@@ -195,9 +200,6 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                           << mac_id_tx[num_tx] << ". Skipping" << std::endl;
             continue;
         }
-        std::cout << "log [calculate_AOA_profile]: =========================" << std::endl;
-        std::cout << "log [calculate_AOA_profile]: Profile for RX_SAR_robot MAC-ID: " << __RX_SAR_robot_MAC_ID
-                  << ", TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
 
         auto temp2 = utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], TX_Neighbor_robot, __FLAG_debug);
 
@@ -206,7 +208,6 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             if (__FLAG_debug)
                 std::cout << "log [calculate_AOA_profile]: Detected RX MAC IDs = " << key.first
                           << ", Packet count: = " << key.second << std::endl;
-            mac_id_tx.push_back(key.first);
         }
 
         data_packets_RX = RX_SAR_robot.get_wifi_data(mac_id_tx[num_tx]);          //Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
@@ -1481,17 +1482,55 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                                      nlohmann::json true_positions_tx,
                                      const int pos_idx)
 {
+    
     nlohmann::json position = true_positions_tx["value"][tx_name];
+    std::cout << rx_pos_est << std::endl;
+    std::cout << rx_pos_true << std::endl;
+    
     nlohmann::json output_stats =
         {
-            {"a_INFO_Transmitting_robot", {{"Name", tx_name}, {"MAC_ID", tx_mac_id}, {"groundtruth_position", {{"x", float(position["position"]["x"])}, {"y", float(position["position"]["y"])}, {"z", float(position["position"]["z"])}}}, {"groundtruth_azimuth", true_phi}, {"groundtruth_elevation", true_theta}}},
-            {"b_INFO_Receiving_robot", {{"id", pos_idx}, {"displacement_type", __trajType}, {"estimated_start_position", {{"x", rx_pos_est(0, 0)}, //Will be same as true positin when using gt flag
-                                                                                                                          {"y", rx_pos_est(0, 1)},
-                                                                                                                          {"z", rx_pos_est(0, 2)},
-                                                                                                                          {"yaw", rx_pos_est(0, 3)}}},
-                                        {"groundtruth_start_position", {{"x", rx_pos_true(0, 0)}, {"y", rx_pos_true(0, 1)}, {"z", rx_pos_true(0, 2)}, {"yaw", rx_pos_true(0, 3)}}}}},
-            {"c_INFO_Performance", {{"azimuth_profile_resolution", __nphi}, {"elevation_profile_resolution", __ntheta}, {"Forward_channel_packets", get_tx_pkt_count(tx_mac_id)}, {"Reverse_channel_packets", get_rx_pkt_count(tx_mac_id)}, {"Packets_Used", get_paired_pkt_count(tx_mac_id)}, {"time(sec)", get_processing_time(tx_mac_id)}, {"memory(GB)", get_memory_used(tx_mac_id)}}},
-            {"d_INFO_AOA_profile", {{"Profile_variance", get_top_confidence(tx_mac_id)}, {"Top_N_peaks", {{"1", {{"estimated_azimuth", aoa_error[0][0]}, {"estimated_elevation", aoa_error[0][1]}, {"Total_AOA_Error", aoa_error[0][2]}, {"azimuth_error", aoa_error[0][3]}, {"elevation_error", aoa_error[0][4]}}}}}}}};
+            {"a_INFO_Transmitting_robot", {
+                {"Name", tx_name}, 
+                {"MAC_ID", tx_mac_id}, 
+                {"groundtruth_position", {
+                    {"x", float(position["position"]["x"])}, 
+                    {"y", float(position["position"]["y"])}, 
+                    {"z", float(position["position"]["z"])}}}, 
+                {"groundtruth_azimuth", true_phi}, 
+                {"groundtruth_elevation", true_theta}}},
+            {"b_INFO_Receiving_robot", {
+                {"id", pos_idx}, 
+                {"displacement_type", __trajType}, 
+                {"estimated_start_position", {
+                    {"x", rx_pos_est(0, 0)}, //Will be same as true positin when using gt flag
+                    {"y", rx_pos_est(0, 1)},
+                    {"z", rx_pos_est(0, 2)},
+                    {"yaw", rx_pos_est(0, 3)}}},
+                {"groundtruth_start_position", {
+                    {"x", rx_pos_true(0, 0)}, 
+                    {"y", rx_pos_true(0, 1)}, 
+                    {"z", rx_pos_true(0, 2)}, 
+                    {"yaw", rx_pos_true(0, 3)}}}}},
+            {"c_INFO_Performance", {
+                {"azimuth_profile_resolution", __nphi}, 
+                {"elevation_profile_resolution", __ntheta}, 
+                {"Forward_channel_packets", get_tx_pkt_count(tx_mac_id)}, 
+                {"Reverse_channel_packets", get_rx_pkt_count(tx_mac_id)}, 
+                {"Packets_Used", get_paired_pkt_count(tx_mac_id)}, 
+                {"time(sec)", get_processing_time(tx_mac_id)}, 
+                {"memory(GB)", get_memory_used(tx_mac_id)}}},
+            {"d_INFO_AOA_profile", {
+                {"Profile_variance", get_top_confidence(tx_mac_id)}, 
+                {"Top_N_peaks", {
+                    {"1", {{"estimated_azimuth", aoa_error[0][0]}, 
+                    {"estimated_elevation", aoa_error[0][1]},
+                     {"Total_AOA_Error", aoa_error[0][2]}, 
+                     {"azimuth_error", aoa_error[0][3]}, 
+                     {"elevation_error", aoa_error[0][4]}}}}
+                    }
+                }
+            }
+        };
 
     for (int i = 1; i < aoa_error.size(); i++)
     {
