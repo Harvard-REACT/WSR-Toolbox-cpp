@@ -449,7 +449,7 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                                                                 bool sub_sample){
     int tx_length = int(tx_robot.size()), rx_length = int(rx_robot.size());
     int itr_k=0, itr_l=0;
-    double a;
+    // double a;
     bool first_csi_val = true;
     std::cout.precision(15);
 
@@ -459,12 +459,14 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
     nc::NdArray<double> temp2 = nc::zeros<double>(nc::Shape(1,1));
     double interpolated_phase;
     std::complex<double> interpolated_h;
-
+    int a=0,b=0;
     while(itr_k < tx_length && itr_l < rx_length)
         {
-            // std::cout << "TX frame: " << tx_robot[itr_k].frame_count << ", RX frame:" << rx_robot[itr_l].frame_count << std::endl;
+            a = itr_k;
+            b = itr_l;
             if (tx_robot[itr_k].frame_count == rx_robot[itr_l].frame_count)
             {
+                // std::cout << "TX frame: " << tx_robot[itr_k].frame_count << ", RX frame:" << rx_robot[itr_l].frame_count << std::endl;
                 //multiply forward and reverse channel
                 for(int h_i = 0;h_i< 30; h_i++)
                 {

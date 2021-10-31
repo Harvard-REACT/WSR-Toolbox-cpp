@@ -13,7 +13,7 @@
     },
     "channel": {
         "desc": "wireless channel used in the 5.0 GHz range",
-        "value": 108
+        "value": 104
     },
     "subCarrier": {
         "desc": "subcarrier for the channel [1,..,30]. Default is 15.5 that corresponds to the center freqency.",

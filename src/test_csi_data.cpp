@@ -7,7 +7,11 @@
 int main(){
     
     WSR_Util utils;
-    std::string config = "../config/config_3D_SAR.json";
+    //std::string config = "../config/config_3D_SAR.json";
+    std::string config = "/home/jadhav/catkin_ws/src/wsr_ros/config/config_rx0.json";
+    
+    std::cout << config << std::endl;
+
     WSR_Module run_module(config);
     
     //RX_SAR_Robot: performs 3D SAR
@@ -53,7 +57,9 @@ int main(){
         run_module.tx_name_list[tx_mac_id] = tx_name;
     }
 
+    std::cout << rx_robot_csi << std::endl;
     
+
     /*Test CSI data files*/
     run_module.test_csi_data(rx_robot_csi,tx_robot_csi);
     auto detected_tx = run_module.get_paired_pkt_count();

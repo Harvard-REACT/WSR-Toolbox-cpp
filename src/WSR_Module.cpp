@@ -1629,38 +1629,19 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
                       << data_packets_TX.size() << std::endl;
         }
 
-        if (__FLag_use_packet_id)
-        {
-            std::cout << "log [test_csi_data]: Calculating forward-reverse channel product using Counter " << std::endl;
-            csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
-                                                             data_packets_TX,
-                                                             __FLAG_interpolate_phase,
-                                                             __FLAG_sub_sample);
-        }
-        else
-        {
-            std::cout << "log [test_csi_data]: Calculating forward-reverse channel product using Timestamps " << std::endl;
-            csi_data = utils.getForwardReverseChannel_v2(data_packets_RX,
-                                                         data_packets_TX,
-                                                         __time_offset,
-                                                         __time_threshold,
-                                                         cal_ts_offset,
-                                                         __FLAG_interpolate_phase,
-                                                         __FLAG_sub_sample);
-        }
+        std::cout << "log [test_csi_data]: Calculating forward-reverse channel product using Counter " << std::endl;
+        csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
+                                                            data_packets_TX,
+                                                            __FLAG_interpolate_phase,
+                                                            __FLAG_sub_sample);
 
         std::cout << "log [test_csi_data]: corrected CFO " << std::endl;
         h_list_all = csi_data.first;
         csi_timestamp_all = csi_data.second;
 
         bool moving = true;
-        utils.get_phase_diff_metrics(h_list,
-                                     moving_channel_ang_diff_mean,
-                                     moving_channel_ang_diff_stdev,
-                                     __FLAG_interpolate_phase,
-                                     moving);
 
-        if (h_list.shape().rows < __min_packets_to_process)
+        if (h_list_all.shape().rows < __min_packets_to_process)
         {
             std::cout << "log [test_csi_data]: Not enough CSI packets." << std::endl;
             std::cout << "log [test_csi_data]: Return Empty AOA profile" << std::endl;
@@ -1671,22 +1652,22 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
         {
             if (__FLAG_debug)
             {
-                std::cout << "log [test_csi_data]: CSI_packets_used = " << csi_timestamp.shape() << std::endl;
-                std::cout << "log [test_csi_data]: h_list size  = " << h_list.shape() << std::endl;
+                std::cout << "log [test_csi_data]: CSI_packets_used = " << csi_timestamp_all.shape() << std::endl;
+                std::cout << "log [test_csi_data]: h_list size  = " << h_list_all.shape() << std::endl;
 
                 std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
                 debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());
 
                 //Store phase and timestamp of the channel for debugging
                 std::string channel_data_all_fn = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
-                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_all_fn, __FLAG_interpolate_phase);
+                utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all_fn, __FLAG_interpolate_phase);
             }
 
             auto starttime = std::chrono::high_resolution_clock::now();
             auto endtime = std::chrono::high_resolution_clock::now();
             float processtime = std::chrono::duration<float, std::milli>(endtime - starttime).count();
             /*Interpolate the trajectory and csi data*/
-            __paired_pkt_count[mac_id_tx[num_tx]] = csi_timestamp.shape().rows;
+            __paired_pkt_count[mac_id_tx[num_tx]] = csi_timestamp_all.shape().rows;
             __calculated_ts_offset[mac_id_tx[num_tx]] = cal_ts_offset;
             __rx_pkt_size[mac_id_tx[num_tx]] = data_packets_RX.size();
             __tx_pkt_size[mac_id_tx[num_tx]] = data_packets_TX.size();
