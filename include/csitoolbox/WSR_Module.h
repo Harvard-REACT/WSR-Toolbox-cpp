@@ -36,10 +36,15 @@ class WSR_Module
         nc::NdArray<double> compute_profile_bartlett_singlethread(
                     const nc::NdArray<std::complex<double>>& h_list, 
                     const nc::NdArray<double>& pose_list);
+        
+        nc::NdArray<double> compute_profile_bartlett_offboard(
+                            const nc::NdArray<std::complex<double>>& h_list, 
+                            const nc::NdArray<double>& pose_list);
 
         nc::NdArray<double> phi_list,precomp_rep_phi,theta_list, precomp_rep_theta;
         bool __FLAG_normalize_profile = true, __FLAG_packet_threshold = false, __FLAG_debug = true, __FLAG_threading=false,
-            __FLAG_interpolate_phase = true, __FLAG_sub_sample = false, __FLag_use_packet_id = true;
+            __FLAG_interpolate_phase = true, __FLAG_sub_sample = false, __FLag_use_packet_id = true, __FLAG_offboard=false,
+            __FLAG_openmp=false;
         nc::NdArray<double> __aoa_profile;
         std::unordered_map<std::string, nc::NdArray<double>> __all_aoa_profiles;
         std::unordered_map<std::string, std::vector<double>> __all_topN_confidence;
@@ -81,6 +86,12 @@ class WSR_Module
         void get_eigen_rep_angle_trig(EigenDoubleMatrix& output, 
                                       EigenDoubleMatrix& input,
                                       std::string trig_operation);
+        void get_eigen_rep_angle_trig_openmp(EigenDoubleMatrix& output, 
+                                      EigenDoubleMatrix& input,
+                                      std::string trig_operation);
+        void get_cwiseProduct_openmp(EigenDoubleMatrix& output, 
+                                  EigenDoubleMatrix& input1,
+                                  EigenDoubleMatrix& input2);
         void get_repmat(EigenDoubleMatrix& output, 
                         EigenDoubleMatrix& input,
                         int rows, int cols);
@@ -98,6 +109,8 @@ class WSR_Module
 
         void get_eterm_3DAdjustment(EigencdMatrix& output, 
                                     EigenDoubleMatrix& input);
+        void get_bterm_all(EigencdMatrix& e_term_exp, 
+                            EigenDoubleMatrix &e_rep_pitch,EigenDoubleMatrix &diff_phi_yaw,EigenDoubleMatrix &rep_rho);
         void get_block_exp(EigencdMatrix& output, 
                             EigencdMatrix& input,
                             int start, int end, int rows, int cols);  
@@ -119,6 +132,14 @@ class WSR_Module
                                 const nc::NdArray<double>& rx_pos_est,
                                 nlohmann::json true_positions_tx,
                                 const int pos_idx);
+        nlohmann::json get_stats_old_json(double true_phi,
+                                double true_theta,std::vector<vector<float>>& aoa_error,
+                                const std::string& tx_mac_id,
+                                const std::string& tx_name,
+                                const nc::NdArray<double>& rx_pos_true, 
+                                const nc::NdArray<double>& rx_pos_est,
+                                nlohmann::json true_positions_tx,
+                                const int pos_idx);                                
         int test_csi_data(std::string rx_csi_file, 
                         std::unordered_map<std::string, std::string> tx_csi_file);
         nlohmann::json get_performance_stats(const std::string& tx_mac_id,

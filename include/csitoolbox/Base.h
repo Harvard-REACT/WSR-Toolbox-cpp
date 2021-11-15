@@ -19,6 +19,8 @@
 #include <thread>
 #include <unordered_map>
 
+//#define EIGEN_USE_BLAS
+
 /*Data packets sturcture from log_to_file*/
 struct DataPacket{
     unsigned long timestamp_low;
