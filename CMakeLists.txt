@@ -7,11 +7,12 @@ add_compile_options(-std=c++14 -pthread
                     -DNDEBUG -g -fwrapv -O3 -Wall 
                     -g -fstack-protector-strong 
                     -Wformat -Werror=format-security 
-                    -g -Wdate-time -D_FORTIFY_SOURCE=2 -fPIC )
+                    -g -Wdate-time -D_FORTIFY_SOURCE=2 -fPIC -fopenmp)
 
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+find_package(OpenMP REQUIRED)
 set(BOOST_INCLUDE_DIRS "$ENV{HOME}/Downloads/boost_1_68_0")
 set(BOOST_LIBRARIES "$ENV{HOME}/Downloads/boost_1_68_0/stage/lib")
 
@@ -64,11 +65,11 @@ add_executable(test_csi_data src/test_csi_data.cpp src/WIFI_Agent.cpp src/WSR_Mo
 ## Specify libraries to link a library or executable target against
 target_link_libraries(test_wsr
    -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
-   ${BOOST_LIBRARIES}
+   ${BOOST_LIBRARIES} OpenMP::OpenMP_CXX
  )
 target_link_libraries(test_csi_data
   -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
-  ${BOOST_LIBRARIES}
+  ${BOOST_LIBRARIES} OpenMP::OpenMP_CXX
 )
 
 #############

@@ -7,11 +7,11 @@
 int main(int argc, char *argv[]){
     
     WSR_Util utils;
-    // struct passwd *pw = getpwuid(getuid());
-    // std::string homedir = pw->pw_dir;
+    struct passwd *pw = getpwuid(getuid());
+    std::string homedir = pw->pw_dir;
     // std::string folder = "";
     // std::string config = utils.__homedir+"/catkin_ws/src/csitoolbox/config/config_3D_SAR.json";
-    string traj_type = argv[2];
+    string traj_type = argv[1];
     std::string config = "../config/config_3D_SAR.json";
     WSR_Module run_module(config);
     
@@ -31,6 +31,7 @@ int main(int argc, char *argv[]){
 
     std::string rx_robot_csi = utils.__homedir + reverse_csi;
     std::string traj_fn_rx = utils.__homedir + trajectory_file_rx;
+    std::cout << traj_fn_rx << std::endl;
     std::vector<std::vector<double>> trajectory_rx = utils.loadTrajFromCSV(traj_fn_rx); //Robot performing SAR
     nc::NdArray<double> displacement;
     nc::NdArray<double> trajectory_timestamp;
