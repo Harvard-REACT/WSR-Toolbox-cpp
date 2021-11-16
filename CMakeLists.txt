@@ -13,6 +13,11 @@ add_compile_options(-std=c++14 -pthread
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenMP REQUIRED)
+# if (OPENMP_FOUND)
+#     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+#     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+# endif()
 set(BOOST_INCLUDE_DIRS "$ENV{HOME}/Downloads/boost_1_68_0")
 set(BOOST_LIBRARIES "$ENV{HOME}/Downloads/boost_1_68_0/stage/lib")
 
@@ -48,7 +53,6 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-
 add_executable(test_wsr src/test_wsr.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp)
 add_executable(test_csi_data src/test_csi_data.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp)
 
@@ -63,13 +67,13 @@ add_executable(test_csi_data src/test_csi_data.cpp src/WIFI_Agent.cpp src/WSR_Mo
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(test_wsr
+target_link_libraries(test_wsr PRIVATE
    -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
-   ${BOOST_LIBRARIES} OpenMP::OpenMP_CXX
+   ${BOOST_LIBRARIES}  ${OpenMP_CXX_FLAGS}
  )
-target_link_libraries(test_csi_data
+target_link_libraries(test_csi_data PRIVATE
   -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
-  ${BOOST_LIBRARIES} OpenMP::OpenMP_CXX
+  ${BOOST_LIBRARIES} ${OpenMP_CXX_FLAGS}
 )
 
 #############

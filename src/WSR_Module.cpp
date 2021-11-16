@@ -1914,7 +1914,7 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
             std::cout << "Time elapsed " << (end - start) / std::chrono::milliseconds(1) << " for e_term_prod " << std::endl;
 
             //Does not work on the UP board
-            int max_threads = 64;
+            int max_threads = 1;
             int total_rows = __nphi * __ntheta;
             int block_row_size = total_rows / max_threads;
             int block_col = 0;
