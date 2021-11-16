@@ -12,7 +12,7 @@ Core C++ code repo for WSR toolbox with Cython wrapper.
 ### C++ version tested and supported
 - ~~[ ] c++11~~
 - [x] c++14
-- [ ] c++17
+- [x] c++17
 - [ ] c++20
 
 ### Python version tested
@@ -27,22 +27,25 @@ Core C++ code repo for WSR toolbox with Cython wrapper.
 
 ## Setup instructions (tested on UP Squared board)
 
-1. Clone the repository in your home directory.
+1. Create a directory named WSR_Project and clone the repository in that directory.
 
-2. Install python 3.7 (minimum supported version for using visualization scripts) and other dependencies
+2. Install python 3.7 (minimum supported version for using visualization scripts) and make it default version
 ```
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
-sudo apt install python3.7
-sudo apt-get install python3.7-tk
+sudo apt install python3.7 python3.7-tk python3-pip python3.7-dev
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.5 1
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2
+sudo update-alternatives --config python3
 ```
+Select python3.7 as the default version.
 
 3. Install the python dependency packages
 ```
 cd ~
-sudo apt install python3-pip
 cd WSR-Toolbox-cpp
-python3.7 -m pip install -r requirements.txt
+pip3 install numpy pybind11 pythran
+python3 install -r requirements.txt
 ```
 
 4. Download and compile the boost_1.68 locally in $HOME/Downloads.
