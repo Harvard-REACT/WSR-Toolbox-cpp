@@ -938,15 +938,23 @@ void WSR_Module::get_eigen_rep_angle_trig_openmp(EigenDoubleMatrix &output,
 void WSR_Module::get_bterm_all(EigencdMatrix &e_term_exp,
                                EigenDoubleMatrix &eigen_pitch_list, EigenDoubleMatrix &eigen_yaw_list, EigenDoubleMatrix &rep_rho)
 {
+
+    // EigenDoubleMatrix eigen_precomp_rep_phi = EigenDoubleMatrixMap(precomp_rep_phi.data(),
+    //                                                precomp_rep_phi.numRows(),
+    //                                                precomp_rep_phi.numCols());
+    EigenDoubleMatrix eigen_precomp_rep_theta = EigenDoubleMatrixMap(precomp_rep_theta.data(),
+                                                     precomp_rep_theta.numRows(),
+                                                     precomp_rep_theta.numCols());
+
     int i = 0;
     int j = 0;
-#pragma omp parallel for shared(e_term_exp, __eigen_precomp_rep_theta, eigen_pitch_list, eigen_yaw_list, rep_rho) private(i, j) collapse(2)
+#pragma omp parallel for shared(e_term_exp, eigen_precomp_rep_theta, eigen_pitch_list, eigen_yaw_list, rep_rho) private(i, j) collapse(2)
     for (i = 0; i < e_term_exp.rows(); i++)
     {
         for (j = 0; j < e_term_exp.cols(); j++)
         {
-            e_term_exp(i, j) = exp((sin(__eigen_precomp_rep_theta(i, 0)) * cos(eigen_pitch_list(0,j)) * cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j)) +
-                                 sin(eigen_pitch_list(0, j)) * cos(__eigen_precomp_rep_theta(i, 0))) *
+            e_term_exp(i, j) = exp((sin(eigen_precomp_rep_theta(i, 0)) * cos(eigen_pitch_list(0,j)) * cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j)) +
+                                 sin(eigen_pitch_list(0, j)) * cos(eigen_precomp_rep_theta(i, 0))) *
                                 rep_rho(0, j) * (-4.0 * std::complex<double>(0, 1) * M_PI / __lambda));
         }
     }
@@ -1906,7 +1914,7 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
             std::cout << "Time elapsed " << (end - start) / std::chrono::milliseconds(1) << " for e_term_prod " << std::endl;
 
             //Does not work on the UP board
-            int max_threads = 64;
+            int max_threads = 1;
             int total_rows = __nphi * __ntheta;
             int block_row_size = total_rows / max_threads;
             int block_col = 0;
