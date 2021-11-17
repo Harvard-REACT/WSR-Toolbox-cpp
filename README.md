@@ -33,7 +33,7 @@ Core C++ code repo for WSR toolbox with Cython wrapper.
 ```
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
-sudo apt install python3.7 python3.7-tk python3-pip python3.7-dev
+sudo apt install python3.7 python3.7-tk python3-pip python3.7-dev python3-gdbm cmake
 sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.5 1
 sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2
 sudo update-alternatives --config python3
@@ -42,10 +42,10 @@ Select python3.7 as the default version.
 
 3. Install the python dependency packages
 ```
-cd ~
+cd ~/WSR_Project
 cd WSR-Toolbox-cpp
-pip3 install numpy pybind11 pythran
-python3 install -r requirements.txt
+pip3 install Cython numpy pybind11 pythran
+pip3 install -r requirements.txt
 ```
 
 4. Download and compile the boost_1.68 locally in $HOME/Downloads.
@@ -60,17 +60,11 @@ sudo ./b2 --with=all -j $cpuCores
 ```
 Note: Do not run install since will break the default boost installation required for ROS systems. 
 
-5. Install cmake(the default version works for now)
-
-```
-sudo apt install cmake
-```
-
-6. Compile as a standalone C++ project
+5. Compile as a standalone C++ project
 
 Create new subdirectory in the WSR-Toolbox folder to store the build 
 ```
-cd ~/WSR-Toolbox-cpp/
+cd ~/WSR_Project/WSR-Toolbox-cpp/
 mkdir wsr_build && cd wsr_build
 cmake ..
 cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'`
