@@ -40,7 +40,6 @@ class WSR_Util{
                                                                                 bool __Flag_get_mean_pos,bool __Flag_offset);
         std::pair<nc::NdArray<double>, nc::NdArray<double>> getRelativeTrajectory(std::vector<std::vector<double>>& trajectory_tx,
                                                                                   std::vector<std::vector<double>>& trajectory_rx,
-                                                                                  nc::NdArray<double>& pos_sar_robot,
                                                                                   std::vector<double>& antenna_offset,
                                                                                   bool __Flag_get_mean_pos, bool __Flag_offset);
         std::pair<int,int> returnClosestIndices(const nc::NdArray<double>& csi_timestamp,
@@ -101,14 +100,9 @@ class WSR_Util{
         float wrapNegPitoPi(float val);
         float get_yaw(double& x, double& y, double& z, double& w);
         Eigen::Vector3f rotationMatrixToEulerAngles(Eigen::Matrix3f &R);
-        std::pair<nc::NdArray<double>, nc::NdArray<double>> formatTrajectory_neighbor(
-                            std::vector<std::vector<double>>& trajectory,
-                            nc::NdArray<double>& pos,
-                            nc::NdArray<double> timestamp_sar_robot);
 };
 
 
 #endif //CSITOOLBOX_WSR_UTIL_H
-
 
 
