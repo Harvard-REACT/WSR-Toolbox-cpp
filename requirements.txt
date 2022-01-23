@@ -1,5 +1,4 @@
 setuptools
-matplotlib
-seaborn
-Cython
-pandas
+#matplotlib
+#seaborn
+#pandas
