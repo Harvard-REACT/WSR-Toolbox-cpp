@@ -173,12 +173,15 @@ cd wsr_build
 ./test_csi_data
 ```
 
-### Calculate AOA profiles using Core C++ framework(needs trajectory information)
+### Calculate AOA profiles using Core C++ framework (needs robot displacement)
 
 2. To test the AOA calculation run the following:
 ```
 cd wsr_build
-./test_wsr
+./test_wsr <displacement type>
+
+e.g.
+./test_wsr gt
 ```
 
 ## Visualization
@@ -203,7 +206,7 @@ e.g
 python3.8 visualize_aoa_profile.py --file ../debug/tx1_aoa_profile_2021-03-04_154746.csv
 ```
 
-3. To visualize interpolated trajectory
+3. To visualize interpolated robot displacement
 ```
 cd scripts
 python3.7 viz_traj.py --file <filepath>
@@ -214,7 +217,11 @@ python3.8 viz_traj.py --file ../debug/tx1_2021-03-04_154746_interpl_trajectory.j
 
 To use matlab visualizer (recommended), run the following script instead
 ```
-python3.8 viz_aoa_matlab.py --file ../debug/tx1_2021-03-04_154746_interpl_trajectory.json
+python3 viz_aoa_matlab.py --nphi <resolution of azimuth angle> --ntheta <resolution of elevation angle> --phi_min <min elevation angle> --phi_max <min azimuth angle> --theta_min <max elevation angle> --theta_max <max elevation angle> --file <file_name>
+
+e.g. When using 2D robot displacement geometry
+
+python3 viz_aoa_matlab.py --nphi 360 --ntheta 90 --phi_min -180 --phi_max 180 --theta_min 0 --theta_max 90 --file ../debug/tx3_aoa_profile_2021-06-27_202550.csv
 ```
 
 Note :If the matlab viewer is used for visualizing the AOA profile, then make sure that the matlab api for python has be installed ([reference](https://www.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html)).

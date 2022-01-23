@@ -100,70 +100,70 @@
         "desc":"True groundtruth positions of TX for checking accuracy",
         "value":
         {
-            "tx0":{
-                "position":{ 
-                "x": 0,
-                "y": 0,
-                "z": 0
-                },
-                "orientation": {
+          "tx0":{
+            "position":{ 
+            "x": 0,
+            "y": 0,
+            "z": 0
+            },
+            "orientation": {
+              "x": 0,
+              "y": 0,
+              "z": 0,
+              "w": 0
+            }
+          },
+          "tx1":{
+              "position":{ 
+              "x": -2.48014688492,
+              "y": -0.0483481697738,
+              "z": 0.97895771265
+              },
+              "orientation": {
+                "x": 0.0168978497386,
+                "y":-0.006858184468,
+                "z": 0.453646808863,
+                "w": -0.890995025635
+              }
+            },
+            "tx2":{
+              "position":{ 
+              "x": -2.42,
+              "y": 2.65,
+              "z": 0.72
+              },
+              "orientation": {
                 "x": 0,
                 "y": 0,
                 "z": 0,
                 "w": 0
-                }
+              }
             },
-            "tx1":{
-                "position":{ 
-                    "x": 1.28,
-                    "y": 5.53,
-                    "z": 1.0
-                },
-                "orientation": {
-                    "x": 0.0168978497386,
-                    "y":-0.006858184468,
-                    "z": 0.453646808863,
-                    "w": -0.890995025635
-                }
-            },
-            "tx2":{
-                "position":{ 
-                "x": -0.11,
-                "y": -2.52,
-                "z": 0.62
-                },
-                "orientation": {
-                  "x": 0,
-                  "y": 0,
-                  "z": 0,
-                  "w": 0
-                }
+            "tx3":{
+              "position":{ 
+              "x": 2.53,
+              "y": -2.65,
+              "z": 0.85
               },
-              "tx3":{
-                "position":{ 
-                "x": -1.86,
-                "y": -2.25,
-                "z": 0.66
-                },
-                "orientation": {
-                  "x": 0,
-                  "y": 0,
-                  "z": 0,
-                  "w": 0
-                }
+              "orientation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 0
+              }
             },
             "tx4":{
-                "position":{ 
-                "x": 2.57294034958,
-                "y": -0.201433882117,
-                "z": 0.361933887005
-                },
-                "orientation": {
-                    "x": 0,
-                    "y": 0,
-                    "z": 0,
-                    "w": 0
-                }
+              "position":{ 
+              "x": -3.73,
+              "y": -1.49,
+              "z": 0.35
+              },
+              "orientation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 0
+              }
             }
         }
     },
@@ -239,7 +239,7 @@
     },
     "debug":{
         "desc":"Flag to enable/disbale max packet threshold",
-        "value":false
+        "value":true
     },
     "debug_dir":{
         "desc":"dir to save intermediate data files for debugging",
