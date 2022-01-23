@@ -200,10 +200,10 @@ python3.7 viz_channel_data.py --file ../debug/tx1_2021-03-04_154746_all_channel_
 2. To visualize the profile , go to scripts directory and use the visualize_aoa_profile.py
 ```
 cd scripts
-python3.7 visualize_aoa_profile.py --file <filepath>
+python3.7 visualize_aoa_profile.py --file <filepath> --nphi <resolution of azimuth angle> --ntheta <resolution of elevation angle>
 
 e.g
-python3.8 visualize_aoa_profile.py --file ../debug/tx1_aoa_profile_2021-03-04_154746.csv
+python3.7 visualize_aoa_profile.py --file ../debug/tx3_aoa_profile_2021-06-27_202550.csv --nphi 360 --ntheta 90
 ```
 
 3. To visualize interpolated robot displacement
@@ -212,7 +212,7 @@ cd scripts
 python3.7 viz_traj.py --file <filepath>
 
 e.g.
-python3.8 viz_traj.py --file ../debug/tx1_2021-03-04_154746_interpl_trajectory.json
+python3.7 viz_traj.py --file ../debug/tx1_2021-03-04_154746_interpl_trajectory.json
 ```
 
 To use matlab visualizer (recommended), run the following script instead

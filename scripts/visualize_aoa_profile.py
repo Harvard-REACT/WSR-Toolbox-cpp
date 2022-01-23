@@ -15,16 +15,18 @@ from matplotlib import cm
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", help="AOA profile csv file")
+    parser.add_argument("--nphi", type = int, help="Resolution of azimuth angle")
+    parser.add_argument("--ntheta", type = int, help="Resolution of elevation angle")
     args = parser.parse_args()
     
-    X = np.arange(0, 359, 1).flatten()
-    Y = np.arange(0, 179, 1).flatten()
+    X = np.arange(0, args.nphi-1, 1).flatten()
+    Y = np.arange(0, args.ntheta-1, 1).flatten()
     X, Y = np.meshgrid(X, Y)
     
     aoa_profile = np.genfromtxt(args.file, delimiter=',')
 
     max_peak = np.unravel_index(np.argmax(aoa_profile, axis=None), aoa_profile.shape)
-    profile = aoa_profile[:,0:180]
+    profile = aoa_profile[:,0:args.ntheta]
     Z = profile[X,Y]
 
     fig = plt.figure(figsize=(12,6))
