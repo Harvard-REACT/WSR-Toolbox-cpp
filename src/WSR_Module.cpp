@@ -1061,8 +1061,8 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
 
     if (__FLAG_debug)
         std::cout << "log [calculate_AOA_profile] Top elevation angle " << peak_ind << " : "
-                    << 180 - theta_list(0, theta_idx) * 180 / M_PI << std::endl;
-    ret_theta.push_back(180 - theta_list(0, theta_idx) * 180 / M_PI);
+                    << theta_list(0, theta_idx) * 180 / M_PI << std::endl;
+    ret_theta.push_back(theta_list(0, theta_idx) * 180 / M_PI);
 
     float variance = get_profile_variance(phi_idx, theta_idx);
     __aoa_profile_variance.push_back(variance);
@@ -1157,8 +1157,8 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
             ret_phi.push_back(phi_list(0, phi_idx) * 180 / M_PI);
             if (__FLAG_debug)
                 std::cout << "log [calculate_AOA_profile] Top elevation angle " << peak_ind << " : "
-                            << 180 - theta_list(0, theta_idx) * 180 / M_PI << std::endl;
-            ret_theta.push_back(180 - theta_list(0, theta_idx) * 180 / M_PI);
+                            << theta_list(0, theta_idx) * 180 / M_PI << std::endl;
+            ret_theta.push_back(theta_list(0, theta_idx) * 180 / M_PI);
             //            phi_indexes_stored(0,phi_idx) = 1;
             //            theta_indexes_stored(0,theta_idx) = 1;
             for (int i = -radius; i < radius; i++)
