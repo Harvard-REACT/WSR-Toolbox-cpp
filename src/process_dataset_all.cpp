@@ -29,12 +29,15 @@ int main(int argc, char *argv[])
     else if (traj_type == "gt")
         traj_pre = "rx_trajectory_";
     
-    int stat_itr = 0 + start_integer;
+    
+    int dir_idx = 1;
     nlohmann::json all_stats;
 
     //Process the dataset one subfolder at a time
     for (const auto & entry : fs::directory_iterator(dataset))
     { 
+      nlohmann::json all_dir_stats ;
+      int stat_itr = 0 + start_integer;
       std::vector<string> csi_tx;
       std::list<std::string> mylist;
       std::set<string> timesset;
@@ -222,23 +225,36 @@ int main(int argc, char *argv[])
 
           }
         }
-        if(all_stats.size() == 0)
+        if(all_dir_stats.size() == 0)
         {
-          all_stats = {
+          all_dir_stats = {
             {std::to_string(stat_itr),stats_per_sample}
           };
         }
         else
         {
-          all_stats.push_back({std::to_string(stat_itr), stats_per_sample});
+          all_dir_stats.push_back({std::to_string(stat_itr), stats_per_sample});
         }
         stat_itr+=1;
-        std::cout << stats_per_sample.dump(4) << std::endl;
-        std::cout << stat_itr;
+        // std::cout << stats_per_sample.dump(4) << std::endl;
+        // std::cout << stat_itr;
       }
+
+
+      if(all_stats.size() == 0)
+        {
+          all_stats = {
+            {std::to_string(dir_idx),all_dir_stats}
+          };
+        }
+        else
+          all_stats.push_back({std::to_string(dir_idx), all_dir_stats});
+
+      dir_idx+=1;
     }
+
     std::cout << all_stats.dump(4) << std::endl;
-    std::cout << stat_itr;
+    std::cout << dir_idx;
     std::ofstream file("key.json");
     file << all_stats;
 }
