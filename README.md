@@ -235,22 +235,16 @@ e.g.
 python3.8 viz_traj.py --file ../debug/tx1_2021-03-04_154746_packet_dist.json
 ```
 
-
-## Compiling and using Cpython modules (WIP)
-The name of the path to sample data files is hardcoded for testing. Update it accordingly based on the your system.
-
-1. For testing the csi-reader, first run the setup.py
+## Compiling and using Cpython modules
+1. First run the setup.py
 ```
 $ python3 setup.py build_ext --inplace
 ```
 Note: sometimes if the Cpython_modules/wsr_module.cpp file is not removed the changes made in C++ modules do not take effect.
 
-### To test parsing of robot trajectory and csi data (using cpython library)
-Once the library is compiled, the csi reader function can be called using python script. To test, run the following from scripts directory. e.g
-
 ```
 cd scripts
-python3.7 main.py --f ../data/3D_Helix_101_mocap_2020-03-04_102615/mocap_data_a.txt_2020-03-04_102615.txt --mocap_id 101 --parser_type optitrack
+python3 main.py --d_type gt
 ```
 
 ### Testing Trajectory data
