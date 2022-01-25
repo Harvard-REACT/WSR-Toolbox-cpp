@@ -1,10 +1,10 @@
-function viz_aoa(filename, nphi, ntheta, phi_min, phi_max,theta_min, theta_max)
+function viz_aoa(filename, nphi, ntheta, phi_max, theta_max)
     
     nbeta = nphi;
     ngamma = ntheta;      
-    beta_min = phi_min*(pi/180);
+    beta_min = 0*(pi/180);
     beta_max = phi_max*(pi/180);
-    gamma_min = theta_min*(pi/180);
+    gamma_min = 0*(pi/180);
     gamma_max = theta_max*(pi/180);      
     betaList = linspace(beta_min, beta_max, nbeta).';
     gammaList = linspace(gamma_min, gamma_max, ngamma);
