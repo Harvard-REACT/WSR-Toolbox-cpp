@@ -38,6 +38,7 @@ include_directories(
    src/WIFI_Agent.cpp 
    src/WSR_Module.cpp 
    src/WSR_Util.cpp
+   src/WSR_Main.cpp
  )
 
 ## Add cmake target dependencies of the library
@@ -48,8 +49,9 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(test_wsr src/test_wsr.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp)
-add_executable(test_csi_data src/test_csi_data.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp)
+
+add_executable(test_wsr src/test_wsr.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp src/WSR_Main.cpp)
+add_executable(test_csi_data src/test_csi_data.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp src/WSR_Main.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

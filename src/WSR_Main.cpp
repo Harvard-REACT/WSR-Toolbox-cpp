@@ -1,43 +1,41 @@
-#include "csitoolbox/WSR_Module.h"
-#include <unistd.h>
-#include <sys/types.h>
-#include <unordered_map>
-#include <chrono>
+/**
+ * (c) REACT LAB, Harvard University
+	Author: Ninad Jadhav, Weiying Wang
+*/
 
-int main(int argc, char *argv[]){
+#include "csitoolbox/WSR_Main.h"
+
+
+WSR_Main::WSR_Main(void) {}
+
+WSR_Main::~WSR_Main(void) {}
+
+WSR_Main::WSR_Main(std::string config_fn,
+                   std::string displacement_type) 
+{
+    __config_fn = config_fn;
+    __d_type = displacement_type;
+}
+
+std::pair<std::vector<std::string>, std::vector<double>> WSR_Main::generate_aoa()
+{
     
     WSR_Util utils;
-    // struct passwd *pw = getpwuid(getuid());
-    // std::string homedir = pw->pw_dir;
-    // std::string folder = "";
-    // std::string config = utils.__homedir+"/catkin_ws/src/csitoolbox/config/config_3D_SAR.json";
-    string traj_type = argv[1];
-    std::cout << "Processing trajectory type: " << traj_type << std::endl;
-    std::string config = "../config/config_3D_SAR.json";
-    WSR_Module run_module(config); // TODO: How can this be initialized only once without hardcoding config fn? maybe use if else?
+    std::cout << "Processing trajectory type: " << __d_type << std::endl;
+    WSR_Module run_module(__config_fn);
     
-    // omp_set_num_threads(64);
-    // std::cout << "threads = " << omp_get_num_threads() << endl;
-    
-    //Fetch files from remote RX and TX 
-    // std::string csi_collect_cmd = homedir+"/catkin_ws/src/wsr_ros/scripts/collect_csi.sh" + rx_details + 
-    //                             tx_details + " " + tx2_details + " " +tx3_details +" "+ tx4_details+" "+tx5_details;
-
-    //RX_SAR_Robot: performs 3D SAR
-    //TX_SAR_Robot(s): Neighboring robots for which RX_SAR_robot calculates AOA
-
     /*================== Process RX_SAR_Robot files ====================*/
     std::string reverse_csi = run_module.__precompute_config["input_RX_channel_csi_fn"]["value"]["csi_fn"].dump();
     std::string trajectory_file_rx;
-    if(traj_type == "gt")
+    if(__d_type == "gt")
         trajectory_file_rx = run_module.__precompute_config["input_trajectory_csv_fn_rx"]["value"].dump();
-    else if(traj_type == "t265")
+    else if(__d_type == "t265")
         trajectory_file_rx = run_module.__precompute_config["input_trajectory_csv_fn_rx_t265"]["value"].dump();
-    else if(traj_type == "odom")
+    else if(__d_type == "odom")
         trajectory_file_rx = run_module.__precompute_config["input_trajectory_csv_fn_rx_odom"]["value"].dump();
 
     
-    std::string output = run_module.__precompute_config["debug_dir"]["value"].dump();
+    std::string output = run_module.__precompute_config["output_aoa_profile_path"]["value"].dump();
     bool __Flag_get_mean_pos = bool(run_module.__precompute_config["get_mean_pose_RX"]["value"]);
 
     //Remove all double-quote characters
@@ -47,9 +45,7 @@ int main(int argc, char *argv[]){
 
     std::string rx_robot_csi = utils.__homedir + reverse_csi;
     std::string traj_fn_rx = utils.__homedir + trajectory_file_rx;
-    // std::string true_traj_fn_rx = utils.__homedir + true_traj_pre + *ts_it + "_.csv";
     std::vector<std::vector<double>> trajectory_rx = utils.loadTrajFromCSV(traj_fn_rx); //Robot performing SAR
-    // std::vector<std::vector<double>> true_trajectory_rx = utils.loadTrajFromCSV(true_traj_fn_rx); //Robot performing SAR
     nc::NdArray<double> displacement;
     nc::NdArray<double> displacement_timestamp;
     
@@ -99,16 +95,16 @@ int main(int argc, char *argv[]){
     std::vector<double> antenna_offset, antenna_offset_true;
     antenna_offset_true = run_module.__precompute_config["antenna_position_offset"]["mocap_offset"].get<std::vector<double>>(); 
 
-    if (traj_type == "gt")
+    if (__d_type == "gt")
     antenna_offset = antenna_offset_true;
-    else if (traj_type == "t265")
+    else if (__d_type == "t265")
     antenna_offset = run_module.__precompute_config["antenna_position_offset"]["t265_offset"].get<std::vector<double>>();
-    else if (traj_type == "odom")
+    else if (__d_type == "odom")
     antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
     
-
     std::cout << "log [WSR_Module]: Got offset " << std::endl;
     nc::NdArray<double> pos,true_pos;
+    
     //Get relative trajectory if moving ends
     if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
     {          
@@ -120,7 +116,6 @@ int main(int argc, char *argv[]){
     else
     {
         auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,pos,__Flag_get_mean_pos,true);
-        // auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset_true,true_pos,__Flag_get_mean_pos,true);
         displacement_timestamp = return_val.first;
         displacement = return_val.second;
     }
@@ -137,13 +132,16 @@ int main(int argc, char *argv[]){
     double true_phi, true_theta;
 
     std::cout << "Getting AOA profile stats for TX Neighbor robots" << std::endl;
-    std::string viz_id = "";
+    std::vector<std::string> tx_ids_all;
+    std::vector<double> tx_top_aoa_peak;
+    
     for(auto & itr : all_aoa_profile)
     {
         std::cout << "-----------------------------" << std::endl;
         
         std::string tx_id = itr.first;
         std::string ts = run_module.data_sample_ts[tx_id];
+        tx_ids_all.push_back(run_module.tx_name_list[tx_id]);
         auto profile = itr.second;
         std::vector<double> aoa_confidence = all_confidences[tx_id];
 
@@ -156,13 +154,13 @@ int main(int argc, char *argv[]){
         else
         {
             string profile_op_fn = utils.__homedir+output+"/"+run_module.tx_name_list[tx_id]+"_aoa_profile_"+ts+".csv";
-            std::cout << profile_op_fn << std::endl;
             utils.writeToFile(profile,profile_op_fn);
 
             true_phi = all_true_AOA[run_module.tx_name_list[tx_id]].first;
             true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
 
             auto topN_angles = all_topN_angles[tx_id];
+            tx_top_aoa_peak.push_back(topN_angles.first[0]);
 
             std::vector<std::vector<float>> aoa_error = run_module.get_aoa_error(topN_angles,
                                                                                 all_true_AOA[run_module.tx_name_list[tx_id]],
@@ -174,14 +172,9 @@ int main(int argc, char *argv[]){
             //Display output
             std::cout << stats.dump(4) << std::endl;
         }
-        viz_id = viz_id + run_module.tx_name_list[tx_id] +" ";
     }
     
-    //Visualize
-    if(run_module.__precompute_config["debug"]["value"])
-    {
-        std::string viz_op = "../scripts/viz_data.sh ~/" + run_module.__precompute_config["debug_dir"]["value"].dump() + " '" + viz_id +"'";
-        std::cout << viz_op << std::endl;
-        system(viz_op.c_str());
-    }
+    std::cout << "Completed" << std::endl;
+
+    return std::make_pair(tx_ids_all, tx_top_aoa_peak);
 }

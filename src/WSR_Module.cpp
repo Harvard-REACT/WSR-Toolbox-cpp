@@ -46,6 +46,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     __FLAG_openmp = bool(__precompute_config["openmp"]["value"]);
     bool __FLAG_use_multiple_sub_carriers = bool(__precompute_config["multiple_sub_carriers"]["value"]);
     bool __FLAG_use_magic_mac = bool(__precompute_config["use_magic_mac"]["value"]);
+    __FLAG_use_relative_displacement = bool(__precompute_config["use_relative_trajectory"]["value"]);
 
     //calculate channel freqeuency based on channel and subcarrier number
     double centerfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
@@ -139,7 +140,7 @@ WSR_Module::WSR_Module(std::string config_fn)
         std::cout << "  __FLAG_sub_sample = " << utils.bool_to_string(__FLAG_sub_sample) << std::endl;
         std::cout << "  __FLAG_normalize_profile = " << utils.bool_to_string(__FLAG_normalize_profile) << std::endl;
         std::cout << "  __FLAG_use_multiple_sub_carriers = " << utils.bool_to_string(__FLAG_use_multiple_sub_carriers) << std::endl;
-        std::cout << "  __FLAG_use_magic_mac = " << utils.bool_to_string(__FLAG_use_magic_mac) << std::endl;
+        std::cout << "  __FLAG_use_relative_displacement = " << utils.bool_to_string(__FLAG_use_relative_displacement) << std::endl;
     }
 
     std::cout << "log [Precomp]: Finished Initializations" << std::endl;
@@ -154,7 +155,7 @@ WSR_Module::WSR_Module(std::string config_fn)
 int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                                       std::unordered_map<std::string, std::string> tx_csi_file,
                                       nc::NdArray<double> displacement,
-                                      nc::NdArray<double> trajectory_timestamp)
+                                      nc::NdArray<double> displacement_timestamp)
 {
 
     std::cout << "============ Starting WSR module ==============" << std::endl;
@@ -262,7 +263,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         /*Get the shifted version of the pose timestamps such that they match exactly with csi timestamps.*/
         if (__FLAG_debug)
             std::cout << "log [calculate_AOA_profile]: Removing unused csi data" << std::endl;
-        std::pair<int, int> csi_timestamp_range = utils.returnClosestIndices(csi_timestamp_all, trajectory_timestamp);
+        std::pair<int, int> csi_timestamp_range = utils.returnClosestIndices(csi_timestamp_all, displacement_timestamp);
         int start_index = csi_timestamp_range.first, end_index = csi_timestamp_range.second;
 
         /*Slice the csi_timestamp using the indices to remove unused CSI values
@@ -302,7 +303,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             /*Interpolate the trajectory using the csi data timestamps*/
             if (__FLAG_debug)
                 std::cout << "log [calculate_AOA_profile]: interpolating the trajectory and csi forward-reverse product" << std::endl;
-            auto interpolated_data = utils.interpolate(csi_timestamp, trajectory_timestamp, displacement);
+            auto interpolated_data = utils.interpolate(csi_timestamp, displacement_timestamp, displacement);
             nc::NdArray<double> pose_list = interpolated_data.first;
 
             if (__FLAG_debug)
@@ -323,7 +324,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
 
                 //Store the packet distribution to check for spotty packets
                 std::string packet_dist = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_packet_dist.json";
-                utils.writePacketDistributionToJsonFile(csi_timestamp, trajectory_timestamp, displacement, packet_dist);
+                utils.writePacketDistributionToJsonFile(csi_timestamp, displacement_timestamp, displacement, packet_dist);
 
                 //Store interpolated trajectory for debugging
                 std::string interpl_trajectory = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_interpl_trajectory.json";
