@@ -28,7 +28,7 @@ do
 
     profile_fn=$(ls -t1 $1 |  head -n $nrf | grep $tx | grep aoa)
     echo "AOA profile for $profile_fn"
-    python3.8 ~/catkin_ws/src/wsr_ros/scripts/visualize_aoa_profile.py --file $1/$profile_fn
+    # python3.8 ~/catkin_ws/src/wsr_ros/scripts/visualize_aoa_profile.py --file $1/$profile_fn
     # python3.8 ~/catkin_ws/src/wsr_ros/scripts/viz_aoa_matlab.py --file $1$profile_fn
 
 
