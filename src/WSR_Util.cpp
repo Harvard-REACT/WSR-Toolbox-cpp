@@ -1057,7 +1057,7 @@ void WSR_Util::writeTrajToFile(nc::NdArray<double>& rx_trajectory, const std::st
 std::vector<std::vector<double>> WSR_Util::loadTrajFromCSV(std::string traj_fn)
 {
     std::vector<std::vector<double>> rx_trajectory;
-
+    std::cout << traj_fn<< std::endl;
     // File pointer 
     fstream traj_file;
     traj_file.open( traj_fn.c_str() , ios::in );
