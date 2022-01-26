@@ -1,4 +1,0 @@
-setuptools
-#matplotlib
-#seaborn
-#pandas
