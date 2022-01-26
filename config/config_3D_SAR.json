@@ -178,30 +178,17 @@
     "input_TX_channel_csi_fn":{
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
-            "tx0":{
-                "mac_id_val":"00:16:EA:12:34:56",
-                "mac_id":"00:21:6A:C5:FC:00",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/3D_1_RX_2_TX_formation_2/3D_csi_rx_tx/csi_tx0_2021-03-03_192000.dat"
-            },
-            "tx1":{
-                "mac_id_val":"0:33:106:62:245:126",
-                "mac_id":"00:21:6A:C0:D0:1A",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx1_2021-04-19_172137.dat"
-                },
             "tx2":{
-                "mac_id_val":"0:33:106:63:23:90",
                 "mac_id":"00:21:6A:3F:17:5A",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
+                "csi_fn":"/catkin_ws/src/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
             },
             "tx3":{
-                "mac_id_val":"0:33:106:48:210:60",
                 "mac_id":"00:21:6A:30:D2:3C",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
+                "csi_fn":"/catkin_ws/src/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
             },
             "tx4":{
-                "mac_id_val":"0:33:106:178:110:250",
                 "mac_id":"00:21:6A:B2:6E:FA",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_202550.dat"
+                "csi_fn":"/catkin_ws/src/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_202550.dat"
             }
         }
     },
@@ -209,13 +196,12 @@
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
         "value":{           
             "mac_id":"00:21:6A:53:89:D2",
-            "mac_id_val":"00:16:EA:12:34:56",
-            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_202550.dat"
+            "csi_fn":"/catkin_ws/src/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_202550.dat"
         }
     },
     "input_trajectory_csv_fn_rx":{
         "desc":"Trajectory fiile",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/rx_trajectory_2021-06-27_202550_.csv"
+        "value":"/catkin_ws/src/WSR-Toolbox-cpp/data/Sample_data/rx_trajectory_2021-06-27_202550_.csv"
     },
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
@@ -223,7 +209,7 @@
     },
     "output_aoa_profile_path":{
         "desc":"AOA profile",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/debug"
+        "value":"/catkin_ws/src/WSR-Toolbox-cpp/debug"
     },
     "max_packets_to_process":{
         "desc":"Maximum number of csi packets to process",
@@ -243,7 +229,7 @@
     },
     "debug_dir":{
         "desc":"dir to save intermediate data files for debugging",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/debug"
+        "value":"/catkin_ws/src/WSR-Toolbox-cpp/debug"
     },
     "use_relative_trajectory":{
         "desc":"Flag to enable/disbale usage of relative trajectory",

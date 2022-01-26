@@ -19,7 +19,7 @@ def main():
     args = parser.parse_args()
     
     homedir = expanduser("~")    
-    config_fn = homedir + "/WSR_Project/WSR-Toolbox-cpp/config/config_3D_SAR.json"
+    config_fn = homedir + "/catkin_ws/src/WSR-Toolbox-cpp/config/config_3D_SAR.json"
     
     #Ros publisher
     pub = rospy.Publisher('chatter', String, queue_size=0)
@@ -41,7 +41,6 @@ def main():
         print("pub 2")
         pub.publish(hello_str)
         print("pub 3")
-        a=input("next")
         #rate.sleep()           
 
 if __name__ == "__main__":
