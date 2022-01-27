@@ -1,11 +1,10 @@
+#!/usr/bin/env python
+
 '''
 (c) REACT LAB, Harvard University
 Author: Ninad Jadhav, Weiying Wang
 '''
 
-#!/usr/bin/env python
-
-#from libs import wsr_module
 import rospy
 from wsr_toolbox_cpp.msg import wsr_aoa_array
 
