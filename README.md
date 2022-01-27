@@ -45,16 +45,12 @@ cd WSR-Toolbox-cpp
 git checkout wsr-kinetic
 ```
 
-### Update the python configuration steps and check if they work without the UP-board image 
-6. Update kernel to 4.15.0-142 and then reboot ? ---> Add this step in the WSR WiFI driver.
-
-
-7. Install the python dependency packages
+6. Install the python dependency packages
 ```
 pip install Cython setuptools pybind11
 ```
 
-8. Download and compile the boost_1.68 locally in $HOME/Downloads.
+7. Download and compile the boost_1.68 locally in $HOME/Downloads.
 ```
 cd ~/Downloads
 wget http://downloads.sourceforge.net/project/boost/boost/1.68.0/boost_1_68_0.tar.gz
@@ -67,7 +63,7 @@ sudo ./b2 --with=all -j $cpuCores
 Note: Do not run install since will break the default boost installation required for ROS systems. 
 
 
-## Generating a Cython library
+## Generating Cython library
 This requires running the setup.py in WSR_toolbox_cpp. It generates a library using cython which then can be imported in python programs and used with rospy.
 
 1. First, run the setup.py
@@ -84,18 +80,23 @@ Note: sometimes if the Cpython_modules/wsr_module.cpp file is not deleted before
 roscore
 ```
 
-3. Test sample publisher
+3. Test sample example for publisher and subscriber
+```
+roslaunch wsr_toolbox_cpp wsr_pub.launch
+```
+
+In another terminal start
 ```
 cd scripts
-python main.py --d_type gt
+python main_sub.py
 ```
 
-check the output using rostopic list
+In the third terminal, publish on the boolean topic /get_aoa from the command line to trigger AOA computation using sample data
+```
+rostop pub --once /get_aoa std_msgs/Bool "data: false"
+```
 
-
-2. **Launch File**
-
-3. The status of some important flags and parameters are available during initialization. (This requires that the 'debug' config parameter is set to 'true' to see the status during code execution):
+4. The status of some important flags and parameters are available during initialization. (This requires that the 'debug' config parameter is set to 'true' to see the status during code execution):
 ```
 log [Precomp]: Important FLAGS status
   Trajectory Type = "2D" (3D)
@@ -106,5 +107,5 @@ log [Precomp]: Important FLAGS status
   __FLAG_sub_sample = false
   __FLAG_normalize_profile = true
   __FLAG_use_multiple_sub_carriers = false
-  __FLAG_use_magic_mac = false
+  __FLAG_use_relative_displacement = false
 ```
