@@ -6,11 +6,9 @@
 #!/usr/bin/env python3
 
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 import json
 import glob, os
-import seaborn as sns
 import numpy as np
 import argparse
 
@@ -44,27 +42,11 @@ def main():
     traj = pd.DataFrame.from_dict(data_json, orient="index")
 
 
-    sns.scatterplot(y=traj["center_subcarrier_phase"],
-                    x=np.arange(0,len(data_json),1),
-                    s=8,
-                    marker='x')
+    plt.scatter(np.arange(0,len(data_json),1),
+                traj["center_subcarrier_phase"],s=1)
     plt.title('RX Robot Channel Phase')
     plt.show()
 
-    sns.scatterplot(y=traj["timestamp"],
-            x=np.arange(0,len(data_json),1),
-            s=8,
-            marker='x')
-
-    plt.title('RX Robot Channel Timestamp')
-    plt.show()
-
-    # sns.scatterplot(y=traj["numcpp_center_subcarrier"],
-    #         x=np.arange(0,len(data_json["channel_packets"]),1),
-    #         s=10,
-    #         marker='x')
-
-    # plt.show()
 
 if __name__ == "__main__":
     main()

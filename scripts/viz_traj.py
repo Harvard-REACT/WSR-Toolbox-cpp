@@ -6,11 +6,9 @@
 #!/usr/bin/env python3
 
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 import json
 import glob, os
-import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
 import argparse
 
