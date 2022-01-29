@@ -1,48 +1,36 @@
-# WSR-Toolbox ROS Kinetic
-Deploying the WSR Toolbox on Ubuntu 16.04 with ROS kinetic (Supports only rospy and python2.7)
+# WSR-Toolbox ROS Melodic
+Deploying the WSR Toolbox on Ubuntu 18.04 with ROS kinetic (Supports only rospy)
 
 ## Setup instructions
-
-1. update the kernel and packages
-```
-sudo apt-get update && sudo apt-get dist-upgrade 
-reboot
-```
-After reboot, the kernel will be updated to 4.15.0-142-generic
-```
-uname -r
-```
-
-2. Install [ROS kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu).
+1. Install [ROS kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu).
 
 Note: For for _rosdep update_ add an extra flag to update kinetic since its an EOL distro
 ```
-rosdep update --include-eol-distros
+rosdep update
 ```
 
-3. Create [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace) using _catkin build_
+2. Create [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace) using _catkin build_
 ```
-sudo apt install python-catkin-tools python-pip python-numpy git vim -y
+sudo apt install python-catkin-tools python-pip git vim -y
 mkdir -p ~/catkin_ws/src 
 cd ~/catkin_ws
 catkin build
 ```
 
-4. Open the ~/.bashrc file and add the following (if not done already)
+3. Open the ~/.bashrc file and add the following (if not done already)
 ```
-source ~/catkin_ws/devel/setup.bash
-export ROS_MASTER_URI=http://<IP of the ROS master>:11311
-export ROS_HOSTNAME=<IP of your system>
-
+echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+echo "export ROS_MASTER_URI=http://<IP of the ROS master>:11311" >> ~/.bashrc
+echo "export ROS_HOSTNAME=<IP of your system>" >> ~/.bashrc
+source ~/.bashrc
 ```
-After editing is done, update bashrc in the current terminal by running _source ~/.bashrc_
 
 5. Clone this repository in the _workspace_/src 
 ```
 cd ~/catkin_ws/src
 git clone https://github.com/Harvard-REACT/WSR-Toolbox-cpp.git
 cd WSR-Toolbox-cpp
-git checkout wsr-kinetic
+git checkout wsr-melodic
 ```
 
 6. Install the python dependency packages
@@ -114,3 +102,6 @@ log [Precomp]: Important FLAGS status
   __FLAG_use_multiple_sub_carriers = false
   __FLAG_use_relative_displacement = false
 ```
+
+## Visualization of Data
+
