@@ -64,12 +64,14 @@ Note: Do not run install since will break the default boost installation require
 
 
 ## Generating Cython library
-This requires running the setup.py in WSR_toolbox_cpp. It generates a library using cython which then can be imported in python programs and used with rospy.
+This requires running the setup.py in WSR_toolbox_cpp. It generates a library using cython which then can be imported in python programs and used with rospy. The catkin build command will generate the required ros messages
 
 1. First, run the setup.py
 ```
-cd WSR-Toolbox-cpp
+cd ~/catkin_ws/src/WSR-Toolbox-cpp
+catkin build
 python setup.py build_ext --inplace
+source ~/.bashrc
 ```
 The above code will auto generate a wsr_module.cpp file in the Cpython_modules directory. A libarary file will also be generated in the scripts/libs directory.
 
@@ -80,9 +82,12 @@ Note: sometimes if the Cpython_modules/wsr_module.cpp file is not deleted before
 roscore
 ```
 
-3. Test sample example for publisher and subscriber
+3. Test sample example for publisher and subscriber. Update the path of config file correctly in the wsr_pub.launch or pass it via command line
 ```
-roslaunch wsr_toolbox_cpp wsr_pub.launch
+roslaunch wsr_toolbox_cpp wsr_pub.launch config_fn:=<path to config file>
+
+e.g.
+roslaunch wsr_toolbox_cpp wsr_pub.launch config_fn:=/home/test-u18/catkin_ws/src/WSR-Toolbox-cpp/config/config_3D_SAR.json
 ```
 
 In another terminal start
