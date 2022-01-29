@@ -22,20 +22,19 @@ rosdep update --include-eol-distros
 
 3. Create [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace) using _catkin build_
 ```
-sudo apt install python-catkin-tools python-pip python-numpy git vim -y
+sudo apt install python-catkin-tools python-pip git vim -y
 mkdir -p ~/catkin_ws/src 
 cd ~/catkin_ws
 catkin build
 ```
 
-4. Open the ~/.bashrc file and add the following (if not done already)
+4. Update the ~/.bashrc file
 ```
-source ~/catkin_ws/devel/setup.bash
-export ROS_MASTER_URI=http://<IP of the ROS master>:11311
-export ROS_HOSTNAME=<IP of your system>
-
+echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+echo "export ROS_MASTER_URI=http://<IP of the ROS master>:11311" >> ~/.bashrc
+echo "export ROS_HOSTNAME=<IP of your system>" >> ~/.bashrc
+source ~/.bashrc
 ```
-After editing is done, update bashrc in the current terminal by running _source ~/.bashrc_
 
 5. Clone this repository in the _workspace_/src 
 ```
@@ -47,7 +46,7 @@ git checkout wsr-kinetic
 
 6. Install the python dependency packages
 ```
-pip install Cython setuptools numpy pybind11 pythran scipy pandas matplotlib
+pip install Cython
 ```
 
 7. Download and compile the boost_1.68 locally in $HOME/Downloads.
