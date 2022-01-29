@@ -47,7 +47,7 @@ git checkout wsr-kinetic
 
 6. Install the python dependency packages
 ```
-pip install Cython setuptools pybind11
+pip install Cython setuptools numpy pybind11 pythran scipy pandas matplotlib
 ```
 
 7. Download and compile the boost_1.68 locally in $HOME/Downloads.
