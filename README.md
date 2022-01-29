@@ -104,4 +104,37 @@ log [Precomp]: Important FLAGS status
 ```
 
 ## Visualization of Data
+1. Channel phase data
+```
+python scripts/viz_channel_data.py --file <channel data file name>
+
+e.g.
+python scripts/viz_channel_data.py --file debug/tx4_2021-06-27_202550_all_channel_data.json
+```
+
+2. Packet distribution along robot's displacement or interpolated displacement
+```
+python scripts/viz_traj.py --file <packet_dist or interpl_traj file>
+
+e.g.
+python scripts/viz_traj.py --file debug/tx4_2021-06-27_202550_packet_dist.json
+
+python scripts/viz_traj.py --file debug/tx4_2021-06-27_202550_interpl_trajectory.json
+```
+
+3. AOA profle
+```
+python scripts/visualize_aoa_profile.py --file debug/tx4_aoa_profile_2021-06-27_202550.csv --nphi <resolution of azimuth angle> --ntheta <resolution of elevation angle>
+
+e.g.
+python scripts/visualize_aoa_profile.py --file debug/tx4_aoa_profile_2021-06-27_202550.csv --nphi 180 --ntheta 90
+``` 
+
+If matlab is installed, then it can be utilized as well (better visualization but higher rendering time)
+```
+python scripts/viz_aoa_matlab.py --file debug/tx4_aoa_profile_2021-06-27_202550.csv --nphi <resolution of azimuth angle> --ntheta <resolution of elevation angle> --phi_max <max_azimuth angle> --theta_max <max_elevation angle>
+
+python scripts/visualize_aoa_profile.py --file debug/tx4_aoa_profile_2021-06-27_202550.csv --nphi 180 --ntheta 90 --phi_max 360 --theta_max 90
+```
+
 
