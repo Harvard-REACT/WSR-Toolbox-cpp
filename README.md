@@ -2,7 +2,7 @@
 Deploying the WSR Toolbox on Ubuntu 18.04 with ROS kinetic (Supports only rospy)
 
 ## Setup instructions
-1. Install [ROS kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu).
+1. Install [ROS Melodic](http://wiki.ros.org/melodic/Installation/Ubuntu).
 
 Note: For for _rosdep update_ add an extra flag to update kinetic since its an EOL distro
 ```
