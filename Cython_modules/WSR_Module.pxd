@@ -1,7 +1,7 @@
 from libcpp.vector cimport vector
 from libcpp.string cimport string
-from libcpp.pair cimport pair
-from libcpp import bool
+#from libcpp.pair cimport pair
+from libcpp.unordered_map cimport unordered_map
 
 cdef extern from "WSR_Module.cpp":
     pass
@@ -20,7 +20,8 @@ cdef extern from "WSR_Main.h":
     cdef cppclass WSR_Main:
         WSR_Main() except +
         WSR_Main(string, string) except +
-        pair[vector[string], vector[double]] generate_aoa()
+        unordered_map[string, vector[double]] generate_aoa()
+        
 
 cdef extern from "WSR_Module.h":
     cdef cppclass WSR_Module:
