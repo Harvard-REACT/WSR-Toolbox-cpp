@@ -1,5 +1,5 @@
 <launch>
-    <arg name="config_fn" default="/home/test-u18/catkin_ws/src/WSR-Toolbox-cpp/config/config_3D_SAR.json" />
+    <arg name="config_fn" default="/home/wsr-ros-test/catkin_ws/src/WSR-Toolbox-cpp/config/config_3D_SAR.json" />
     <arg name="d_type" default="gt" />
 
 
