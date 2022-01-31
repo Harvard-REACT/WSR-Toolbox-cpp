@@ -44,10 +44,12 @@ def main():
 	    tx_aoa_array.header.stamp = rospy.Time.now() 
 	    tx_aoa_array.header.frame_id = "wsr_angle"
 
-	    for i in range(len(aoa_toolbox[0])):
+	    for key, val in aoa_toolbox.items():
                 tx_aoa = wsr_aoa()
-	        tx_aoa.id = aoa_toolbox[0][i]
-	        tx_aoa.aoa_azimuth = aoa_toolbox[1][i]
+	        tx_aoa.id = key
+	        tx_aoa.profile_variance = val[0]
+                tx_aoa.aoa_azimuth = val[1]
+                tx_aoa.aoa_elevation = val[2]
 		#print(tx_aoa)
 	        tx_aoa_array.aoa_array.append(tx_aoa)
 	    

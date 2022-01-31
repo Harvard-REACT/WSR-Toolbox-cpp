@@ -17,7 +17,7 @@ WSR_Main::WSR_Main(std::string config_fn,
     __d_type = displacement_type;
 }
 
-std::pair<std::vector<std::string>, std::vector<double>> WSR_Main::generate_aoa()
+std::unordered_map<std::string, std::vector<double>> WSR_Main::generate_aoa()
 {
     
     WSR_Util utils;
@@ -132,8 +132,9 @@ std::pair<std::vector<std::string>, std::vector<double>> WSR_Main::generate_aoa(
     double true_phi, true_theta;
 
     std::cout << "Getting AOA profile stats for TX Neighbor robots" << std::endl;
-    std::vector<std::string> tx_ids_all;
-    std::vector<double> tx_top_aoa_peak;
+    std::unordered_map<string, std::vector<double>> aoa_return_val;
+    //std::vector<std::string> tx_ids_all;
+    //std::vector<double> tx_top_aoa_peak;
     
     for(auto & itr : all_aoa_profile)
     {
@@ -141,9 +142,9 @@ std::pair<std::vector<std::string>, std::vector<double>> WSR_Main::generate_aoa(
         
         std::string tx_id = itr.first;
         std::string ts = run_module.data_sample_ts[tx_id];
-        tx_ids_all.push_back(run_module.tx_name_list[tx_id]);
+	//tx_ids_all.push_back(run_module.tx_name_list[tx_id]);
         auto profile = itr.second;
-        std::vector<double> aoa_confidence = all_confidences[tx_id];
+        std::vector<double> aoa_profile_variance = all_confidences[tx_id];
 
         if(profile.shape().rows == 1) 
         {
@@ -160,14 +161,15 @@ std::pair<std::vector<std::string>, std::vector<double>> WSR_Main::generate_aoa(
             true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
 
             auto topN_angles = all_topN_angles[tx_id];
-            tx_top_aoa_peak.push_back(topN_angles.first[0]);
-
+	    std::string tx_name = run_module.tx_name_list[tx_id];
+	    std::vector<double> var_and_aoa {aoa_profile_variance[0], topN_angles.first[0], topN_angles.second[0]};
+	    aoa_return_val.insert(std::make_pair(tx_name, var_and_aoa));
             std::vector<std::vector<float>> aoa_error = run_module.get_aoa_error(topN_angles,
-                                                                                all_true_AOA[run_module.tx_name_list[tx_id]],
+                                                                                all_true_AOA[tx_name],
                                                                                 trajType);
             
             auto stats = run_module.get_stats(true_phi, true_theta, aoa_error,
-                                                tx_id, run_module.tx_name_list[tx_id],
+                                                tx_id, tx_name,
                                                 pos,pos,true_positions_tx,1); // Only estimatd pos used here. True_pos is used only when compiling aggregate results.
             //Display output
             std::cout << stats.dump(4) << std::endl;
@@ -176,5 +178,5 @@ std::pair<std::vector<std::string>, std::vector<double>> WSR_Main::generate_aoa(
     
     std::cout << "Completed" << std::endl;
 
-    return std::make_pair(tx_ids_all, tx_top_aoa_peak);
+    return aoa_return_val;
 }
