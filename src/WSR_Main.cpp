@@ -17,7 +17,7 @@ WSR_Main::WSR_Main(std::string config_fn,
     __d_type = displacement_type;
 }
 
-std::unordered_map<std::string, std::vector<double>> WSR_Main::generate_aoa()
+std::unordered_map<std::string, std::vector<std::vector<double>>> WSR_Main::generate_aoa()
 {
     
     WSR_Util utils;
@@ -132,7 +132,7 @@ std::unordered_map<std::string, std::vector<double>> WSR_Main::generate_aoa()
     double true_phi, true_theta;
 
     std::cout << "Getting AOA profile stats for TX Neighbor robots" << std::endl;
-    std::unordered_map<string, std::vector<double>> aoa_return_val;
+    std::unordered_map<string, std::vector<std::vector<double>>> aoa_return_val;
     //std::vector<std::string> tx_ids_all;
     //std::vector<double> tx_top_aoa_peak;
     
@@ -145,7 +145,8 @@ std::unordered_map<std::string, std::vector<double>> WSR_Main::generate_aoa()
 	//tx_ids_all.push_back(run_module.tx_name_list[tx_id]);
         auto profile = itr.second;
         std::vector<double> aoa_profile_variance = all_confidences[tx_id];
-
+        std::cout << profile.shape().rows << std::endl;
+        std::cout << profile.shape().cols << std::endl;
         if(profile.shape().rows == 1) 
         {
             //Dummy profile, error in AOA calculation
@@ -161,9 +162,12 @@ std::unordered_map<std::string, std::vector<double>> WSR_Main::generate_aoa()
             true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
 
             auto topN_angles = all_topN_angles[tx_id];
-	    std::string tx_name = run_module.tx_name_list[tx_id];
-	    std::vector<double> var_and_aoa {aoa_profile_variance[0], topN_angles.first[0], topN_angles.second[0]};
-	    aoa_return_val.insert(std::make_pair(tx_name, var_and_aoa));
+	        std::string tx_name = run_module.tx_name_list[tx_id];
+            std::vector<double> flat_profile = profile.toStlVector();
+	        std::vector<double> var {aoa_profile_variance[0]};
+            std::vector<double> dims {run_module.__nphi, run_module.__ntheta};
+            std::vector<std::vector<double>> aoa_return_vector {dims, var, topN_angles.first, topN_angles.second, flat_profile};
+            aoa_return_val.insert(std::make_pair(tx_name, aoa_return_vector));
             std::vector<std::vector<float>> aoa_error = run_module.get_aoa_error(topN_angles,
                                                                                 all_true_AOA[tx_name],
                                                                                 trajType);

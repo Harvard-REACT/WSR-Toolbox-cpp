@@ -19,7 +19,6 @@ class WSR_Module
 {   
     private:
         double __lambda,__time_offset,__time_threshold,__peak_radius;
-        size_t __nphi, __ntheta, __snum_start, __snum_end;
         std::unordered_map<std::string, double> __perf_aoa_profile_cal_time,__memory_used, __calculated_ts_offset,
                                                 __channel_phase_diff_mean,__channel_phase_diff_stdev,
                                                 __static_channel_phase_mean,__static_channel_phase_stdev,
@@ -53,6 +52,7 @@ class WSR_Module
                         __eigen_rep_theta_co, __precomp__eigen_rep_lambda, __precomp__eigen_rep_phi, __precomp__eigen_rep_theta;
         
     public:
+        size_t __nphi, __ntheta, __snum_start, __snum_end;
         nlohmann::json __precompute_config; 
         std::unordered_map<std::string,std::string> data_sample_ts;
         std::unordered_map<std::string,std::string> tx_name_list;

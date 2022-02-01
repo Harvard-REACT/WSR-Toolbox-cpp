@@ -1743,90 +1743,90 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
                            std::ref(eigen_rep_phi),
                            std::ref(__precomp__eigen_rep_phi), __nphi * __ntheta, num_poses);
 
-    std::thread theta_repmat(&WSR_Module::get_matrix_block, this,
+        std::thread theta_repmat(&WSR_Module::get_matrix_block, this,
                              std::ref(eigen_rep_theta),
                              std::ref(__precomp__eigen_rep_theta), __nphi * __ntheta, num_poses);
 
-    phi_repmat.join();
-    theta_repmat.join();
-           std::thread yaw_repmat(&WSR_Module::get_repmat, this,
-                           std::ref(eigen_rep_yaw),
-                           std::ref(eigen_yaw_list), __nphi * __ntheta, 1);
-            std::thread pitch_repmat(&WSR_Module::get_repmat, this,
-                             std::ref(eigen_rep_pitch),
-                             std::ref(eigen_pitch_list), __nphi * __ntheta, 1);
-  
-           std::thread rho_repmat(&WSR_Module::get_repmat, this,
-                           std::ref(eigen_rep_rho),
-                           std::ref(eigen_rho_list), __nphi * __ntheta, 1);
-           yaw_repmat.join();
-           pitch_repmat.join();
-           rho_repmat.join();
-                       diff_phi_yaw = eigen_rep_phi - eigen_rep_yaw;
+        phi_repmat.join();
+        theta_repmat.join();
+        std::thread yaw_repmat(&WSR_Module::get_repmat, this,
+                        std::ref(eigen_rep_yaw),
+                        std::ref(eigen_yaw_list), __nphi * __ntheta, 1);
+        std::thread pitch_repmat(&WSR_Module::get_repmat, this,
+                            std::ref(eigen_rep_pitch),
+                            std::ref(eigen_pitch_list), __nphi * __ntheta, 1);
 
-            EigenDoubleMatrix e_sin_rep_theta, e_cos_rep_pitch, e_sin_rep_pitch, e_cos_rep_theta, e_cos_rep_phi_rep_yaw;
-            EigenDoubleMatrix temp1, temp2, temp3, eigen_bterm_rep2, temp_prod;
+        std::thread rho_repmat(&WSR_Module::get_repmat, this,
+                        std::ref(eigen_rep_rho),
+                        std::ref(eigen_rho_list), __nphi * __ntheta, 1);
+        yaw_repmat.join();
+        pitch_repmat.join();
+        rho_repmat.join();
+                    diff_phi_yaw = eigen_rep_phi - eigen_rep_yaw;
 
-            eigen_bterm_rep2 = EigenDoubleMatrix::Zero(diff_phi_yaw.rows(), diff_phi_yaw.cols());
-            //For regular parallelization
+        EigenDoubleMatrix e_sin_rep_theta, e_cos_rep_pitch, e_sin_rep_pitch, e_cos_rep_theta, e_cos_rep_phi_rep_yaw;
+        EigenDoubleMatrix temp1, temp2, temp3, eigen_bterm_rep2, temp_prod;
 
-            std::thread phi_yaw_cos(&WSR_Module::get_eigen_rep_angle_trig, this,
-                                    std::ref(e_cos_rep_phi_rep_yaw), std::ref(diff_phi_yaw), "cos");
+        eigen_bterm_rep2 = EigenDoubleMatrix::Zero(diff_phi_yaw.rows(), diff_phi_yaw.cols());
+        //For regular parallelization
 
-            std::thread theta_sin(&WSR_Module::get_eigen_rep_angle_trig, this,
-                                  std::ref(e_sin_rep_theta), std::ref(eigen_rep_theta), "sin");
+        std::thread phi_yaw_cos(&WSR_Module::get_eigen_rep_angle_trig, this,
+                                std::ref(e_cos_rep_phi_rep_yaw), std::ref(diff_phi_yaw), "cos");
 
-            std::thread pitch_cos(&WSR_Module::get_eigen_rep_angle_trig, this,
-                                  std::ref(e_cos_rep_pitch), std::ref(eigen_rep_pitch), "cos");
+        std::thread theta_sin(&WSR_Module::get_eigen_rep_angle_trig, this,
+                                std::ref(e_sin_rep_theta), std::ref(eigen_rep_theta), "sin");
 
-            std::thread pitch_sin(&WSR_Module::get_eigen_rep_angle_trig, this,
-                                  std::ref(e_sin_rep_pitch), std::ref(eigen_rep_pitch), "sin");
+        std::thread pitch_cos(&WSR_Module::get_eigen_rep_angle_trig, this,
+                                std::ref(e_cos_rep_pitch), std::ref(eigen_rep_pitch), "cos");
 
-            std::thread theta_cos(&WSR_Module::get_eigen_rep_angle_trig, this,
-                                  std::ref(e_cos_rep_theta), std::ref(eigen_rep_theta), "cos");
+        std::thread pitch_sin(&WSR_Module::get_eigen_rep_angle_trig, this,
+                                std::ref(e_sin_rep_pitch), std::ref(eigen_rep_pitch), "sin");
 
-            phi_yaw_cos.join();
-            theta_sin.join();
-            pitch_cos.join();
-            pitch_sin.join();
-            theta_cos.join();
+        std::thread theta_cos(&WSR_Module::get_eigen_rep_angle_trig, this,
+                                std::ref(e_cos_rep_theta), std::ref(eigen_rep_theta), "cos");
 
-            if (__FLAG_debug)
-                std::cout << "log [compute_AOA] : calculating steering vector" << std::endl;
-            std::thread temp1_cwp(&WSR_Module::get_cwiseProduct, this, std::ref(temp1),
-                                  std::ref(e_sin_rep_theta), std::ref(e_cos_rep_pitch));
+        phi_yaw_cos.join();
+        theta_sin.join();
+        pitch_cos.join();
+        pitch_sin.join();
+        theta_cos.join();
 
-            // auto temp2 = e_sin_rep_pitch.cwiseProduct(e_cos_rep_theta);
-            std::thread temp2_cwp(&WSR_Module::get_cwiseProduct, this, std::ref(temp2),
-                                  std::ref(e_sin_rep_pitch), std::ref(e_cos_rep_theta));
+        if (__FLAG_debug)
+            std::cout << "log [compute_AOA] : calculating steering vector" << std::endl;
+        std::thread temp1_cwp(&WSR_Module::get_cwiseProduct, this, std::ref(temp1),
+                                std::ref(e_sin_rep_theta), std::ref(e_cos_rep_pitch));
 
-            temp1_cwp.join();
-            temp2_cwp.join();
+        // auto temp2 = e_sin_rep_pitch.cwiseProduct(e_cos_rep_theta);
+        std::thread temp2_cwp(&WSR_Module::get_cwiseProduct, this, std::ref(temp2),
+                                std::ref(e_sin_rep_pitch), std::ref(e_cos_rep_theta));
 
-            temp_prod = temp1.cwiseProduct(e_cos_rep_phi_rep_yaw);
-            temp3 = temp_prod + temp2;
-            eigen_bterm_rep2 = eigen_rep_rho.cwiseProduct(temp3);
-            get_cwiseProduct_cd(e_term_prod, eigen_bterm_rep2, eigen_eterm_3DAdjustment); //remove 3rd argument
+        temp1_cwp.join();
+        temp2_cwp.join();
 
-            // get_cwiseProduct_cd(e_term_prod,eigen_bterm_rep2,eigen_eterm_3DAdjustment); //remove 3rd argument
-            end = std::chrono::high_resolution_clock::now();
-            std::cout << "Time elapsed " << (end - start) / std::chrono::milliseconds(1) << " for e_term_prod " << std::endl;
+        temp_prod = temp1.cwiseProduct(e_cos_rep_phi_rep_yaw);
+        temp3 = temp_prod + temp2;
+        eigen_bterm_rep2 = eigen_rep_rho.cwiseProduct(temp3);
+        get_cwiseProduct_cd(e_term_prod, eigen_bterm_rep2, eigen_eterm_3DAdjustment); //remove 3rd argument
 
-            //Does not work on the UP board
-            int max_threads = 1;
-            int total_rows = __nphi * __ntheta;
-            int block_row_size = total_rows / max_threads;
-            int block_col = 0;
-            int block_col_size = num_poses;
-            std::thread e_term_blk_threads[max_threads];
-            std::vector<EigencdMatrix> emat(max_threads);
-            start = std::chrono::high_resolution_clock::now();
+        // get_cwiseProduct_cd(e_term_prod,eigen_bterm_rep2,eigen_eterm_3DAdjustment); //remove 3rd argument
+        end = std::chrono::high_resolution_clock::now();
+        std::cout << "Time elapsed " << (end - start) / std::chrono::milliseconds(1) << " for e_term_prod " << std::endl;
 
-            int itr;
-            for (itr = 0; itr < max_threads - 1; itr++)
-            {
-                e_term_blk_threads[itr] = std::thread(&WSR_Module::get_block_exp, this, std::ref(emat[itr]),
-                                                      std::ref(e_term_prod), itr * block_row_size, block_col, block_row_size, block_col_size);
+        //Does not work on the UP board
+        int max_threads = 1;
+        int total_rows = __nphi * __ntheta;
+        int block_row_size = total_rows / max_threads;
+        int block_col = 0;
+        int block_col_size = num_poses;
+        std::thread e_term_blk_threads[max_threads];
+        std::vector<EigencdMatrix> emat(max_threads);
+        start = std::chrono::high_resolution_clock::now();
+
+        int itr;
+        for (itr = 0; itr < max_threads - 1; itr++)
+        {
+            e_term_blk_threads[itr] = std::thread(&WSR_Module::get_block_exp, this, std::ref(emat[itr]),
+                                                    std::ref(e_term_prod), itr * block_row_size, block_col, block_row_size, block_col_size);
         }
 
         int remaining_rows = total_rows - itr * block_row_size;
@@ -1864,9 +1864,10 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett_offboard(
 
     if (__FLAG_debug)
         std::cout << "log [compute_AOA] : Getting transpose and returning profile" << std::endl;
+    
     beta_profile = nc::transpose((beta_profile));
     auto total_end = std::chrono::high_resolution_clock::now();
-     std::cout << "Offboard Computation spent " << (total_end- total_start)/std::chrono::milliseconds(1)<< " ms"<< std::endl;
+    std::cout << "Offboard Computation spent " << (total_end- total_start)/std::chrono::milliseconds(1)<< " ms"<< std::endl;
 
     return beta_profile;
 }

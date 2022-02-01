@@ -24,7 +24,7 @@ class WSR_Main
         WSR_Main(std::string config_fn,
                 std::string displacement_type);
 
-        std::unordered_map<std::string, std::vector<double>> generate_aoa();
+        std::unordered_map<std::string, std::vector<std::vector<double>>> generate_aoa();
 };      
 
 
