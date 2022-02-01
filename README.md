@@ -80,8 +80,7 @@ roslaunch wsr_toolbox_cpp wsr_pub.launch config_fn:=/home/test-u18/catkin_ws/src
 
 In another terminal start
 ```
-cd scripts
-python main_sub.py
+rosrun wsr_toolbox_cpp main_sub.py 
 ```
 
 In the third terminal, publish on the boolean topic /get_aoa from the command line to trigger AOA computation using sample data
