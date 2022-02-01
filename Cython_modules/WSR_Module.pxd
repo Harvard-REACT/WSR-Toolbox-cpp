@@ -20,7 +20,7 @@ cdef extern from "WSR_Main.h":
     cdef cppclass WSR_Main:
         WSR_Main() except +
         WSR_Main(string, string) except +
-        unordered_map[string, vector[double]] generate_aoa()
+        unordered_map[string, vector[vector[double]]] generate_aoa()
         
 
 cdef extern from "WSR_Module.h":
