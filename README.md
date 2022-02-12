@@ -35,7 +35,7 @@ git checkout wsr-melodic
 
 6. Install the python dependency packages
 ```
-pip install Cython setuptools numpy pybind11 pythran scipy pandas matplotlib
+pip install Cython setuptools numpy pybind11 scipy pandas matplotlib
 ```
 
 7. Download and compile the boost_1.68 locally in $HOME/Downloads.
