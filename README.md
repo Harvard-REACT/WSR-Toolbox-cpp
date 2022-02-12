@@ -81,7 +81,17 @@ Note: sometimes if the Cpython_modules/wsr_module.cpp file is not deleted before
 roscore
 ```
 
-3. Test sample example for publisher and subscriber. Update the path of config file correctly in the wsr_pub.launch or pass it via command line
+3. The CSI data (for sample example) can be verified as follows:
+```
+roslaunch wsr_toolbox_cpp wsr_check_csi.launch   
+```
+
+In another terminal publish on the boolean topic /verify_csi from the command line 
+```
+rostopic pub --once /verify_csi std_msgs/Bool "data: true"
+```
+
+4. Test sample example for publisher and subscriber. Update the path of config file correctly in the wsr_pub.launch or pass it via command line
 ```
 roslaunch wsr_toolbox_cpp wsr_pub.launch config_fn:=<path to config file>
 
