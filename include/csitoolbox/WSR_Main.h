@@ -25,6 +25,8 @@ class WSR_Main
                 std::string displacement_type);
 
         std::unordered_map<std::string, std::vector<std::vector<double>>> generate_aoa();
+
+        std::vector<string> verify_csi_data();
 };      
 
 
