@@ -10,6 +10,12 @@ WSR_Main::WSR_Main(void) {}
 
 WSR_Main::~WSR_Main(void) {}
 
+/**
+ * @brief Construct a new wsr main::wsr main object
+ * 
+ * @param config_fn 
+ * @param displacement_type 
+ */
 WSR_Main::WSR_Main(std::string config_fn,
                    std::string displacement_type) 
 {
@@ -17,6 +23,11 @@ WSR_Main::WSR_Main(std::string config_fn,
     __d_type = displacement_type;
 }
 
+/**
+ * @brief 
+ * 
+ * @return std::unordered_map<std::string, std::vector<std::vector<double>>> 
+ */
 std::unordered_map<std::string, std::vector<std::vector<double>>> WSR_Main::generate_aoa()
 {
     
@@ -183,4 +194,71 @@ std::unordered_map<std::string, std::vector<std::vector<double>>> WSR_Main::gene
     std::cout << "Completed" << std::endl;
 
     return aoa_return_val;
+}
+
+/**
+ * @brief 
+ * 
+ * @return std::vector<string> 
+ */
+std::vector<string> WSR_Main::verify_csi_data()
+{
+    
+    WSR_Util utils;
+    std::cout << "Processing trajectory type: " << __d_type << std::endl;
+    WSR_Module run_module(__config_fn);
+    
+    /*================== Process RX_SAR_Robot files ====================*/
+    std::string reverse_csi = run_module.__precompute_config["input_RX_channel_csi_fn"]["value"]["csi_fn"].dump();    
+
+    //Remove all double-quote characters
+    reverse_csi.erase(remove( reverse_csi.begin(), reverse_csi.end(), '\"' ),reverse_csi.end());
+    std::string rx_robot_csi = utils.__homedir + reverse_csi;
+    
+    /*============= Process the TX_SAR_Robot files =======================*/
+    std::unordered_map<std::string,std::string> tx_robot_csi;
+
+    for (auto it = run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].begin(); 
+    it != run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].end(); ++it)
+    {
+        const string& tx_name =  it.key();
+        auto temp =  it.value();
+        string tx_mac_id = temp["mac_id"];
+        string csi_data_file = temp["csi_fn"]; 
+        csi_data_file.erase(remove( csi_data_file.begin(), csi_data_file.end(), '\"' ),csi_data_file.end());
+        tx_robot_csi[tx_mac_id] = utils.__homedir + csi_data_file;
+        
+        //get timestamp for using to store AOA profile
+        std::string csi_name,ts,time_val,date_val; 
+        stringstream tokenize_string1(tx_robot_csi[tx_mac_id]); 
+        while(getline(tokenize_string1, csi_name, '/'));
+        stringstream tokenize_string2(csi_name);
+        int count = 0;
+        while(getline(tokenize_string2, ts, '_'))
+        {
+        if(count == 2) date_val = ts;
+        count++;
+        }
+        stringstream tokenize_string3(ts);
+        getline(tokenize_string3, time_val, '.');
+        run_module.data_sample_ts[tx_mac_id] = date_val +"_"+ time_val;
+        run_module.tx_name_list[tx_mac_id] = tx_name;
+    }
+
+    /*Test CSI data files*/
+    run_module.test_csi_data(rx_robot_csi,tx_robot_csi);
+    auto detected_tx = run_module.get_paired_pkt_count();
+    std::vector<string> tx_vals;
+    for(auto & itr : detected_tx)
+    {
+      std::string tx_id = itr.first;
+      std::string tx_name = run_module.tx_name_list[tx_id];
+      tx_vals.push_back(tx_name);
+      auto stats = run_module.get_performance_stats(tx_id, run_module.tx_name_list[tx_id]);
+
+      std::cout << stats.dump(4) << std::endl;
+      std::cout << "********************************" << std::endl;
+    } 
+
+    return tx_vals;
 }
