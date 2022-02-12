@@ -4,7 +4,7 @@
 Author: Ninad Jadhav, Weiying Wang
 '''
 
-import wsr_module
+from libs import wsr_module
 import argparse
 from os.path import expanduser
 import rospy

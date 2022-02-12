@@ -13,7 +13,7 @@ import os
 extra_compile_args = sysconfig.get_config_var('CFLAGS').split()
 
 setup(ext_modules=cythonize(Extension(
-                'scripts.wsr_module',
+                'scripts.libs.wsr_module',
                 sources=['Cython_modules/wsr_module.pyx'],
                 include_dirs=['include',
                               'include/csitoolbox',
@@ -21,5 +21,7 @@ setup(ext_modules=cythonize(Extension(
                               os.path.expanduser('~')+'/Downloads/boost_1_68_0'],
                 language="c++",
 		            extra_compile_args=['-std=c++14', '-O3', '-fopenmp'],
-                extra_link_args=['-lgomp', '-lpthread', '-lm', '-ldl']
+                extra_link_args=['-lgomp', '-lpthread', '-lm', '-ldl'],
+                packages=['libs'],#python pkg name
+                package_dir={'': 'scripts'},
     )))
