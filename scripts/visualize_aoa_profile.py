@@ -19,12 +19,13 @@ def main():
     parser.add_argument("--ntheta", type = int, help="Resolution of elevation angle")
     args = parser.parse_args()
     
-    X = np.arange(0, args.nphi-1, 1).flatten()
+    X = np.arange(0, 2*args.nphi-1, 1).flatten()
     Y = np.arange(0, args.ntheta-1, 1).flatten()
     X, Y = np.meshgrid(X, Y)
     
     aoa_profile = np.genfromtxt(args.file, delimiter=',')
-
+    print(aoa_profile.shape)
+    
     max_peak = np.unravel_index(np.argmax(aoa_profile, axis=None), aoa_profile.shape)
     profile = aoa_profile[:,0:args.ntheta]
     Z = profile[X,Y]
@@ -39,8 +40,8 @@ def main():
 
 
     fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5)
-
-
+    ax.set_xlim(0,2*args.nphi-1)
+    ax.set_xticklabels([x-180 for x in ax.get_xticks()])
     ax.set_xlabel('Azimuth (Degree)')
     ax.set_ylabel('Elevation (Degree)')
     ax.set_zlabel('Magnitude')
