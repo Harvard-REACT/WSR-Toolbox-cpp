@@ -1,17 +1,28 @@
-function viz_profile(profile)
-    beta_min = -180*(pi/180);
-    beta_max = 180*(pi/180);
+function viz_aoa(filename, nphi, ntheta, phi_max, theta_max)
+    
+    nbeta = nphi;
+    ngamma = ntheta;      
+    beta_min = 0*(pi/180);
+    beta_max = phi_max*(pi/180);
     gamma_min = 0*(pi/180);
-    gamma_max = 180*(pi/180);       
-    nbeta = 360;
-    ngamma = 180;
+    gamma_max = theta_max*(pi/180);      
     betaList = linspace(beta_min, beta_max, nbeta).';
     gammaList = linspace(gamma_min, gamma_max, ngamma);
-    beta_profile_csv = readtable(profile);
+    beta_profile_csv = readtable(filename);
     beta_profile_cpp = table2array(beta_profile_csv);
     figure(12233);
-    %figure; clf; hold on;
+    subplot(2,1,1)
     surf(betaList*180/pi, gammaList*180/pi, beta_profile_cpp.', 'EdgeColor', 'none');
+    set(gcf,'Renderer','Zbuffer')            
+    xlabel('Azimuth (Degree)');
+    ylabel('Elevation (Degree)');
+    title(sprintf('AOA profile (side view)'));         
+    subplot(2,1,2)
+    surf(betaList*180/pi, gammaList*180/pi, beta_profile_cpp.', 'EdgeColor', 'none');
+    set(gcf,'Renderer','Zbuffer');
+    view(2)
+    title('AOA profile Top View');
     xlabel('Beta');
     ylabel('Gamma');
+
 end
