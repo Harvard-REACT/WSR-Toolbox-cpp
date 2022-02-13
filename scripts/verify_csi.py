@@ -35,6 +35,8 @@ def get_plot(filename, tx):
     plt.scatter(np.arange(0,len(data_json),1),
                 traj["center_subcarrier_phase"],s=1)
     plt.title('Channel Phase for '+ str(tx))
+    plt.xlabel("WiFi Packets collected")
+    plt.ylabel("WiFi channel phase")
     plt.show(block=False)
     plt.pause(10)
     plt.close()
@@ -43,8 +45,9 @@ def main():
     rospy.init_node('wsr_py_node', anonymous=True)
     homedir = expanduser("~")    
     d_type = rospy.get_param('~d_type', 'gt')
-    config_fn = rospy.get_param('~config_fn', homedir+'/catkin_ws/src/WSR-Toolbox-cpp/config/config_3D_SAR.json') 
-    rootdir = homedir + "/catkin_ws/src/WSR-Toolbox-cpp/debug/" 
+    catkin_ws_name = rospy.get_param('~ws_name', 'catkin_ws')
+    config_fn = rospy.get_param('~config_fn', homedir+'/'+catkin_ws_name+'/src/WSR-Toolbox-cpp/config/config_3D_SAR.json') 
+    rootdir = homedir+'/'+catkin_ws_name+"/src/WSR-Toolbox-cpp/debug/" 
    
     #Ros publisher
     rate = rospy.Rate(1) # 10hz

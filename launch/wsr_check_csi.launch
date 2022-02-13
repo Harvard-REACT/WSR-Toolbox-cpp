@@ -1,11 +1,13 @@
 <launch>
     <arg name="config_fn" default="/home/test-u18/catkin_ws/src/WSR-Toolbox-cpp/config/config_3D_SAR.json" />
     <arg name="d_type" default="gt" />
+    <arg name="ws_name" default="catkin_ws" />
 
 
 <node pkg="wsr_toolbox_cpp" name="verify_csi" type="verify_csi.py" output="screen">
 	<param name="config_fn" value="$(arg config_fn)" />
 	<param name="d_type" value="$(arg d_type)" />
+        <param name="ws_name" value="$(arg ws_name)" />
 </node>
 
 </launch>
