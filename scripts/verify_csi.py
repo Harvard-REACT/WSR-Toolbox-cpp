@@ -67,9 +67,9 @@ def main():
             for tx in tx_vals:
                 regex = re.compile(tx)
                 for root, dirs, files in os.walk(rootdir):
-                    for file in files:
-                        if regex.match(file):
-                            fn = rootdir+file
+                    for filen in files:
+                        if regex.match(filen) and "all_channel_data" in filen:
+                            fn = rootdir+filen
                             get_plot(fn,tx)
 
             rospy.loginfo("Request completed")
