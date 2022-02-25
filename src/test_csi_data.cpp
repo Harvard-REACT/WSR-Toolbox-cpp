@@ -7,8 +7,8 @@
 int main(){
     
     WSR_Util utils;
-    //std::string config = "../config/config_3D_SAR.json";
-    std::string config = "/home/jadhav/catkin_ws/src/wsr_ros/config/config_rx0.json";
+    std::string config = "../config/config_3D_SAR.json";
+    //std::string config = "/home/jadhav/catkin_ws/src/wsr_ros/config/config_3D_SAR.json";
     
     std::cout << config << std::endl;
 

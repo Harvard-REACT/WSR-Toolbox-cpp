@@ -163,6 +163,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
     WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR
     nc::NdArray<std::complex<double>> h_list_all, h_list_static, h_list;
     nc::NdArray<double> csi_timestamp_all, csi_timestamp;
+    std::vector<std::vector<int>> rssi_value;
     double cal_ts_offset, moving_channel_ang_diff_mean, moving_channel_ang_diff_stdev,
         static_channel_ang_mean, static_channel_ang_stdev;
     std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
@@ -272,9 +273,15 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         * */
         if (__FLAG_debug)
             std::cout << "log [calculate_AOA_profile]: Slicing CSI timestamps" << std::endl;
+        
         csi_timestamp = csi_timestamp_all({start_index, end_index}, csi_timestamp_all.cSlice());
         h_list = h_list_all({start_index, end_index}, h_list_all.cSlice());
         h_list_static = h_list_all({0, start_index}, h_list_all.cSlice());
+
+        if (__FLAG_debug)
+            std::cout << "log [calculate_AOA_profile]: Slicing RSSI data" << std::endl;
+        rssi_value = utils.get_signal_strength(data_packets_RX,start_index,end_index);
+        
 
         bool moving = true;
         utils.get_phase_diff_metrics(h_list,
@@ -329,6 +336,10 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                 //Store interpolated trajectory for debugging
                 std::string interpl_trajectory = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_interpl_trajectory.json";
                 utils.writeTrajToFile(pose_list, interpl_trajectory);
+
+                //Write RSSI value to Json file
+                std::string rssi_val_fn = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_rssi.json";
+                utils.writeRssiToFile(rssi_value, rssi_val_fn);
             }
 
             /*Interpolate the trajectory and csi data*/
@@ -1491,6 +1502,12 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
         data_packets_RX = RX_SAR_robot.get_wifi_data(mac_id_tx[num_tx]);          //Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
         data_packets_TX = TX_Neighbor_robot.get_wifi_data(__RX_SAR_robot_MAC_ID); //Packets only of RX_SAR_robot in a TX_Neighbor_robot's csi file
 
+        std:: cout << "-----------------------------------------" << std::endl;
+        for(int i=0; i<100; i++)
+        {
+            printf("%d, ", data_packets_TX[i].frame_count );
+        }
+        std:: cout << "-----------------------------------------" << std::endl;
 
         std::cout << "log [calculate_AOA_profile]: Packets for TX_Neighbor_robot collected by RX_SAR_robot : "
                     << data_packets_RX.size() << std::endl;
@@ -1547,6 +1564,7 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
 
             //Store phase and timestamp of the channel for debugging
             std::string channel_data_all = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
+            std::cout << channel_data_all << std::endl;
             utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all, __FLAG_interpolate_phase);
 
             auto starttime = std::chrono::high_resolution_clock::now();

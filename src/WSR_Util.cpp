@@ -255,6 +255,7 @@ void WSR_Util::read_bfee_timestamp_mac(uint8_t *inBytes, WIFI_Agent& robot)
 	wifi_data_packet.perm [1] = ((antenna_sel >> 2) & 0x3) + 1;
 	wifi_data_packet.perm [2] = ((antenna_sel >> 4) & 0x3) + 1;
 
+    // printf("%d, ", wifi_data_packet.frame_count );
     robot.saveDataPacket(wifi_data_packet);
     
 }
@@ -1547,4 +1548,55 @@ Eigen::Vector3f  WSR_Util::rotationMatrixToEulerAngles(Eigen::Matrix3f &R)
     }
     return Eigen::Vector3f(x, y, z);
 
+}
+//=============================================================================================================================
+/**
+ * 
+ * 
+ * */
+std::vector<std::vector<int>> WSR_Util::get_signal_strength(std::vector<DataPacket>& rx_robot_data,
+                                                int start_index,
+                                                int end_index)
+ {
+     std::cout << "log [Utils]: Getting RSSI data" << std::endl;
+     std::vector<std::vector<int>> ret_val;
+     for(int i=start_index; i<end_index; i++)
+     {
+         std:vector<int> temp;
+         temp.push_back(rx_robot_data[i].rssi_a);
+         temp.push_back(rx_robot_data[i].rssi_b);
+         temp.push_back(rx_robot_data[i].rssi_c);
+         ret_val.push_back(temp); //signal strength from all antennas
+     }
+    return ret_val;
+ }
+ //=============================================================================================================================
+/**
+ * 
+ * 
+ * */
+void WSR_Util::writeRssiToFile(std::vector<std::vector<int>>& rssi_rx_robot, std::string fn)
+{
+    string output_file = __homedir+"/"+fn, key;
+    std::cout.precision(15);
+    ofstream myfile (output_file);
+    nlohmann::json signal_strength;
+    signal_strength["rssi_value"] = {};
+
+    std::cout << "log [Utils]: RSSI count " << rssi_rx_robot.size() << std::endl;
+    if (myfile.is_open())
+    {
+        for(size_t i = 0; i < rssi_rx_robot.size(); i++)
+        {
+            nlohmann::json temp = {
+               {"rssi_a",rssi_rx_robot[i][0]},
+               {"rssi_b",rssi_rx_robot[i][1]},
+               {"rssi_c",rssi_rx_robot[i][2]}, 
+            };
+            key = std::to_string(i);
+            signal_strength["rssi_value"][key] = temp;
+        }
+        myfile << signal_strength;   
+    }
+    myfile.close();
 }

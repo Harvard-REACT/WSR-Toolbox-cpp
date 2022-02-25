@@ -100,6 +100,11 @@ class WSR_Util{
         float wrapNegPitoPi(float val);
         float get_yaw(double& x, double& y, double& z, double& w);
         Eigen::Vector3f rotationMatrixToEulerAngles(Eigen::Matrix3f &R);
+        std::vector<std::vector<int>> get_signal_strength(std::vector<DataPacket>& rx_robot_data,
+                                                            int start_index,
+                                                            int end_index);
+        void writeRssiToFile(std::vector<std::vector<int>>& rssi_rx_robot, std::string fn) ;                                                       
+
 };
 
 
