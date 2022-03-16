@@ -133,6 +133,7 @@ WSR_Module::WSR_Module(std::string config_fn)
         std::cout << "  Trajectory Type = " << __trajType << std::endl;
         std::cout << "  WiFi Channel = " << double(__precompute_config["channel"]["value"]) << std::endl;
         std::cout << "  Channel center frequency (GHz) = " << centerfreq << std::endl;
+        std::cout << "  WiFi signal wavelength = " << __lambda << std::endl;
         std::cout << "  __FLAG_packet_threshold = " << utils.bool_to_string(__FLAG_packet_threshold) << std::endl;
         std::cout << "  __FLAG_debug = " << utils.bool_to_string(__FLAG_debug) << std::endl;
         std::cout << "  __FLAG_threading = " << utils.bool_to_string(__FLAG_threading) << std::endl;

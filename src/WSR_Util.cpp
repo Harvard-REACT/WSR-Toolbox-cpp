@@ -679,13 +679,21 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
 
         if(__Flag_offset && rx_trajectory[i].size()>5) //Released Dataset for gt does not have orientation values.
         {
-            q.x() = rx_trajectory[i][5];
-            q.y() = rx_trajectory[i][6];
-            q.z() = rx_trajectory[i][7];
-            q.w() = rx_trajectory[i][8];
-            ori_now = q.toRotationMatrix().eulerAngles(0, 1, 2);//r,p,y
-            if(i>0) yaw = wrapNegPitoPi(ori_now[2]-ori_start[2]);
-            else ori_start = ori_now;
+            Eigen::Quaternionf q(rx_trajectory[i][8], rx_trajectory[i][5], rx_trajectory[i][6], rx_trajectory[i][7]); //w,x,y,z
+            ori_now = Eigen::Matrix3f(q).eulerAngles(0, 1, 2);//r,p,y
+            // q.x() = rx_trajectory[i][5];
+            // q.y() = rx_trajectory[i][6];
+            // q.z() = rx_trajectory[i][7];
+            // q.w() = rx_trajectory[i][8];
+            // ori_now = q.toRotationMatrix().eulerAngles(0, 1, 2);//r,p,y
+            if(i>0) 
+            {
+                // yaw = wrapNegPitoPi(ori_now[2]-ori_start[2]);
+                yaw = ori_now[2]-ori_start[2];
+                // std::cout << ori_start[2] << "," << ori_now[2] <<"," << yaw << std::endl;
+            }
+            else 
+                ori_start = ori_now;
             q_diff = Eigen::AngleAxisf(0, Eigen::Vector3f::UnitX()) * 
                      Eigen::AngleAxisf(0, Eigen::Vector3f::UnitY())* 
                      Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitZ());
@@ -697,6 +705,9 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
         displacement(i,0) = rx_trajectory[i][2] + position_vector[0]; //x
         displacement(i,1) = rx_trajectory[i][3] + position_vector[1]; //y
         displacement(i,2) = rx_trajectory[i][4] + position_vector[2]; //z
+        // std::cout << rx_trajectory[i][2] << "," << rx_trajectory[i][3] << "," << rx_trajectory[i][4] << std::endl;
+        // std::cout << displacement(i,0) << ", " << displacement(i,1) << "," << displacement(i,2) << std::endl;  
+        // std::cout << "------------------------------------------------------------------" << std::endl;
         
     }
     std::cout << "Displacement updated" << std::endl;
@@ -1194,7 +1205,7 @@ std::unordered_map<std::string, std::pair<double,double>> WSR_Util::get_true_aoa
         double gt_z = double(position["position"]["z"]);
 
         //First position
-        //std::cout << gt_x <<", " << displacement(0,0) << "," << gt_y << "," << displacement(0,1) << std::endl;
+        // std::cout << gt_x <<", " << "," << gt_y << "," << std::endl;
         x_diff = gt_x - pos(0,0);
         y_diff = gt_y - pos(0,1);
         z_diff = gt_z - pos(0,2);

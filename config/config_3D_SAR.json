@@ -89,7 +89,7 @@
     },
     "normalize_profile":{
         "desc":"Normalize the profile",
-        "value":true
+        "value":false
     },
     "topN_count":{
         "desc":"Top N AOA angles to return from AOA profile",
@@ -178,6 +178,14 @@
     "input_TX_channel_csi_fn":{
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
+            "tx1":{
+                "mac_id_illegitimate":"00:21:6A:3E:F5:7E",
+                "mac_id_spoofed_1":"00:21:6A:3F:17:1",
+                "mac_id_spoofed_2":"00:21:6A:3F:17:2",
+                "mac_id_legitimate":"00:21:6A:3F:17:3",
+                "mac_id":"00:21:6A:3F:17:3",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
+            },
             "tx2":{
                 "mac_id_val":"0:33:106:63:23:90",
                 "mac_id":"00:21:6A:3F:17:5A",
@@ -198,8 +206,7 @@
     "input_RX_channel_csi_fn":{
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
         "value":{           
-            "mac_id":"00:21:6A:53:89:D2",
-            "mac_id_val":"00:16:EA:12:34:56",
+            "mac_id":"00:21:6A:3F:16:DA",
             "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_202550.dat"
         }
     },
@@ -236,7 +243,7 @@
         "value":true
     },
     "debug":{
-        "desc":"Flag to enable/disbale max packet threshold",
+        "desc":"Flag to enable/disbale debug data generation",
         "value":true
     },
     "debug_dir":{
@@ -285,7 +292,7 @@
     },
     "antenna_position_offset": {
         "desc": "offset between center of displacement center and antenna tip (meters)",
-        "mocap_offset":[0.0,0.0,0.0],
+        "mocap_offset":[0.00,0.00,0.00],
         "t265_offset":[0.0,0.0,0.06],
         "odom_offset":[0.0,0.16,0.14]
     },
@@ -299,7 +306,7 @@
     },
     "top_N_magnitude":{
         "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
-        "value": 70
+        "value": 50
     },
     "offboard_computation":{
         "desc":"Perform computation offboard with high number of CPU cores",
