@@ -146,6 +146,11 @@ class WSR_Module
                                             const std::string& tx_name);
         std::unordered_map<std::string, int> get_paired_pkt_count();
         std::unordered_map<std::string, std::vector<double>>get_all_confidence();
+
+        int calculate_spoofed_AOA_profile(std::string rx_csi_file,
+                                            std::unordered_map<std::string, std::string> tx_csi_file,
+                                            nc::NdArray<double> displacement,
+                                            nc::NdArray<double> displacement_timestamp);
 };
 
 

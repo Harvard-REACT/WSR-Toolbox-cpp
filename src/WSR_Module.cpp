@@ -1921,9 +1921,220 @@ nlohmann::json WSR_Module::get_stats_old_json(double true_phi,
     std::cout << "Got json" << std::endl;
     return output_stats;
 }
+//======================================================================================================================
+/**
+ * Description: 
+ * Input:
+ * Output:
+ * */
+int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
+                                            std::unordered_map<std::string, std::string> tx_csi_file,
+                                            nc::NdArray<double> displacement,
+                                            nc::NdArray<double> displacement_timestamp)
+{
 
-/*
-,
+    std::cout << "============ Starting WSR module Spoofing Simulation ==============" << std::endl;
+
+    WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR
+    nc::NdArray<std::complex<double>> h_list_all, h_list_static, h_list;
+    nc::NdArray<double> csi_timestamp_all, csi_timestamp;
+    std::vector<std::vector<int>> rssi_value;
+    double cal_ts_offset, moving_channel_ang_diff_mean, moving_channel_ang_diff_stdev,
+        static_channel_ang_mean, static_channel_ang_stdev;
+    std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
+    debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());
+    int ret_val = 0;
+
+    std::cout << "log [calculate_AOA_profile]: Parsing CSI Data " << std::endl;
+
+    auto temp1 = utils.readCsiData(rx_csi_file, RX_SAR_robot, __FLAG_debug);
 
 
-*/
+    //Simulated spoofed data by changing the mac-id of alternate packets on the RX
+    RX_SAR_robot.simulate_spoofed_data(1);
+
+
+    //Check the actual number of packets collected
+    std::cout << "log [calculate_AOA_profile]: Neighbouring TX robot IDs count = " << RX_SAR_robot.unique_mac_ids_packets.size() << std::endl;
+    for (auto key : RX_SAR_robot.unique_mac_ids_packets)
+    {
+        if (__FLAG_debug)
+            std::cout << "log [calculate_AOA_profile]: Detected MAC ID = " << key.first
+                      << ", Packet count: = " << key.second << std::endl;
+    }
+
+
+    //Check the spoofed number of packets simulated
+    std::vector<std::string> mac_id_tx;
+    std::cout << "log [calculate_AOA_profile]: Neighbouring Spoofed TX robot IDs count = " << RX_SAR_robot.unique_mac_ids_packets_spoofed.size() << std::endl;
+
+    for (auto key : RX_SAR_robot.unique_mac_ids_packets_spoofed)
+    {
+        if (__FLAG_debug)
+            std::cout << "log [calculate_AOA_profile]: Detected MAC ID = " << key.first
+                      << ", Packet count: = " << key.second << std::endl;
+        mac_id_tx.push_back(key.first);
+    }
+
+
+    //Get AOA profile for each of the Spoofed TX neighboring robots
+    if (__FLAG_debug)
+        std::cout << "log [calculate_AOA_profile]: Getting AOA profiles" << std::endl;
+    std::vector<DataPacket> data_packets_RX, data_packets_TX;
+
+    for (int num_tx = 0; num_tx < mac_id_tx.size(); num_tx++)
+    {
+        WIFI_Agent TX_Neighbor_robot; // Neighbouring robots who reply back
+        std::pair<nc::NdArray<std::complex<double>>, nc::NdArray<double>> csi_data;
+
+        if (tx_csi_file.find(mac_id_tx[num_tx]) == tx_csi_file.end())
+        {
+            if (__FLAG_debug)
+                std::cout << "log [calculate_AOA_profile]: No CSI data available for TX Neighbor MAC-ID: "
+                          << mac_id_tx[num_tx] << ". Skipping" << std::endl;
+            continue;
+        }
+        std::cout << "log [calculate_AOA_profile]: =========================" << std::endl;
+        std::cout << "log [calculate_AOA_profile]: Profile for RX_SAR_robot MAC-ID: " << __RX_SAR_robot_MAC_ID
+                  << ", TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
+
+        auto temp2 = utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], TX_Neighbor_robot, __FLAG_debug);
+
+        for (auto key : TX_Neighbor_robot.unique_mac_ids_packets)
+        {
+            if (__FLAG_debug)
+                std::cout << "log [calculate_AOA_profile]: Detected RX MAC IDs = " << key.first
+                          << ", Packet count: = " << key.second << std::endl;
+            //mac_id_tx.push_back(key.first);
+        }
+
+        data_packets_RX = RX_SAR_robot.get_wifi_data_spoofed(mac_id_tx[num_tx]);  //Spoofed Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
+        data_packets_TX = TX_Neighbor_robot.get_wifi_data(__RX_SAR_robot_MAC_ID); //Packets only of RX_SAR_robot in a TX_Neighbor_robot's csi file
+
+        if (__FLAG_debug)
+        {
+            std::cout << "log [calculate_AOA_profile]: Packets for TX_Neighbor_robot collected by RX_SAR_robot : "
+                      << data_packets_RX.size() << std::endl;
+            std::cout << "log [calculate_AOA_profile]: Packets for RX_SAR_robot collected by TX_Neighbor_robot : "
+                      << data_packets_TX.size() << std::endl;
+        }
+
+
+        std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product using Counter " << std::endl;
+        csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
+                                                            data_packets_TX,
+                                                            __FLAG_interpolate_phase,
+                                                            __FLAG_sub_sample);
+
+
+        std::cout << "log [calculate_AOA_profile]: corrected CFO " << std::endl;
+        h_list_all = csi_data.first;
+        csi_timestamp_all = csi_data.second;
+
+        if (csi_timestamp_all.size() < __min_packets_to_process)
+        {
+            std::cout << csi_timestamp_all.size() << std::endl;
+            if (__FLAG_debug)
+                std::cout << "log [calculate_AOA_profile]: Very few CSI data packets left after forward-backward product" << std::endl;
+            break;
+        }
+
+        /*Get the shifted version of the pose timestamps such that they match exactly with csi timestamps.*/
+        if (__FLAG_debug)
+            std::cout << "log [calculate_AOA_profile]: Removing unused csi data" << std::endl;
+        std::pair<int, int> csi_timestamp_range = utils.returnClosestIndices(csi_timestamp_all, displacement_timestamp);
+        int start_index = csi_timestamp_range.first, end_index = csi_timestamp_range.second;
+
+        /*Slice the csi_timestamp using the indices to remove unused CSI values
+        * Note: Make sure that the packet transmission freqency is high enough when random_packets is used, 
+        * such that about 400 left after slicing even if the trajectory duration is small. 
+        * */
+        if (__FLAG_debug)
+            std::cout << "log [calculate_AOA_profile]: Slicing CSI timestamps" << std::endl;
+        
+        csi_timestamp = csi_timestamp_all({start_index, end_index}, csi_timestamp_all.cSlice());
+        h_list = h_list_all({start_index, end_index}, h_list_all.cSlice());
+        h_list_static = h_list_all({0, start_index}, h_list_all.cSlice());
+
+    
+        rssi_value = utils.get_signal_strength(data_packets_RX,start_index,end_index);
+
+        if (h_list.shape().rows < __min_packets_to_process)
+        {
+            std::cout << "log [calculate_AOA_profile]: Not enough CSI packets." << std::endl;
+            std::cout << "log [calculate_AOA_profile]: Return Empty AOA profile" << std::endl;
+            //Return empty dummpy AOA profile
+            __aoa_profile = nc::zeros<double>(1, 1);
+        }
+        else
+        {
+            /*Interpolate the trajectory using the csi data timestamps*/
+            if (__FLAG_debug)
+                std::cout << "log [calculate_AOA_profile]: interpolating the trajectory and csi forward-reverse product" << std::endl;
+            auto interpolated_data = utils.interpolate(csi_timestamp, displacement_timestamp, displacement);
+            nc::NdArray<double> pose_list = interpolated_data.first;
+
+            if (__FLAG_debug)
+            {
+                std::cout << "log [calculate_AOA_profile]: CSI_packets_used = " << csi_timestamp.shape() << std::endl;
+                std::cout << "log [calculate_AOA_profile]: pose_list size  = " << pose_list.shape() << std::endl;
+                std::cout << "log [calculate_AOA_profile]: h_list size  = " << h_list.shape() << std::endl;
+
+                std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
+                debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());
+
+                //Store phase and timestamp of the channel for debugging
+                std::string channel_data_sliced = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_sliced_channel_data.json";
+                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_sliced, __FLAG_interpolate_phase);
+
+                std::string channel_data_all = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
+                utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all, __FLAG_interpolate_phase);
+
+                //Store the packet distribution to check for spotty packets
+                std::string packet_dist = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_packet_dist.json";
+                utils.writePacketDistributionToJsonFile(csi_timestamp, displacement_timestamp, displacement, packet_dist);
+
+                //Store interpolated trajectory for debugging
+                std::string interpl_trajectory = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_interpl_trajectory.json";
+                utils.writeTrajToFile(pose_list, interpl_trajectory);
+
+                //Write RSSI value to Json file
+                std::string rssi_val_fn = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_rssi.json";
+                utils.writeRssiToFile(rssi_value, rssi_val_fn);
+            }
+
+            /*Interpolate the trajectory and csi data*/
+            std::cout << "log [calculate_AOA_profile]: Calculating AOA profile..." << std::endl;
+            auto starttime = std::chrono::high_resolution_clock::now();
+
+            __aoa_profile = compute_profile_bartlett_offboard(h_list, pose_list);
+
+            auto endtime = std::chrono::high_resolution_clock::now();
+            float processtime = std::chrono::duration<float, std::milli>(endtime - starttime).count();
+
+            //Stats
+            std::pair<std::vector<double>, std::vector<double>> top_N = find_topN();
+            __TX_top_N_angles[mac_id_tx[num_tx]] = top_N;
+            __paired_pkt_count[mac_id_tx[num_tx]] = csi_timestamp.shape().rows;
+            __perf_aoa_profile_cal_time[mac_id_tx[num_tx]] = processtime / 1000;
+            __memory_used[mac_id_tx[num_tx]] = utils.mem_usage() / 1000000;
+            __calculated_ts_offset[mac_id_tx[num_tx]] = cal_ts_offset;
+            __rx_pkt_size[mac_id_tx[num_tx]] = data_packets_RX.size();
+            __tx_pkt_size[mac_id_tx[num_tx]] = data_packets_TX.size();
+            __top_peak_confidence[mac_id_tx[num_tx]] = __aoa_profile_variance[0];
+        }
+
+        /*Store the aoa_profile*/
+        __all_aoa_profiles[mac_id_tx[num_tx]] = __aoa_profile;
+        __all_topN_confidence[mac_id_tx[num_tx]] = __aoa_profile_variance;
+
+        //TODO: get azimuth and elevation from beta_profile
+        std::cout << "log [calculate_AOA_profile]: Completed AOA calculation." << std::endl;
+        TX_Neighbor_robot.reset();
+    }
+
+    std::cout << "============ WSR module end ==============" << std::endl;
+    RX_SAR_robot.reset();
+
+    return ret_val;
+}

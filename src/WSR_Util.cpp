@@ -463,9 +463,9 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
 
     while(itr_k < tx_length && itr_l < rx_length)
         {
-            // std::cout << "TX frame: " << tx_robot[itr_k].frame_count << ", RX frame:" << rx_robot[itr_l].frame_count << std::endl;
             if (tx_robot[itr_k].frame_count == rx_robot[itr_l].frame_count)
             {
+                std::cout << "TX frame: " << tx_robot[itr_k].frame_count << ", RX frame:" << rx_robot[itr_l].frame_count << std::endl;
                 //multiply forward and reverse channel
                 for(int h_i = 0;h_i< 30; h_i++)
                 {

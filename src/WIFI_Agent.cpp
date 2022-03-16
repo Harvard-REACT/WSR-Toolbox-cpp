@@ -151,3 +151,81 @@ std::string WIFI_Agent::dec2hex(unsigned int i)
     return ss.str();
 }
 //Function to check if CSI is empty or not for a given packet
+
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+void WIFI_Agent::simulate_spoofed_data(int spoofed_count)
+{
+
+    int k = 0;
+    std::string mac_id_str_original = wifi_data_packet_array[0].mac_real;
+
+    std::vector <std::string> mac_val; 
+    std::stringstream check1(mac_id_str_original); 
+    std::string intermediate; 
+    while(getline(check1, intermediate, ':')) 
+    { 
+        mac_val.push_back(intermediate); 
+    } 
+
+    std::vector<std::string> spoofed_mac_id;
+
+    spoofed_mac_id.push_back(mac2str(mac_id_str_original));
+
+    for(int i=0; i<spoofed_count; i++)
+    {
+        spoofed_mac_id.push_back("0"+dec2hex(std::stoi(mac_val[0])) + ":" +
+                                dec2hex(std::stoi(mac_val[1])) + ":" +
+                                dec2hex(std::stoi(mac_val[2])) + ":" +
+                                dec2hex(std::stoi(mac_val[3])) + ":" +
+                                dec2hex(std::stoi(mac_val[4])) + ":" +
+                                dec2hex(i+1));
+    }
+
+    for(int i=0;i<spoofed_mac_id.size(); i++)
+    {
+        std::cout << spoofed_mac_id[i] << std::endl;
+    }
+
+
+    for (int i=0;i < wifi_data_packet_array.size();i++)
+    {
+        if(k>spoofed_count) k = 0;
+        
+        DataPacket temp =  wifi_data_packet_array[i];
+        temp.mac_real = spoofed_mac_id[k];
+        wifi_spoofed_data_packet_array.push_back(temp);
+        if (unique_mac_ids_packets_spoofed.find(temp.mac_real) != unique_mac_ids_packets_spoofed.end())
+        {
+            unique_mac_ids_packets_spoofed[temp.mac_real] = unique_mac_ids_packets_spoofed[temp.mac_real] + 1;
+        }
+        else
+        {
+            unique_mac_ids_packets_spoofed[temp.mac_real] = 1;
+        }
+
+        k+=1;
+    }
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+std::vector<DataPacket> WIFI_Agent::get_wifi_data_spoofed(std::string mac_id)
+{
+    std::vector<DataPacket> temp;
+    std::set<std::string> unique_mac_id;
+    for (int i=0;i < wifi_spoofed_data_packet_array.size();i++)
+    {
+        if(wifi_spoofed_data_packet_array[i].mac_real == mac_id) 
+        {
+            // std::cout << wifi_spoofed_data_packet_array[i].frame_count << std::endl;
+            temp.push_back(wifi_spoofed_data_packet_array[i]);
+        }
+    }
+    return temp;
+}

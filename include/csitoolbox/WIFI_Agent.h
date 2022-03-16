@@ -15,6 +15,7 @@ class WIFI_Agent {
        std::ifstream csi_file__;
        int file_size__ = -1, pkt_count = 0;
        std::vector<DataPacket> wifi_data_packet_array; 
+       std::vector<DataPacket> wifi_spoofed_data_packet_array; 
        std::vector<std::vector<double>> csi_performax;
        std::string mac2str(std::string const& s);
        std::string dec2hex(unsigned int i);
@@ -24,7 +25,7 @@ class WIFI_Agent {
 
     public:
         std::string robot_type;
-        std::unordered_map<std::string, int> unique_mac_ids_packets;
+        std::unordered_map<std::string, int> unique_mac_ids_packets, unique_mac_ids_packets_spoofed;
         int getSize(std::string fn); 
         size_t readSizeT(std::string fn);
         std::vector<DataPacket> get_wifi_data(std::string mac_id);
@@ -37,6 +38,8 @@ class WIFI_Agent {
         void reset();
         WIFI_Agent();
         ~WIFI_Agent();
+        void simulate_spoofed_data(int spoofed_count);
+        std::vector<DataPacket> get_wifi_data_spoofed(std::string mac_id);
         
 };
 
