@@ -1960,7 +1960,7 @@ int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
 
 
     //Simulated spoofed data by changing the mac-id of alternate packets on the RX
-    RX_SAR_robot.simulate_spoofed_data(1);
+    RX_SAR_robot.simulate_spoofed_data(0);
 
 
     //Check the actual number of packets collected
