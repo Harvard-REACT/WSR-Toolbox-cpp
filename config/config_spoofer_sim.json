@@ -57,7 +57,7 @@
     },
     "normalize_profile":{
         "desc":"Normalize the profile",
-        "value":false
+        "value":true
     },
     "topN_count":{
         "desc":"Top N AOA angles to return from AOA profile",
@@ -193,7 +193,7 @@
     },
     "max_packets_to_process":{
         "desc":"Maximum number of csi packets to process",
-        "value":1500
+        "value":2500
     },
     "min_packets_to_process":{
         "desc":"Minimum number of csi packets to process",
@@ -267,7 +267,7 @@
     },
     "top_N_magnitude":{
         "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
-        "value": 10
+        "value": 20
     },
     "offboard_computation":{
         "desc":"Perform computation offboard with high number of CPU cores",
