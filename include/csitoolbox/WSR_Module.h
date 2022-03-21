@@ -41,6 +41,10 @@ class WSR_Module
                             const nc::NdArray<std::complex<double>>& h_list, 
                             const nc::NdArray<double>& pose_list);
 
+        nc::NdArray<double> compute_profile_music_offboard(
+                    const nc::NdArray<std::complex<double>>& h_list, 
+                    const nc::NdArray<double>& pose_list);
+
         nc::NdArray<double> phi_list,precomp_rep_phi,theta_list, precomp_rep_theta;
         bool __FLAG_normalize_profile = true, __FLAG_packet_threshold = false, __FLAG_debug = true, __FLAG_threading=false,
             __FLAG_interpolate_phase = true, __FLAG_sub_sample = false, __FLag_use_packet_id = true, __FLAG_offboard=false,
@@ -48,9 +52,11 @@ class WSR_Module
         nc::NdArray<double> __aoa_profile;
         std::unordered_map<std::string, nc::NdArray<double>> __all_aoa_profiles;
         std::unordered_map<std::string, std::vector<double>> __all_topN_confidence;
+        std::unordered_map<std::string, std::vector<double>> __all_topN_magnitudes;
         std::unordered_map<std::string, std::pair<std::vector<double>,std::vector<double>>> __TX_top_N_angles;
         EigenDoubleMatrix __eigen_lambda_list, __eigen_precomp_rep_phi, __eigen_precomp_rep_theta,__eigen_rep_theta_sine,
                         __eigen_rep_theta_co, __precomp__eigen_rep_lambda, __precomp__eigen_rep_phi, __precomp__eigen_rep_theta;
+        std::vector<double> __peak_magnitudes;
         
     public:
         nlohmann::json __precompute_config; 
@@ -151,6 +157,8 @@ class WSR_Module
                                             std::unordered_map<std::string, std::string> tx_csi_file,
                                             nc::NdArray<double> displacement,
                                             nc::NdArray<double> displacement_timestamp);
+        std::vector<double> get_top_magnitudes(const std::string &tx_mac_id);
+
 };
 
 
