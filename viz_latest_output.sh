@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Fetch the files from the RX_SAR robot (enable password less ssh)
-rsync --ignore-existing up12@192.168.1.43:~/WSR_Project/WSR-Toolbox-cpp/data/online_data/* $1
+# rsync --ignore-existing up12@192.168.1.43:~/WSR_Project/WSR-Toolbox-cpp/data/online_data/* $1
 
 #rsync --ignore-existing up-board-03@192.168.1.30:~/REACT-Projects/WSR-Toolbox-cpp/data/online_data/* $1
 

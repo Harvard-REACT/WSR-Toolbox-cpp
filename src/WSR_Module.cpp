@@ -65,7 +65,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     __max_packets_to_process = int(__precompute_config["max_packets_to_process"]["value"]);
     __min_packets_to_process = int(__precompute_config["min_packets_to_process"]["value"]);
     __peak_radius = int(__precompute_config["peak_radius"]["value"]);
-    __snum_end = __FLAG_use_multiple_sub_carriers ? int(__precompute_config["scnum_end"]["value"]) : int(__precompute_config["scnum_start"]["value"]) + 1;
+    __snum_end = int(__precompute_config["scnum_end"]["value"]);
     __trajType = __precompute_config["trajectory_type"]["value"];
     __relative_magnitude_threshold = int(__precompute_config["top_N_magnitude"]["value"]);
 
@@ -956,7 +956,12 @@ void WSR_Module::get_eigen_rep_angle_trig_openmp(EigenDoubleMatrix &output,
         }
     }
 }
-
+//=============================================================================================================================
+/**
+ * Description: 
+ * Input:
+ * Output:
+ */
 void WSR_Module::get_bterm_all(EigencdMatrix &e_term_exp,
                                EigenDoubleMatrix &eigen_pitch_list, EigenDoubleMatrix &eigen_yaw_list, EigenDoubleMatrix &rep_rho)
 {
@@ -978,6 +983,35 @@ void WSR_Module::get_bterm_all(EigencdMatrix &e_term_exp,
             e_term_exp(i, j) = exp((sin(eigen_precomp_rep_theta(i, 0)) * cos(eigen_pitch_list(0,j)) * cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j)) +
                                  sin(eigen_pitch_list(0, j)) * cos(eigen_precomp_rep_theta(i, 0))) *
                                 rep_rho(0, j) * (-4.0 * std::complex<double>(0, 1) * M_PI / __lambda));
+        }
+    }
+}
+//=============================================================================================================================
+/**
+ * Description: 
+ * Input:
+ * Output:
+ */
+void WSR_Module::get_bterm_all_subcarrier(EigenDoubleMatrix &e_term,
+                               EigenDoubleMatrix &eigen_pitch_list, EigenDoubleMatrix &eigen_yaw_list, EigenDoubleMatrix &rep_rho)
+{
+
+    // EigenDoubleMatrix eigen_precomp_rep_phi = EigenDoubleMatrixMap(precomp_rep_phi.data(),
+    //                                                precomp_rep_phi.numRows(),
+    //                                                precomp_rep_phi.numCols());
+    EigenDoubleMatrix eigen_precomp_rep_theta = EigenDoubleMatrixMap(precomp_rep_theta.data(),
+                                                     precomp_rep_theta.numRows(),
+                                                     precomp_rep_theta.numCols());
+
+    int i = 0;
+    int j = 0;
+#pragma omp parallel for shared(e_term, eigen_precomp_rep_theta, eigen_pitch_list, eigen_yaw_list, rep_rho) private(i, j) collapse(2)
+    for (i = 0; i < e_term.rows(); i++)
+    {
+        for (j = 0; j < e_term.cols(); j++)
+        {
+            e_term(i, j) = (sin(eigen_precomp_rep_theta(i, 0)) * cos(eigen_pitch_list(0,j)) * cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j)) +
+                                 sin(eigen_pitch_list(0, j)) * cos(eigen_precomp_rep_theta(i, 0))) * rep_rho(0, j);
         }
     }
 }
@@ -2161,6 +2195,7 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
     auto total_start  = std::chrono::high_resolution_clock::now();
     EigencdMatrix eigen_eterm_3DAdjustment, e_term_prod;
     EigenDoubleMatrix eigen_rep_lambda, eigen_rep_phi, eigen_rep_theta, diff_phi_yaw, eigen_rep_yaw, eigen_rep_pitch, eigen_rep_rho;
+    WSR_Util util_obj;
 
     int total_packets = input_h_list.shape().rows;
     if (total_packets != input_pose_list.shape().rows)
@@ -2228,12 +2263,13 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
 
     start = std::chrono::high_resolution_clock::now();
     std::cout << "Computing e_term_prod...." << std::endl;
-    EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
-
+    // EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
+    EigenDoubleMatrix e_term(__nphi * __ntheta, num_poses);
 
     //===========Openmp implementation 0.2 sec faster =============.
 
-    get_bterm_all(std::ref(e_term_exp), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));
+    // get_bterm_all(std::ref(e_term_exp), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));    
+    get_bterm_all_subcarrier(std::ref(e_term), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));
     std::cout << " Time elapsed for eterm_prod and eterm_exp:  " << (end - start) / std::chrono::milliseconds(1) << std::endl;
     //===========Openmp implementation=============.
 
@@ -2244,9 +2280,18 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
     EigenDoubleMatrix eigen_betaProfile_final;
     bool first = true;
     // for(int h_i=3; h_i<28; h_i++)
-    for(int h_i=12; h_i<18; h_i++)
+    for(int h_i=__snum_start; h_i<__snum_end; h_i++)
     {
+        
         std::cout << "Subcarrier : " << h_i << std::endl;
+
+        double centerfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
+                        (double(__precompute_config["subCarrier"]["value"]) - h_i) * 20e6 / 30;
+        double lambda_inv =  centerfreq/double(__precompute_config["c"]["value"]);
+        EigencdMatrix temp = e_term * (-4.0 * std::complex<double>(0, 1) * M_PI * lambda_inv);
+        EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
+        getExponential(e_term_exp, temp);
+        
         nc::NdArray<std::complex<double>> h_list_single_channel;
         h_list_single_channel = h_list(h_list.rSlice(), h_i);
         
@@ -2259,20 +2304,37 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         auto h_list_eigen = EigencdMatrixMap(h_list_single_channel.data(), h_list_single_channel.numRows(), h_list_single_channel.numCols());
         // auto h_list_eigen_T = h_list_eigen.transpose();
         // auto h_list_single_channel_complex_conjugate = h_list_eigen_T.adjoint();
-        // // auto H = h_list_eigen*h_list_single_channel_complex_conjugate;
+        // // // auto H = h_list_eigen*h_list_single_channel_complex_conjugate;
         // auto H = h_list_single_channel_complex_conjugate*h_list_eigen_T;
         // std::cout << "******GOT Channel Product*************" << std::endl;
+        // std::cout << h_list_eigen_T(0,0) << std::endl;
+        // std::cout << h_list_single_channel_complex_conjugate(0,0) << std::endl;
+        // std::cout << H(0,0) << std::endl;
+
+
+        // double *cddataPtr3 = new double[H.rows() * H.cols()];
+        // EigenDoubleMatrixMap(cddataPtr3, H.rows(), H.cols()) = H.real();
+        // auto H_csv = nc::NdArray<double>(cddataPtr3, H.rows(), H.cols(), __takeOwnership);
+        // util_obj.writeToFile(H_csv,"H.csv");
 
         // std::cout << "rows = " << h_list_eigen.rows() << ",  cols = " << h_list_eigen.cols() << std::endl;
         // std::cout << "rows = " << h_list_single_channel_complex_conjugate.rows() << ",  cols = " << h_list_single_channel_complex_conjugate.cols() << std::endl;
         // std::cout << "rows = " << H.rows() << ",  cols = " << H.cols() << std::endl;
 
-
-        // //Get the eigen values and vectors
-        // Eigen::ComplexEigenSolver<Eigen::MatrixXcd> eigensolver;
+        
+        //Get the eigen values and vectors
+        // EigenDoubleMatrix H_real = H.real();
+        // Eigen::ComplexEigenSolver<EigencdMatrix> eigensolver;
         // eigensolver.compute(H);
-        // // //Eigen::VectorXcd H_eigen_values = eigensolver.eigenvalues();
-        // Eigen::MatrixXcd H_eigen_vectors = eigensolver.eigenvectors();
+        // Eigen::VectorXd H_eigen_values = eigensolver.eigenvalues().real();
+        // std::cout << H_eigen_values << std::endl;
+        // EigencdMatrix H_eigen_vectors = eigensolver.eigenvectors();
+        
+        // double *cddataPtr4 = new double[H_eigen_vectors.rows() * H_eigen_vectors.cols()];
+        // EigenDoubleMatrixMap(cddataPtr4, H_eigen_vectors.rows(), H_eigen_vectors.cols()) = H_eigen_vectors;
+        // auto H_eigen_vectors_csv = nc::NdArray<double>(cddataPtr4, H_eigen_vectors.rows(), H_eigen_vectors.cols(), __takeOwnership);
+        // util_obj.writeToFile(H_eigen_vectors_csv,"H_eigen_vectors.csv");
+
         // int nelem = 1;
         // std::cout << "rows = " << H_eigen_vectors.rows() << ",  cols = " << H_eigen_vectors.cols() << std::endl;
 
@@ -2346,4 +2408,25 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
 std::vector<double> WSR_Module::get_top_magnitudes(const std::string &tx_mac_id)
 {
     return __all_topN_magnitudes[tx_mac_id];
+}
+//=============================================================================================================================
+/**
+ * Description: 
+ * Input:
+ * Output:
+ */
+void WSR_Module::getExponential(EigencdMatrix &out,
+                                EigencdMatrix &in)
+{
+
+    int i = 0;
+    int j = 0;
+#pragma omp parallel for shared(out, in) private(i, j) collapse(2)
+    for (i = 0; i < in.rows(); i++)
+    {
+        for (j = 0; j < in.cols(); j++)
+        {
+            out(i, j) = exp(in(i, j));
+        }
+    }
 }

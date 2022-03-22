@@ -158,6 +158,11 @@ class WSR_Module
                                             nc::NdArray<double> displacement,
                                             nc::NdArray<double> displacement_timestamp);
         std::vector<double> get_top_magnitudes(const std::string &tx_mac_id);
+        void get_bterm_all_subcarrier(EigenDoubleMatrix &e_term_exp,
+                                     EigenDoubleMatrix &eigen_pitch_list, 
+                                    EigenDoubleMatrix &eigen_yaw_list, 
+                                    EigenDoubleMatrix &rep_rho);
+        void getExponential(EigencdMatrix &out, EigencdMatrix &in);
 
 };
 

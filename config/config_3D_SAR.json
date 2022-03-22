@@ -37,11 +37,11 @@
     },
     "scnum_start":{
         "desc":"starting subcarrier number for forward-reverse music/bartlett. Total subcarriers 30, start 0, mid 15, end  30 ",
-        "value":15
+        "value":12
     },
     "scnum_end":{
         "desc":"end subcarrier number for forward-reverse music/bartlett. Total subcarriers 30",
-        "value":16
+        "value":18
     },
     "multiple_sub_carriers":{
         "desc":"Use multiple sub-carriers. Used when using relative channel",
@@ -89,7 +89,7 @@
     },
     "normalize_profile":{
         "desc":"Normalize the profile",
-        "value":false
+        "value":true
     },
     "topN_count":{
         "desc":"Top N AOA angles to return from AOA profile",

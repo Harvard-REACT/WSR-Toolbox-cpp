@@ -5,7 +5,7 @@
   },
   "true_rx_position":{
     "desc" : "Position of RX_SAR robot as per the dataset map",
-    "value": "P0"
+    "value": 0
   },
   "true_tx_positions":
   {
