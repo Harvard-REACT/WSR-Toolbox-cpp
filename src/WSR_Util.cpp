@@ -255,7 +255,11 @@ void WSR_Util::read_bfee_timestamp_mac(uint8_t *inBytes, WIFI_Agent& robot)
 	wifi_data_packet.perm [1] = ((antenna_sel >> 2) & 0x3) + 1;
 	wifi_data_packet.perm [2] = ((antenna_sel >> 4) & 0x3) + 1;
 
+
     // printf("%d, ", wifi_data_packet.frame_count );
+    // robot.__packet_id_counter+=1;
+    // if(robot.__packet_id_counter%2!=0)
+    
     robot.saveDataPacket(wifi_data_packet);
     
 }

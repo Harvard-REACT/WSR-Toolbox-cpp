@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
         // std::string config = utils.__homedir+"/catkin_ws/src/csitoolbox/config/config_3D_SAR.json";
        
         //std::string config = "../config/config_3D_SAR.json";
-         std::string config = "../config/config_spoofer_sim.json";
+         std::string config = "../config/config_spoofer_WSR_Dataset.json";
        
         WSR_Module run_module(config);
 
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
         loc_idx = int(TX_gt_positions["true_rx_position"]["value"]);
         auto all_true_AOA = utils.get_true_aoa_v2(true_pos, true_positions_tx);
 
-        //run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
+        // run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
         run_module.calculate_spoofed_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
         
         

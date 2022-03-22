@@ -40,6 +40,9 @@ class WIFI_Agent {
         ~WIFI_Agent();
         void simulate_spoofed_data(int spoofed_count);
         std::vector<DataPacket> get_wifi_data_spoofed(std::string mac_id);
+        void simulate_spoofed_data_multiple(int spoofed_count,
+                                            std::string illegit_mac_id);
+        int __packet_id_counter=0, __transmission_id=1;
         
 };
 
