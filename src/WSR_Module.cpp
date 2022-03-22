@@ -65,7 +65,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     __max_packets_to_process = int(__precompute_config["max_packets_to_process"]["value"]);
     __min_packets_to_process = int(__precompute_config["min_packets_to_process"]["value"]);
     __peak_radius = int(__precompute_config["peak_radius"]["value"]);
-    __snum_end = __FLAG_use_multiple_sub_carriers ? int(__precompute_config["scnum_end"]["value"]) : int(__precompute_config["scnum_start"]["value"]) + 1;
+    __snum_end = int(__precompute_config["scnum_end"]["value"]);
     __trajType = __precompute_config["trajectory_type"]["value"];
     __relative_magnitude_threshold = int(__precompute_config["top_N_magnitude"]["value"]);
 
@@ -193,9 +193,13 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         std::cout << "log [calculate_AOA_profile]: Getting AOA profiles" << std::endl;
     std::vector<DataPacket> data_packets_RX, data_packets_TX;
 
+    int transmission_id=1; //Temp FIX to handle forward-backward packet incorrect counter mismatch.
+
     for (int num_tx = 0; num_tx < mac_id_tx.size(); num_tx++)
     {
         WIFI_Agent TX_Neighbor_robot; // Neighbouring robots who reply back
+        // TX_Neighbor_robot.__transmission_id = transmission_id;
+        // transmission_id+=1;
         std::pair<nc::NdArray<std::complex<double>>, nc::NdArray<double>> csi_data;
 
         if (tx_csi_file.find(mac_id_tx[num_tx]) == tx_csi_file.end())
@@ -348,8 +352,8 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             auto starttime = std::chrono::high_resolution_clock::now();
 
             if (__FLAG_offboard)
-                // __aoa_profile = compute_profile_bartlett_offboard(h_list, pose_list);
-                __aoa_profile = compute_profile_music_offboard(h_list, pose_list);
+                __aoa_profile = compute_profile_bartlett_offboard(h_list, pose_list);
+                // __aoa_profile = compute_profile_music_offboard(h_list, pose_list);
             else
             {
                 if (__FLAG_threading)
@@ -1958,11 +1962,6 @@ int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
 
     auto temp1 = utils.readCsiData(rx_csi_file, RX_SAR_robot, __FLAG_debug);
 
-
-    //Simulated spoofed data by changing the mac-id of alternate packets on the RX
-    RX_SAR_robot.simulate_spoofed_data(0);
-
-
     //Check the actual number of packets collected
     std::cout << "log [calculate_AOA_profile]: Neighbouring TX robot IDs count = " << RX_SAR_robot.unique_mac_ids_packets.size() << std::endl;
     for (auto key : RX_SAR_robot.unique_mac_ids_packets)
@@ -1972,6 +1971,15 @@ int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
                       << ", Packet count: = " << key.second << std::endl;
     }
 
+    //Simulated spoofed data by changing the mac-id of alternate packets on the RX for a specific "illegitimate client e.g.tx2"
+    
+    // RX_SAR_robot.simulate_spoofed_data(2);
+    std::string illegit_mac_id = "";
+    for(auto key: tx_name_list)
+    {
+        if(key.second == "tx2") illegit_mac_id = key.first;
+    }
+    RX_SAR_robot.simulate_spoofed_data_multiple(2,illegit_mac_id);
 
     //Check the spoofed number of packets simulated
     std::vector<std::string> mac_id_tx;
@@ -1991,9 +1999,13 @@ int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
         std::cout << "log [calculate_AOA_profile]: Getting AOA profiles" << std::endl;
     std::vector<DataPacket> data_packets_RX, data_packets_TX;
 
+    // int transmission_id=2; //Temp FIX to handle forward-backward packet incorrect counter mismatch.
+
     for (int num_tx = 0; num_tx < mac_id_tx.size(); num_tx++)
     {
         WIFI_Agent TX_Neighbor_robot; // Neighbouring robots who reply back
+        // TX_Neighbor_robot.__transmission_id = transmission_id;
+        // transmission_id+=1;
         std::pair<nc::NdArray<std::complex<double>>, nc::NdArray<double>> csi_data;
 
         if (tx_csi_file.find(mac_id_tx[num_tx]) == tx_csi_file.end())
@@ -2243,8 +2255,7 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
     
     EigenDoubleMatrix eigen_betaProfile_final;
     bool first = true;
-    // for(int h_i=3; h_i<28; h_i++)
-    for(int h_i=12; h_i<18; h_i++)
+    for(int h_i=__snum_start; h_i<__snum_end; h_i++)
     {
         std::cout << "Subcarrier : " << h_i << std::endl;
         nc::NdArray<std::complex<double>> h_list_single_channel;
@@ -2259,23 +2270,22 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         auto h_list_eigen = EigencdMatrixMap(h_list_single_channel.data(), h_list_single_channel.numRows(), h_list_single_channel.numCols());
         // auto h_list_eigen_T = h_list_eigen.transpose();
         // auto h_list_single_channel_complex_conjugate = h_list_eigen_T.adjoint();
-        // // auto H = h_list_eigen*h_list_single_channel_complex_conjugate;
+        // // // auto H = h_list_eigen*h_list_single_channel_complex_conjugate;
         // auto H = h_list_single_channel_complex_conjugate*h_list_eigen_T;
-        // std::cout << "******GOT Channel Product*************" << std::endl;
+        // // std::cout << "******GOT Channel Product*************" << std::endl;
 
         // std::cout << "rows = " << h_list_eigen.rows() << ",  cols = " << h_list_eigen.cols() << std::endl;
         // std::cout << "rows = " << h_list_single_channel_complex_conjugate.rows() << ",  cols = " << h_list_single_channel_complex_conjugate.cols() << std::endl;
         // std::cout << "rows = " << H.rows() << ",  cols = " << H.cols() << std::endl;
 
 
-        // //Get the eigen values and vectors
+        // // //Get the eigen values and vectors
         // Eigen::ComplexEigenSolver<Eigen::MatrixXcd> eigensolver;
         // eigensolver.compute(H);
-        // // //Eigen::VectorXcd H_eigen_values = eigensolver.eigenvalues();
+        // // // //Eigen::VectorXcd H_eigen_values = eigensolver.eigenvalues();
         // Eigen::MatrixXcd H_eigen_vectors = eigensolver.eigenvectors();
         // int nelem = 1;
         // std::cout << "rows = " << H_eigen_vectors.rows() << ",  cols = " << H_eigen_vectors.cols() << std::endl;
-
         // std::cout << "******GOT EigenVectors*************" << std::endl;
 
 
@@ -2323,7 +2333,7 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
 
     std::cout << beta_profile.shape() << std::endl;
 
-    if (__FLAG_normalize_profile)
+    if (__FLAG_normalize_profile || (__snum_end -__snum_start > 1)) //Always normalize if using multiple subcarriers.
     {
         auto sum_val = nc::sum(nc::sum(beta_profile));
         beta_profile = beta_profile / sum_val(0, 0);

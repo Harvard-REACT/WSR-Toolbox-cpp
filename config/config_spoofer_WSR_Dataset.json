@@ -21,11 +21,11 @@
     },
     "scnum_start":{
         "desc":"starting subcarrier number for forward-reverse music/bartlett. Total subcarriers 30, start 0, mid 15, end  30 ",
-        "value":15
+        "value":12
     },
     "scnum_end":{
         "desc":"end subcarrier number for forward-reverse music/bartlett. Total subcarriers 30",
-        "value":16
+        "value":18
     },
     "multiple_sub_carriers":{
         "desc":"Use multiple sub-carriers. Used when using relative channel",
@@ -33,11 +33,11 @@
     },
     "nphi":{
         "desc":"resolution of phi angle",
-        "value":360
+        "value":180
     },
     "ntheta":{
         "desc":"resolution of theta angle",
-        "value":180
+        "value":90
     },
     "phi_min":{
         "desc":"Minimum azimuth angle",
@@ -146,20 +146,26 @@
     "input_TX_channel_csi_fn":{
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
-            "tx1":{
+            "tx2":{
                 "mac_id_illegitimate":"00:21:6A:3E:F5:7E",
                 "mac_id_legitimate":"00:21:6A:3F:17:3",
-                "mac_id":"00:21:6A:3F:17:3",
+                "mac_id":"00:21:6A:3F:17:5A",
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
             },
-            "tx2":{
-                "mac_id_spoofed_1":"00:21:6A:3E:F5:1",
+            "tx2s1":{
                 "mac_id":"00:21:6A:3F:17:1",
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
             },
-            "tx3":{
-                "mac_id_spoofed_2":"00:21:6A:3E:F5:2",
+            "tx2s2":{
                 "mac_id":"00:21:6A:3F:17:2",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
+            },
+            "tx3":{
+                "mac_id":"00:21:6A:30:D2:3C",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
+            },
+            "tx4":{
+                "mac_id":"00:21:6A:B2:6E:FA",
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
             }
         }
@@ -167,7 +173,7 @@
     "input_RX_channel_csi_fn":{
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
         "value":{           
-            "mac_id":"00:21:6A:3F:16:DA",
+            "mac_id":"00:21:6A:53:89:D2",
             "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_202550.dat"
         }
     },
@@ -241,7 +247,7 @@
     },
     "peak_radius": {
         "desc" : "radius of patch to ignore neighbor peak in degree",
-        "value": 4
+        "value": 2
     },
     "trajectory_type": {
         "desc" : "Trajectory of robots (2D or 3D). Impacts AOA error calculation",
