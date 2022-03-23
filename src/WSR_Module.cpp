@@ -1166,7 +1166,8 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
         //        theta_idx = sortedIdxs_theta(0,arr_idx_theta-i_theta);
         phi_idx = sorted_inds(itr, 0);
         theta_idx = sorted_inds(itr, 1);
-        float relative_peak_magnitude = 100 * std::pow(__aoa_profile(phi_idx, theta_idx), 2) / std::pow(max_peak(0, 0), 2);
+        // float relative_peak_magnitude = 100 * std::pow(__aoa_profile(phi_idx, theta_idx), 2) / std::pow(max_peak(0, 0), 2);
+        float relative_peak_magnitude = 100 * __aoa_profile(phi_idx, theta_idx) / max_peak(0, 0);
 
         //check if this is 1-unit near to other peaks already obtained
         //        check_peak = (phi_idx+1  < 360 && phi_indexes_stored(0,phi_idx+1)   == 0) &&

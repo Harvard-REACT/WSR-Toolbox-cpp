@@ -33,11 +33,11 @@
     },
     "nphi":{
         "desc":"resolution of phi angle",
-        "value":180
+        "value":360
     },
     "ntheta":{
         "desc":"resolution of theta angle",
-        "value":90
+        "value":180
     },
     "phi_min":{
         "desc":"Minimum azimuth angle",
@@ -247,7 +247,7 @@
     },
     "peak_radius": {
         "desc" : "radius of patch to ignore neighbor peak in degree",
-        "value": 2
+        "value": 4
     },
     "trajectory_type": {
         "desc" : "Trajectory of robots (2D or 3D). Impacts AOA error calculation",
@@ -273,7 +273,7 @@
     },
     "top_N_magnitude":{
         "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
-        "value": 5
+        "value": 25
     },
     "offboard_computation":{
         "desc":"Perform computation offboard with high number of CPU cores",
