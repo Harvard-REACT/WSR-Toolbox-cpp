@@ -505,7 +505,7 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                 }
                 else
                 {
-                    if(sub_sample && itr_l%2!=0) continue;
+                    if(sub_sample && itr_l%3!=0) continue;
                     
                     csi_timestamp = nc::append(csi_timestamp, temp2, nc::Axis::ROW);
                     forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);

@@ -352,8 +352,8 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             auto starttime = std::chrono::high_resolution_clock::now();
 
             if (__FLAG_offboard)
-                __aoa_profile = compute_profile_bartlett_offboard(h_list, pose_list);
-                // __aoa_profile = compute_profile_music_offboard(h_list, pose_list);
+                // __aoa_profile = compute_profile_bartlett_offboard(h_list, pose_list);
+                __aoa_profile = compute_profile_music_offboard(h_list, pose_list);
             else
             {
                 if (__FLAG_threading)
@@ -2300,6 +2300,13 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         double centerfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
                         (double(__precompute_config["subCarrier"]["value"]) - h_i) * 20e6 / 30;
         double lambda_inv =  centerfreq/double(__precompute_config["c"]["value"]);
+        std::cout << lambda_inv << std::endl;
+        
+        // double *cddataPtr = new double[e_term.rows() * e_term.cols()];
+        // EigenDoubleMatrixMap(cddataPtr, e_term.rows(), e_term.cols()) = e_term;
+        // auto e_term_csv = nc::NdArray<double>(cddataPtr, e_term.rows(), e_term.cols(), __takeOwnership);
+        // util_obj.writeToFile(e_term_csv,"e_term.csv");
+        
         EigencdMatrix temp = e_term * (-4.0 * std::complex<double>(0, 1) * M_PI * lambda_inv);
         EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
         getExponential(e_term_exp, temp);
@@ -2338,7 +2345,7 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         // EigenDoubleMatrix H_real = H.real();
         // Eigen::ComplexEigenSolver<EigencdMatrix> eigensolver;
         // eigensolver.compute(H);
-        // Eigen::VectorXd H_eigen_values = eigensolver.eigenvalues().real();
+        // Eigen::VectorXcd H_eigen_values = eigensolver.eigenvalues();
         // std::cout << H_eigen_values << std::endl;
         // EigencdMatrix H_eigen_vectors = eigensolver.eigenvectors();
         
@@ -2358,9 +2365,10 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         // std::cout << "*******************" << std::endl;
         
 
-        // auto temp = (e_term_exp * H_eigen_vectors.block(0,0,H_eigen_vectors.rows(),H_eigen_vectors.cols()-nelem)).cwiseAbs2();
-        // std::cout << "rows = " << temp.rows() << ",  cols = " << temp.cols() << std::endl;
-        // EigenDoubleMatrix eigen_result_mat = temp.rowwise().sum();
+        // auto temp2 = (e_term_exp * H_eigen_vectors.block(0,0,H_eigen_vectors.rows(),H_eigen_vectors.cols()-nelem)).cwiseAbs2();
+        // auto temp2 = (e_term_exp * H_eigen_vectors).cwiseAbs2();
+        // std::cout << "rows = " << temp2.rows() << ",  cols = " << temp2.cols() << std::endl;
+        // EigenDoubleMatrix eigen_result_mat = temp2.rowwise().sum();
         // std::cout << "******GOT absolute sum*************" << std::endl;
         // std::cout << "rows = " << eigen_result_mat.rows() << ",  cols = " << eigen_result_mat.cols() << std::endl;
         
@@ -2369,7 +2377,7 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         // std::cout << "rows = " << eigen_betaProfileProd.rows() << ",  cols = " << eigen_betaProfileProd.cols() << std::endl;
 
         EigenDoubleMatrix eigen_betaProfileProd = (e_term_exp * h_list_eigen).cwiseAbs2();    
-        EigenDoubleMatrixMap eigen_betaProfile(eigen_betaProfileProd.data(), __ntheta, __nphi);
+        EigenDoubleMatrixMap eigen_betaProfile(eigen_betaProfileProd.data(),__ntheta, __nphi);
         std::cout << "beta profile rows = " << eigen_betaProfile.rows() << ",  beta profile cols = " << eigen_betaProfile.cols() << std::endl;
 
         if(first)
