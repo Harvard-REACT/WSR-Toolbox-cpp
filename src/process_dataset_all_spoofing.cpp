@@ -76,8 +76,8 @@ int main(int argc, char *argv[])
         std::cout << "***********************************************************************************" << std::endl;
         // std::string config = utils.__homedir+"/catkin_ws/src/csitoolbox/config/config_3D_SAR.json";
        
-        //std::string config = "../config/config_3D_SAR.json";
-         std::string config = "../config/config_spoofer_WSR_Dataset.json";
+        std::string config = "../config/config_spoofer_sim.json";
+        // std::string config = "../config/config_spoofer_WSR_Dataset.json";
        
         WSR_Module run_module(config);
 

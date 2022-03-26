@@ -178,18 +178,22 @@
     "input_TX_channel_csi_fn":{
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
+            "tx1":{
+                "mac_id":"00:21:6A:3F:17:3",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
+            },
             "tx2":{
                 "mac_id_val":"0:33:106:63:23:90",
-                "mac_id":"00:21:6A:3F:17:5A",
+                "mac_id":"00:21:6A:30:D2:3C",
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
             },
             "tx3":{
                 "mac_id_val":"0:33:106:48:210:60",
-                "mac_id":"00:21:6A:30:D2:3C",
+                "mac_id":"00:21:6A:3F:17:5A",
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
             },
             "tx4":{
-                "mac_id":"00:21:6A:B2:6E:FA",
+                "mac_id":"00:21:6A:AC:9C:6A",
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_202550.dat"
             }
         }
@@ -197,7 +201,7 @@
     "input_RX_channel_csi_fn":{
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
         "value":{           
-            "mac_id":"00:21:6A:53:89:D2",
+            "mac_id":"00:21:6A:3F:16:DA",
             "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_202550.dat"
         }
     },
@@ -223,7 +227,7 @@
     },
     "max_packets_to_process":{
         "desc":"Maximum number of csi packets to process",
-        "value":1500
+        "value":2500
     },
     "min_packets_to_process":{
         "desc":"Minimum number of csi packets to process",
@@ -297,7 +301,7 @@
     },
     "top_N_magnitude":{
         "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
-        "value": 20
+        "value": 25
     },
     "offboard_computation":{
         "desc":"Perform computation offboard with high number of CPU cores",

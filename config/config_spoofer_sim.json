@@ -147,20 +147,30 @@
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
             "tx1":{
-                "mac_id_illegitimate":"00:21:6A:3E:F5:7E",
-                "mac_id_legitimate":"00:21:6A:3F:17:3",
                 "mac_id":"00:21:6A:3F:17:3",
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
             },
-            "tx2":{
-                "mac_id_spoofed_1":"00:21:6A:3E:F5:1",
+            "tx1s1":{
                 "mac_id":"00:21:6A:3F:17:1",
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
             },
-            "tx3":{
-                "mac_id_spoofed_2":"00:21:6A:3E:F5:2",
+            "tx1s2":{
                 "mac_id":"00:21:6A:3F:17:2",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
+            },
+            "tx2":{
+                "mac_id_val":"0:33:106:63:23:90",
+                "mac_id":"00:21:6A:30:D2:3C",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
+            },
+            "tx3":{
+                "mac_id_val":"0:33:106:48:210:60",
+                "mac_id":"00:21:6A:3F:17:5A0",
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
+            },
+            "tx4":{
+                "mac_id":"00:21:6A:AC:9C:6A0",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_202550.dat"
             }
         }
     },
@@ -267,7 +277,7 @@
     },
     "top_N_magnitude":{
         "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
-        "value": 5
+        "value": 10
     },
     "offboard_computation":{
         "desc":"Perform computation offboard with high number of CPU cores",

@@ -352,8 +352,8 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             auto starttime = std::chrono::high_resolution_clock::now();
 
             if (__FLAG_offboard)
-                __aoa_profile = compute_profile_bartlett_offboard(h_list, pose_list);
-                // __aoa_profile = compute_profile_music_offboard(h_list, pose_list);
+                // __aoa_profile = compute_profile_bartlett_offboard(h_list, pose_list);
+                __aoa_profile = compute_profile_music_offboard(h_list, pose_list);
             else
             {
                 if (__FLAG_threading)
@@ -1166,8 +1166,8 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
         //        theta_idx = sortedIdxs_theta(0,arr_idx_theta-i_theta);
         phi_idx = sorted_inds(itr, 0);
         theta_idx = sorted_inds(itr, 1);
-        // float relative_peak_magnitude = 100 * std::pow(__aoa_profile(phi_idx, theta_idx), 2) / std::pow(max_peak(0, 0), 2);
-        float relative_peak_magnitude = 100 * __aoa_profile(phi_idx, theta_idx) / max_peak(0, 0);
+        float relative_peak_magnitude = 100 * std::pow(__aoa_profile(phi_idx, theta_idx), 2) / std::pow(max_peak(0, 0), 2);
+        // float relative_peak_magnitude = 100 * __aoa_profile(phi_idx, theta_idx) / max_peak(0, 0);
 
         //check if this is 1-unit near to other peaks already obtained
         //        check_peak = (phi_idx+1  < 360 && phi_indexes_stored(0,phi_idx+1)   == 0) &&
@@ -2012,9 +2012,9 @@ int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
     std::string illegit_mac_id = "";
     for(auto key: tx_name_list)
     {
-        if(key.second == "tx2") illegit_mac_id = key.first;
+        if(key.second == "tx1") illegit_mac_id = key.first;
     }
-    RX_SAR_robot.simulate_spoofed_data_multiple(2,illegit_mac_id);
+    RX_SAR_robot.simulate_spoofed_data_multiple(1,illegit_mac_id);
 
     //Check the spoofed number of packets simulated
     std::vector<std::string> mac_id_tx;
@@ -2296,13 +2296,20 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
     {
         
         std::cout << "Subcarrier : " << h_i << std::endl;
+        int d = std::rand();
+        std::cout << d << std::endl;
 
         double centerfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
                         (double(__precompute_config["subCarrier"]["value"]) - h_i) * 20e6 / 30;
         double lambda_inv =  centerfreq/double(__precompute_config["c"]["value"]);
-        EigencdMatrix temp = e_term * (-4.0 * std::complex<double>(0, 1) * M_PI * lambda_inv);
+        EigencdMatrix temp1 = e_term * (-4.0 * std::complex<double>(0, 1) * M_PI * lambda_inv);
         EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
-        getExponential(e_term_exp, temp);
+        getExponential(e_term_exp, temp1);
+
+        // double *cddataPtr = new double[e_term.rows() * e_term.cols()];
+        // EigenDoubleMatrixMap(cddataPtr, e_term.rows(), e_term.cols()) = e_term;
+        // auto e_term_csv = nc::NdArray<double>(cddataPtr, e_term.rows(), e_term.cols(), __takeOwnership);
+        // util_obj.writeToFile(e_term_csv,"e_term_"+std::to_string(d)+".csv");
         
         nc::NdArray<std::complex<double>> h_list_single_channel;
         h_list_single_channel = h_list(h_list.rSlice(), h_i);
@@ -2316,7 +2323,7 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         auto h_list_eigen = EigencdMatrixMap(h_list_single_channel.data(), h_list_single_channel.numRows(), h_list_single_channel.numCols());
         // auto h_list_eigen_T = h_list_eigen.transpose();
         // auto h_list_single_channel_complex_conjugate = h_list_eigen_T.adjoint();
-        // // // auto H = h_list_eigen*h_list_single_channel_complex_conjugate;
+        // // auto H = h_list_eigen*h_list_single_channel_complex_conjugate;
         // auto H = h_list_single_channel_complex_conjugate*h_list_eigen_T;
         // std::cout << "******GOT Channel Product*************" << std::endl;
         // std::cout << h_list_eigen_T(0,0) << std::endl;
@@ -2327,7 +2334,12 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         // double *cddataPtr3 = new double[H.rows() * H.cols()];
         // EigenDoubleMatrixMap(cddataPtr3, H.rows(), H.cols()) = H.real();
         // auto H_csv = nc::NdArray<double>(cddataPtr3, H.rows(), H.cols(), __takeOwnership);
-        // util_obj.writeToFile(H_csv,"H.csv");
+        // util_obj.writeToFile(H_csv,"H_real_"+std::to_string(d)+".csv");
+        
+        // double *cddataPtr00 = new double[H.rows() * H.cols()];
+        // EigenDoubleMatrixMap(cddataPtr00, H.rows(), H.cols()) = H.imag();
+        // auto H_csv_img = nc::NdArray<double>(cddataPtr00, H.rows(), H.cols(), __takeOwnership);
+        // util_obj.writeToFile(H_csv_img,"H_imag_"+std::to_string(d)+".csv");
 
         // std::cout << "rows = " << h_list_eigen.rows() << ",  cols = " << h_list_eigen.cols() << std::endl;
         // std::cout << "rows = " << h_list_single_channel_complex_conjugate.rows() << ",  cols = " << h_list_single_channel_complex_conjugate.cols() << std::endl;
@@ -2338,8 +2350,13 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         // EigenDoubleMatrix H_real = H.real();
         // Eigen::ComplexEigenSolver<EigencdMatrix> eigensolver;
         // eigensolver.compute(H);
-        // Eigen::VectorXd H_eigen_values = eigensolver.eigenvalues().real();
+        // Eigen::VectorXcd H_eigen_values = eigensolver.eigenvalues();
+        // // std::cout << eigensolver.eigenvalues() << std::endl;
         // std::cout << H_eigen_values << std::endl;
+        // EigenDoubleMatrix H_eigen_real = H_eigen_values.real();
+        
+        // std::cout << "Min Coeff " << std::endl;
+        // std::cout << H_eigen_real.minCoeff() << std::endl;
         // EigencdMatrix H_eigen_vectors = eigensolver.eigenvectors();
         
         // double *cddataPtr4 = new double[H_eigen_vectors.rows() * H_eigen_vectors.cols()];
@@ -2358,7 +2375,8 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         // std::cout << "*******************" << std::endl;
         
 
-        // auto temp = (e_term_exp * H_eigen_vectors.block(0,0,H_eigen_vectors.rows(),H_eigen_vectors.cols()-nelem)).cwiseAbs2();
+        // auto temp = (e_term_exp * H_eigen_vectors.block(0,0,H_eigen_vectors.rows(),H_eigen_vectors.cols()-2)).cwiseAbs2();
+        // auto temp = (e_term_exp * H_eigen_vectors.block(0,0,H_eigen_vectors.rows(),0)).cwiseAbs2();
         // std::cout << "rows = " << temp.rows() << ",  cols = " << temp.cols() << std::endl;
         // EigenDoubleMatrix eigen_result_mat = temp.rowwise().sum();
         // std::cout << "******GOT absolute sum*************" << std::endl;

@@ -273,7 +273,7 @@
     },
     "top_N_magnitude":{
         "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
-        "value": 25
+        "value": 10
     },
     "offboard_computation":{
         "desc":"Perform computation offboard with high number of CPU cores",
