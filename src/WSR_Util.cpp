@@ -475,6 +475,9 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                 for(int h_i = 0;h_i< 30; h_i++)
                 {
                     temp1(0,h_i) = rx_robot[itr_l].csi[h_i][0] * tx_robot[itr_k].csi[h_i][0]; //Use CSI from first antenna only
+                    // auto a = rx_robot[itr_l].csi[h_i][0] * tx_robot[itr_k].csi[h_i][0];
+                    // auto b = rx_robot[itr_l].csi[h_i][1] * tx_robot[itr_k].csi[h_i][1];
+                    // temp1(0,h_i) = a/b;
                 }
                 if(interpolate_phase) 
                 {
@@ -506,7 +509,7 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                 }
                 else
                 {
-                    if(sub_sample && itr_l%2!=0) continue;
+                    if(sub_sample && itr_l%2!=0) continue;  //if used for spoof testing, change based on the number of spoofed agents.
                     
                     csi_timestamp = nc::append(csi_timestamp, temp2, nc::Axis::ROW);
                     forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);

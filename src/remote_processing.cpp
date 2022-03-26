@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
     std::cout << "***********************************************************************************" << std::endl;
     // std::string config = utils.__homedir+"/catkin_ws/src/csitoolbox/config/config_3D_SAR.json";
     std::string config = "../config/config_3D_SAR.json";
+    // std::string config = "../config/config_spoofer_WSR_Dataset.json";
     WSR_Module run_module(config);
 
     std::string output = run_module.__precompute_config["output_aoa_profile_path"]["value"].dump();
@@ -147,6 +148,8 @@ int main(int argc, char *argv[])
 
     std::cout << "log [WSR_Module]: Calculating AOA " << std::endl;
     int ret = run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
+    // int ret = run_module.calculate_spoofed_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
+
     if(ret == 0)
     {
         auto all_aoa_profile = run_module.get_all_aoa_profile();

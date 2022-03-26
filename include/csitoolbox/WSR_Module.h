@@ -57,6 +57,8 @@ class WSR_Module
         EigenDoubleMatrix __eigen_lambda_list, __eigen_precomp_rep_phi, __eigen_precomp_rep_theta,__eigen_rep_theta_sine,
                         __eigen_rep_theta_co, __precomp__eigen_rep_lambda, __precomp__eigen_rep_phi, __precomp__eigen_rep_theta;
         std::vector<double> __peak_magnitudes;
+        std::unordered_map<std::string, int>  __all_topN_above_threshold;
+        int __num_peaks_above_threshold;
         
     public:
         nlohmann::json __precompute_config; 
@@ -163,6 +165,7 @@ class WSR_Module
                                     EigenDoubleMatrix &eigen_yaw_list, 
                                     EigenDoubleMatrix &rep_rho);
         void getExponential(EigencdMatrix &out, EigencdMatrix &in);
+        int get_peak_num_above_threshold(const std::string &tx_mac_id);
 
 };
 

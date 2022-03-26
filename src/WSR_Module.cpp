@@ -383,6 +383,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             __static_channel_phase_stdev[mac_id_tx[num_tx]] = static_channel_ang_stdev;
             __top_peak_confidence[mac_id_tx[num_tx]] = __aoa_profile_variance[0];
             __all_topN_magnitudes[mac_id_tx[num_tx]] = __peak_magnitudes;
+            __all_topN_above_threshold[mac_id_tx[num_tx]] = __num_peaks_above_threshold;
         }
 
         /*Store the aoa_profile*/
@@ -1077,6 +1078,7 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
     nc::NdArray<double> phi_max = nc::amax(__aoa_profile, nc::Axis::COL);
     __aoa_profile_variance.clear();
     __peak_magnitudes.clear();
+    __num_peaks_above_threshold = 0;
     int peak_ind = 1, phi_idx = 0, theta_idx = 0;
     bool check_peak = false;
 
@@ -1120,7 +1122,7 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
     __peak_magnitudes.push_back(__aoa_profile(phi_idx, theta_idx));
     std::cout << "Phi idx = " << phi_idx << ", theta idx = " << theta_idx << std::endl;
 
-
+    __num_peaks_above_threshold+=1;
     float variance = get_profile_variance(phi_idx, theta_idx);
     __aoa_profile_variance.push_back(variance);
 
@@ -1175,10 +1177,14 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
         //                     (theta_idx+1 < 180 && theta_indexes_stored(0,theta_idx+1) == 0) &&
         //                     (theta_idx-1 > 0   && theta_indexes_stored(0,theta_idx-1) == 0) &&
         //                     (relative_peak_magnitude >= 40);
-        if (relative_peak_magnitude >= __relative_magnitude_threshold)
+
+        //Default threshold so that we always return a good number of peaks.
+        if (relative_peak_magnitude >= 0.1)
             check_peak = true;
         else
             check_peak = false;
+        
+        
         for (int i = -radius; i < radius && check_peak; i++)
         {
             int tmp_row = 0, tmp_col = 0;
@@ -1220,6 +1226,9 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
             //            phi_indexes_stored(0,phi_idx) = 1;
             //            theta_indexes_stored(0,theta_idx) = 1;
             __peak_magnitudes.push_back(__aoa_profile(phi_idx, theta_idx));
+
+            if (relative_peak_magnitude >= __relative_magnitude_threshold)
+                __num_peaks_above_threshold+=1;
 
             for (int i = -radius; i < radius; i++)
             {
@@ -1465,7 +1474,12 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                                                                                                                           {"yaw", rx_pos_est(0, 3)}}},
                                         {"groundtruth_start_position", {{"x", rx_pos_true(0, 0)}, {"y", rx_pos_true(0, 1)}, {"z", rx_pos_true(0, 2)}, {"yaw", rx_pos_true(0, 3)}}}}},
             {"c_INFO_Performance", {{"azimuth_profile_resolution", __nphi}, {"elevation_profile_resolution", __ntheta}, {"Forward_channel_packets", get_tx_pkt_count(tx_mac_id)}, {"Reverse_channel_packets", get_rx_pkt_count(tx_mac_id)}, {"Packets_Used", get_paired_pkt_count(tx_mac_id)}, {"time(sec)", get_processing_time(tx_mac_id)}, {"memory(GB)", get_memory_used(tx_mac_id)}}},
-            {"d_INFO_AOA_profile", {{"Profile_variance", get_top_confidence(tx_mac_id)}, {"Top_N_peaks", {{"1", {{"estimated_azimuth", aoa_error[0][0]}, {"estimated_elevation", aoa_error[0][1]}, {"Total_AOA_Error", aoa_error[0][2]}, {"azimuth_error", aoa_error[0][3]}, {"elevation_error", aoa_error[0][4]},{"magnitude",mag[0]}}}}}}}};
+            {"d_INFO_AOA_profile", {{"Profile_variance", get_top_confidence(tx_mac_id)},{"Top_N_threshold",__relative_magnitude_threshold},
+                                    {"Peaks_above_threshold", get_peak_num_above_threshold(tx_mac_id)}, 
+                                    {"Top_N_peaks", {{"1", {{"estimated_azimuth", aoa_error[0][0]}, {"estimated_elevation", aoa_error[0][1]}, {"Total_AOA_Error", aoa_error[0][2]}, {"azimuth_error", aoa_error[0][3]}, {"elevation_error", aoa_error[0][4]},{"magnitude",mag[0]}}}}}
+                                    }
+            }
+        };
 
     for (int i = 1; i < aoa_error.size(); i++)
     {
@@ -2077,7 +2091,14 @@ int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
 
 
         std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product using Counter " << std::endl;
-        csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
+        
+        if( mac_id_tx[num_tx] == illegit_mac_id || mac_id_tx[num_tx] == "00:21:6A:3F:17:1" || mac_id_tx[num_tx] == "00:21:6A:3F:17:2") //Do not subsample for illegitimate or spoofed clients.
+            csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
+                                                            data_packets_TX,
+                                                            __FLAG_interpolate_phase,
+                                                            false);
+        else
+            csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
                                                             data_packets_TX,
                                                             __FLAG_interpolate_phase,
                                                             __FLAG_sub_sample);
@@ -2180,6 +2201,7 @@ int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
             __tx_pkt_size[mac_id_tx[num_tx]] = data_packets_TX.size();
             __top_peak_confidence[mac_id_tx[num_tx]] = __aoa_profile_variance[0];
             __all_topN_magnitudes[mac_id_tx[num_tx]] = __peak_magnitudes;
+            __all_topN_above_threshold[mac_id_tx[num_tx]] = __num_peaks_above_threshold;
         }
 
         /*Store the aoa_profile*/
@@ -2294,7 +2316,6 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
     bool first = true;
     for(int h_i=__snum_start; h_i<__snum_end; h_i++)
     {
-        
         std::cout << "Subcarrier : " << h_i << std::endl;
         int d = std::rand();
         std::cout << d << std::endl;
@@ -2366,7 +2387,7 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
 
         // int nelem = 1;
         // std::cout << "rows = " << H_eigen_vectors.rows() << ",  cols = " << H_eigen_vectors.cols() << std::endl;
-        // std::cout << "******GOT EigenVectors*************" << std::endl;
+        // std::cout << "******GOT EigenVectorssssss*************" << std::endl;
 
 
         // std::cout << "*******************" << std::endl;
@@ -2383,11 +2404,12 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         // std::cout << "rows = " << eigen_result_mat.rows() << ",  cols = " << eigen_result_mat.cols() << std::endl;
         
         // EigenDoubleMatrix eigen_betaProfileProd = eigen_result_mat.cwiseInverse();
+        // EigenDoubleMatrix eigen_betaProfileProd = eigen_result_mat;
         // std::cout << "******GOT Inverse*************" << std::endl;
         // std::cout << "rows = " << eigen_betaProfileProd.rows() << ",  cols = " << eigen_betaProfileProd.cols() << std::endl;
 
         EigenDoubleMatrix eigen_betaProfileProd = (e_term_exp * h_list_eigen).cwiseAbs2();    
-        EigenDoubleMatrixMap eigen_betaProfile(eigen_betaProfileProd.data(), __ntheta, __nphi);
+        EigenDoubleMatrixMap eigen_betaProfile(eigen_betaProfileProd.data(),__ntheta, __nphi);
         std::cout << "beta profile rows = " << eigen_betaProfile.rows() << ",  beta profile cols = " << eigen_betaProfile.cols() << std::endl;
 
         if(first)
@@ -2458,4 +2480,13 @@ void WSR_Module::getExponential(EigencdMatrix &out,
             out(i, j) = exp(in(i, j));
         }
     }
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+int WSR_Module::get_peak_num_above_threshold(const std::string &tx_mac_id)
+{
+    return __all_topN_above_threshold[tx_mac_id];
 }

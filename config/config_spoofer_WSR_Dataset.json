@@ -21,11 +21,11 @@
     },
     "scnum_start":{
         "desc":"starting subcarrier number for forward-reverse music/bartlett. Total subcarriers 30, start 0, mid 15, end  30 ",
-        "value":12
+        "value":15
     },
     "scnum_end":{
         "desc":"end subcarrier number for forward-reverse music/bartlett. Total subcarriers 30",
-        "value":18
+        "value":16
     },
     "multiple_sub_carriers":{
         "desc":"Use multiple sub-carriers. Used when using relative channel",
@@ -273,7 +273,11 @@
     },
     "top_N_magnitude":{
         "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
+<<<<<<< HEAD
         "value": 10
+=======
+        "value": 20
+>>>>>>> 1d271913380e66effe5824c26874c284d5d835d0
     },
     "offboard_computation":{
         "desc":"Perform computation offboard with high number of CPU cores",

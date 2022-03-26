@@ -5,7 +5,7 @@
   },
   "true_rx_position":{
     "desc" : "Position of RX_SAR robot as per the dataset map",
-    "value": 0
+    "value": 1
   },
   "true_tx_positions":
   {
@@ -40,9 +40,35 @@
         },
         "tx2":{
           "position":{ 
-          "x": -4.41,
-          "y": -6.56,
-          "z": 1.41
+          "x": -2.42,
+          "y": 2.65,
+          "z": 0.72
+          },
+          "orientation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 0
+          }
+        },
+        "tx2s1":{
+          "position":{ 
+          "x": -2.42,
+          "y": 2.65,
+          "z": 0.72
+          },
+          "orientation": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 0
+          }
+        },
+        "tx2s2":{
+          "position":{ 
+          "x": -2.42,
+          "y": 2.65,
+          "z": 0.72
           },
           "orientation": {
             "x": 0,
@@ -53,9 +79,15 @@
         },
         "tx3":{
           "position":{ 
+<<<<<<< HEAD
           "x": -4.51,
           "y": 0.30,
           "z": 0.30
+=======
+          "x": 2.53,
+          "y": -2.65,
+          "z": 0.85
+>>>>>>> 1d271913380e66effe5824c26874c284d5d835d0
           },
           "orientation": {
             "x": 0,
@@ -66,9 +98,15 @@
         },
         "tx4":{
           "position":{ 
+<<<<<<< HEAD
           "x": -3.86,
           "y": 2.26,
           "z": 0.22
+=======
+          "x": -3.73,
+          "y": -1.49,
+          "z": 0.35
+>>>>>>> 1d271913380e66effe5824c26874c284d5d835d0
           },
           "orientation": {
             "x": 0,
