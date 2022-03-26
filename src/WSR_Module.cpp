@@ -383,6 +383,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             __static_channel_phase_stdev[mac_id_tx[num_tx]] = static_channel_ang_stdev;
             __top_peak_confidence[mac_id_tx[num_tx]] = __aoa_profile_variance[0];
             __all_topN_magnitudes[mac_id_tx[num_tx]] = __peak_magnitudes;
+            __all_topN_above_threshold[mac_id_tx[num_tx]] = __num_peaks_above_threshold;
         }
 
         /*Store the aoa_profile*/
@@ -1077,6 +1078,7 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
     nc::NdArray<double> phi_max = nc::amax(__aoa_profile, nc::Axis::COL);
     __aoa_profile_variance.clear();
     __peak_magnitudes.clear();
+    __num_peaks_above_threshold = 0;
     int peak_ind = 1, phi_idx = 0, theta_idx = 0;
     bool check_peak = false;
 
@@ -1120,7 +1122,7 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
     __peak_magnitudes.push_back(__aoa_profile(phi_idx, theta_idx));
     std::cout << "Phi idx = " << phi_idx << ", theta idx = " << theta_idx << std::endl;
 
-
+    __num_peaks_above_threshold+=1;
     float variance = get_profile_variance(phi_idx, theta_idx);
     __aoa_profile_variance.push_back(variance);
 
@@ -1175,10 +1177,14 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
         //                     (theta_idx+1 < 180 && theta_indexes_stored(0,theta_idx+1) == 0) &&
         //                     (theta_idx-1 > 0   && theta_indexes_stored(0,theta_idx-1) == 0) &&
         //                     (relative_peak_magnitude >= 40);
-        if (relative_peak_magnitude >= __relative_magnitude_threshold)
+
+        //Default threshold so that we always return a good number of peaks.
+        if (relative_peak_magnitude >= 0.1)
             check_peak = true;
         else
             check_peak = false;
+        
+        
         for (int i = -radius; i < radius && check_peak; i++)
         {
             int tmp_row = 0, tmp_col = 0;
@@ -1220,6 +1226,9 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
             //            phi_indexes_stored(0,phi_idx) = 1;
             //            theta_indexes_stored(0,theta_idx) = 1;
             __peak_magnitudes.push_back(__aoa_profile(phi_idx, theta_idx));
+
+            if (relative_peak_magnitude >= __relative_magnitude_threshold)
+                __num_peaks_above_threshold+=1;
 
             for (int i = -radius; i < radius; i++)
             {
@@ -1465,7 +1474,12 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                                                                                                                           {"yaw", rx_pos_est(0, 3)}}},
                                         {"groundtruth_start_position", {{"x", rx_pos_true(0, 0)}, {"y", rx_pos_true(0, 1)}, {"z", rx_pos_true(0, 2)}, {"yaw", rx_pos_true(0, 3)}}}}},
             {"c_INFO_Performance", {{"azimuth_profile_resolution", __nphi}, {"elevation_profile_resolution", __ntheta}, {"Forward_channel_packets", get_tx_pkt_count(tx_mac_id)}, {"Reverse_channel_packets", get_rx_pkt_count(tx_mac_id)}, {"Packets_Used", get_paired_pkt_count(tx_mac_id)}, {"time(sec)", get_processing_time(tx_mac_id)}, {"memory(GB)", get_memory_used(tx_mac_id)}}},
-            {"d_INFO_AOA_profile", {{"Profile_variance", get_top_confidence(tx_mac_id)}, {"Top_N_peaks", {{"1", {{"estimated_azimuth", aoa_error[0][0]}, {"estimated_elevation", aoa_error[0][1]}, {"Total_AOA_Error", aoa_error[0][2]}, {"azimuth_error", aoa_error[0][3]}, {"elevation_error", aoa_error[0][4]},{"magnitude",mag[0]}}}}}}}};
+            {"d_INFO_AOA_profile", {{"Profile_variance", get_top_confidence(tx_mac_id)},{"Top_N_threshold",__relative_magnitude_threshold},
+                                    {"Peaks_above_threshold", get_peak_num_above_threshold(tx_mac_id)}, 
+                                    {"Top_N_peaks", {{"1", {{"estimated_azimuth", aoa_error[0][0]}, {"estimated_elevation", aoa_error[0][1]}, {"Total_AOA_Error", aoa_error[0][2]}, {"azimuth_error", aoa_error[0][3]}, {"elevation_error", aoa_error[0][4]},{"magnitude",mag[0]}}}}}
+                                    }
+            }
+        };
 
     for (int i = 1; i < aoa_error.size(); i++)
     {
@@ -2012,9 +2026,9 @@ int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
     std::string illegit_mac_id = "";
     for(auto key: tx_name_list)
     {
-        if(key.second == "tx2") illegit_mac_id = key.first;
+        if(key.second == "tx1") illegit_mac_id = key.first;
     }
-    RX_SAR_robot.simulate_spoofed_data_multiple(2,illegit_mac_id);
+    RX_SAR_robot.simulate_spoofed_data_multiple(1,illegit_mac_id);
 
     //Check the spoofed number of packets simulated
     std::vector<std::string> mac_id_tx;
@@ -2077,7 +2091,14 @@ int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
 
 
         std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product using Counter " << std::endl;
-        csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
+        
+        if( mac_id_tx[num_tx] == illegit_mac_id || mac_id_tx[num_tx] == "00:21:6A:3F:17:1" || mac_id_tx[num_tx] == "00:21:6A:3F:17:2") //Do not subsample for illegitimate or spoofed clients.
+            csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
+                                                            data_packets_TX,
+                                                            __FLAG_interpolate_phase,
+                                                            false);
+        else
+            csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
                                                             data_packets_TX,
                                                             __FLAG_interpolate_phase,
                                                             __FLAG_sub_sample);
@@ -2180,6 +2201,7 @@ int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
             __tx_pkt_size[mac_id_tx[num_tx]] = data_packets_TX.size();
             __top_peak_confidence[mac_id_tx[num_tx]] = __aoa_profile_variance[0];
             __all_topN_magnitudes[mac_id_tx[num_tx]] = __peak_magnitudes;
+            __all_topN_above_threshold[mac_id_tx[num_tx]] = __num_peaks_above_threshold;
         }
 
         /*Store the aoa_profile*/
@@ -2294,7 +2316,6 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
     bool first = true;
     for(int h_i=__snum_start; h_i<__snum_end; h_i++)
     {
-        
         std::cout << "Subcarrier : " << h_i << std::endl;
 
         double centerfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
@@ -2321,14 +2342,14 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
 
         //Get complex conjugate of the channel  
         auto h_list_eigen = EigencdMatrixMap(h_list_single_channel.data(), h_list_single_channel.numRows(), h_list_single_channel.numCols());
-        // auto h_list_eigen_T = h_list_eigen.transpose();
-        // auto h_list_single_channel_complex_conjugate = h_list_eigen_T.adjoint();
-        // // // auto H = h_list_eigen*h_list_single_channel_complex_conjugate;
-        // auto H = h_list_single_channel_complex_conjugate*h_list_eigen_T;
-        // std::cout << "******GOT Channel Product*************" << std::endl;
-        // std::cout << h_list_eigen_T(0,0) << std::endl;
-        // std::cout << h_list_single_channel_complex_conjugate(0,0) << std::endl;
-        // std::cout << H(0,0) << std::endl;
+        auto h_list_eigen_T = h_list_eigen.transpose();
+        auto h_list_single_channel_complex_conjugate = h_list_eigen_T.adjoint();
+        // // auto H = h_list_eigen*h_list_single_channel_complex_conjugate;
+        auto H = h_list_single_channel_complex_conjugate*h_list_eigen_T;
+        std::cout << "******GOT Channel Product*************" << std::endl;
+        std::cout << h_list_eigen_T(0,0) << std::endl;
+        std::cout << h_list_single_channel_complex_conjugate(0,0) << std::endl;
+        std::cout << H(0,0) << std::endl;
 
 
         // double *cddataPtr3 = new double[H.rows() * H.cols()];
@@ -2343,20 +2364,25 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         
         //Get the eigen values and vectors
         // EigenDoubleMatrix H_real = H.real();
-        // Eigen::ComplexEigenSolver<EigencdMatrix> eigensolver;
-        // eigensolver.compute(H);
+        Eigen::ComplexEigenSolver<EigencdMatrix> eigensolver;
+        eigensolver.compute(H);
         // Eigen::VectorXcd H_eigen_values = eigensolver.eigenvalues();
-        // std::cout << H_eigen_values << std::endl;
-        // EigencdMatrix H_eigen_vectors = eigensolver.eigenvectors();
+        // for(int z=0; z<H_eigen_values.size();z++)
+        //     std::cout << H_eigen_values(z,0).real() << std::endl;
+        
+        EigencdMatrix H_eigen_vectors = eigensolver.eigenvectors();
+        std::cout << eigensolver.info() << std::endl;
+        std::cout << eigensolver.getMaxIterations() << std::endl;
+        
         
         // double *cddataPtr4 = new double[H_eigen_vectors.rows() * H_eigen_vectors.cols()];
         // EigenDoubleMatrixMap(cddataPtr4, H_eigen_vectors.rows(), H_eigen_vectors.cols()) = H_eigen_vectors;
         // auto H_eigen_vectors_csv = nc::NdArray<double>(cddataPtr4, H_eigen_vectors.rows(), H_eigen_vectors.cols(), __takeOwnership);
         // util_obj.writeToFile(H_eigen_vectors_csv,"H_eigen_vectors.csv");
 
-        // int nelem = 1;
+        int nelem = 1;
         // std::cout << "rows = " << H_eigen_vectors.rows() << ",  cols = " << H_eigen_vectors.cols() << std::endl;
-        // std::cout << "******GOT EigenVectors*************" << std::endl;
+        // std::cout << "******GOT EigenVectorssssss*************" << std::endl;
 
 
         // std::cout << "*******************" << std::endl;
@@ -2366,17 +2392,21 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         
 
         // auto temp2 = (e_term_exp * H_eigen_vectors.block(0,0,H_eigen_vectors.rows(),H_eigen_vectors.cols()-nelem)).cwiseAbs2();
+        auto temp2 = (e_term_exp * H_eigen_vectors.block(0,0,H_eigen_vectors.rows(),H_eigen_vectors.cols()-nelem)).cwiseAbs();
+
+
         // auto temp2 = (e_term_exp * H_eigen_vectors).cwiseAbs2();
-        // std::cout << "rows = " << temp2.rows() << ",  cols = " << temp2.cols() << std::endl;
-        // EigenDoubleMatrix eigen_result_mat = temp2.rowwise().sum();
-        // std::cout << "******GOT absolute sum*************" << std::endl;
-        // std::cout << "rows = " << eigen_result_mat.rows() << ",  cols = " << eigen_result_mat.cols() << std::endl;
+        std::cout << "rows = " << temp2.rows() << ",  cols = " << temp2.cols() << std::endl;
+        EigenDoubleMatrix eigen_result_mat = temp2.rowwise().sum();
+        std::cout << "******GOT absolute sum*************" << std::endl;
+        std::cout << "rows = " << eigen_result_mat.rows() << ",  cols = " << eigen_result_mat.cols() << std::endl;
         
         // EigenDoubleMatrix eigen_betaProfileProd = eigen_result_mat.cwiseInverse();
+        EigenDoubleMatrix eigen_betaProfileProd = eigen_result_mat;
         // std::cout << "******GOT Inverse*************" << std::endl;
         // std::cout << "rows = " << eigen_betaProfileProd.rows() << ",  cols = " << eigen_betaProfileProd.cols() << std::endl;
 
-        EigenDoubleMatrix eigen_betaProfileProd = (e_term_exp * h_list_eigen).cwiseAbs2();    
+        // EigenDoubleMatrix eigen_betaProfileProd = (e_term_exp * h_list_eigen).cwiseAbs2();    
         EigenDoubleMatrixMap eigen_betaProfile(eigen_betaProfileProd.data(),__ntheta, __nphi);
         std::cout << "beta profile rows = " << eigen_betaProfile.rows() << ",  beta profile cols = " << eigen_betaProfile.cols() << std::endl;
 
@@ -2448,4 +2478,13 @@ void WSR_Module::getExponential(EigencdMatrix &out,
             out(i, j) = exp(in(i, j));
         }
     }
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+int WSR_Module::get_peak_num_above_threshold(const std::string &tx_mac_id)
+{
+    return __all_topN_above_threshold[tx_mac_id];
 }
