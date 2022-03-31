@@ -29,6 +29,7 @@ class WSR_Module
         int _phi_min=-180, _phi_max=180, _theta_min = 0,_theta_max=180, __relative_magnitude_threshold=40;
         std::vector<double> __aoa_profile_variance;
         std::string __RX_SAR_robot_MAC_ID, __trajType;
+        std::vector<std::string> __RX_SAR_robot_MAC_ID_List;
         nc::NdArray<double> compute_profile_bartlett_multithread(
                             const nc::NdArray<std::complex<double>>& h_list, 
                             const nc::NdArray<double>& pose_list);
@@ -64,6 +65,7 @@ class WSR_Module
         nlohmann::json __precompute_config; 
         std::unordered_map<std::string,std::string> data_sample_ts;
         std::unordered_map<std::string,std::string> tx_name_list;
+        std::string __rx_name;
         int calculate_AOA_profile(std::string tx_csi_file, 
                                     std::unordered_map<std::string, std::string> rx_csi_file, 
                                     nc::NdArray<double> rx_displacement,

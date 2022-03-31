@@ -41,6 +41,8 @@ WSR_Module::WSR_Module(std::string config_fn)
     __FLAG_offboard = bool(__precompute_config["offboard_computation"]["value"]);
     __FLAG_interpolate_phase = bool(__precompute_config["interpolate_phase"]["value"]);
     __FLAG_sub_sample = bool(__precompute_config["sub_sample_channel_data"]["value"]);
+
+
     __FLAG_normalize_profile = bool(__precompute_config["normalize_profile"]["value"]);
     __FLag_use_packet_id = bool(__precompute_config["use_packet_id"]["value"]);
     __FLAG_openmp = bool(__precompute_config["openmp"]["value"]);
@@ -76,6 +78,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     else
     {
         __RX_SAR_robot_MAC_ID = __precompute_config["input_RX_channel_csi_fn"]["value"]["mac_id"];
+        __RX_SAR_robot_MAC_ID_List = __precompute_config["RX_mac_ID_list"]["value"].get<std::vector<std::string>>();
     }
 
     //Best way to handle elevation abiguity and also preserve multipath peaks.
@@ -185,8 +188,32 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         if (__FLAG_debug)
             std::cout << "log [calculate_AOA_profile]: Detected MAC ID = " << key.first
                       << ", Packet count: = " << key.second << std::endl;
+        
         mac_id_tx.push_back(key.first);
+        
     }
+
+    //With this, get the mac_id of the robot that is RX for a given round
+    std::set<string> s1(__RX_SAR_robot_MAC_ID_List.begin(), __RX_SAR_robot_MAC_ID_List.end());
+    std::set<string> s2(mac_id_tx.begin(), mac_id_tx.end());
+    std::vector<string> v3;
+    std::set_difference(s1.begin(), s1.end(), s2.begin(), s2.end(), std::back_inserter(v3));
+    __RX_SAR_robot_MAC_ID = v3[0];
+
+    for (auto it = __precompute_config["input_TX_channel_csi_fn"]["value"].begin(); 
+        it != __precompute_config["input_TX_channel_csi_fn"]["value"].end(); ++it)
+    {
+        std::cout << it.key() << std::endl;
+        std::cout << it.value()["mac_id"] << std::endl;
+        std::cout << __RX_SAR_robot_MAC_ID << std::endl;
+        if(it.value()["mac_id"] == __RX_SAR_robot_MAC_ID)
+        {
+            __rx_name =  it.key();
+            break;
+        }
+    }
+    
+
 
     //Get AOA profile for each of the RX neighboring robots
     if (__FLAG_debug)
@@ -1168,8 +1195,11 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
         //        theta_idx = sortedIdxs_theta(0,arr_idx_theta-i_theta);
         phi_idx = sorted_inds(itr, 0);
         theta_idx = sorted_inds(itr, 1);
-        float relative_peak_magnitude = 100 * std::pow(__aoa_profile(phi_idx, theta_idx), 2) / std::pow(max_peak(0, 0), 2);
-        // float relative_peak_magnitude = 100 * __aoa_profile(phi_idx, theta_idx) / max_peak(0, 0);
+        
+        //Don't square since the entire profile itself is already squared.
+        //float relative_peak_magnitude = 100 * std::pow(__aoa_profile(phi_idx, theta_idx), 2) / std::pow(max_peak(0, 0), 2);
+        
+        float relative_peak_magnitude = 100 * __aoa_profile(phi_idx, theta_idx) / max_peak(0, 0);
 
         //check if this is 1-unit near to other peaks already obtained
         //        check_peak = (phi_idx+1  < 360 && phi_indexes_stored(0,phi_idx+1)   == 0) &&
@@ -1179,7 +1209,7 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
         //                     (relative_peak_magnitude >= 40);
 
         //Default threshold so that we always return a good number of peaks.
-        if (relative_peak_magnitude >= 0.1)
+        if (relative_peak_magnitude >= 0.0000005)
             check_peak = true;
         else
             check_peak = false;
@@ -2020,26 +2050,54 @@ int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
                       << ", Packet count: = " << key.second << std::endl;
     }
 
+
     //Simulated spoofed data by changing the mac-id of alternate packets on the RX for a specific "illegitimate client e.g.tx2"
-    
-    // RX_SAR_robot.simulate_spoofed_data(2);
     std::string illegit_mac_id = "";
     for(auto key: tx_name_list)
     {
-        if(key.second == "tx1") illegit_mac_id = key.first;
+        if(key.second == "tx3") illegit_mac_id = key.first;
     }
     RX_SAR_robot.simulate_spoofed_data_multiple(1,illegit_mac_id);
+
+
+    // //Spoof the second MAC-ID
+    for(auto key: tx_name_list)
+    {
+        if(key.second == "tx4") illegit_mac_id = key.first;
+    }
+    RX_SAR_robot.simulate_spoofed_data_second(1,illegit_mac_id);
+
 
     //Check the spoofed number of packets simulated
     std::vector<std::string> mac_id_tx;
     std::cout << "log [calculate_AOA_profile]: Neighbouring Spoofed TX robot IDs count = " << RX_SAR_robot.unique_mac_ids_packets_spoofed.size() << std::endl;
-
     for (auto key : RX_SAR_robot.unique_mac_ids_packets_spoofed)
     {
         if (__FLAG_debug)
             std::cout << "log [calculate_AOA_profile]: Detected MAC ID = " << key.first
                       << ", Packet count: = " << key.second << std::endl;
         mac_id_tx.push_back(key.first);
+    }
+
+    //With this, get the mac_id of the robot that is RX for a given round
+    std::set<string> s1(__RX_SAR_robot_MAC_ID_List.begin(), __RX_SAR_robot_MAC_ID_List.end());
+    std::set<string> s2(mac_id_tx.begin(), mac_id_tx.end());
+    std::vector<string> v3;
+    std::set_difference(s1.begin(), s1.end(), s2.begin(), s2.end(), std::back_inserter(v3));
+    __RX_SAR_robot_MAC_ID = v3[0];
+
+
+    for (auto it = __precompute_config["input_TX_channel_csi_fn"]["value"].begin(); 
+        it != __precompute_config["input_TX_channel_csi_fn"]["value"].end(); ++it)
+    {
+        std::cout << it.key() << std::endl;
+        std::cout << it.value()["mac_id"] << std::endl;
+        std::cout << __RX_SAR_robot_MAC_ID << std::endl;
+        if(it.value()["mac_id"] == __RX_SAR_robot_MAC_ID)
+        {
+            __rx_name =  it.key();
+            break;
+        }
     }
 
 
@@ -2092,16 +2150,16 @@ int WSR_Module::calculate_spoofed_AOA_profile(std::string rx_csi_file,
 
         std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product using Counter " << std::endl;
         
-        if( mac_id_tx[num_tx] == illegit_mac_id || mac_id_tx[num_tx] == "00:21:6A:3F:17:1" || mac_id_tx[num_tx] == "00:21:6A:3F:17:2") //Do not subsample for illegitimate or spoofed clients.
+        if( mac_id_tx[num_tx] == "00:21:6A:3F:16:DA" || mac_id_tx[num_tx] == "00:21:6A:3E:F5:7E") 
             csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
+                                                            data_packets_TX,
+                                                            __FLAG_interpolate_phase,
+                                                            true);
+        else
+            csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,      //Do not subsample for illegitimate or spoofed clients.
                                                             data_packets_TX,
                                                             __FLAG_interpolate_phase,
                                                             false);
-        else
-            csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
-                                                            data_packets_TX,
-                                                            __FLAG_interpolate_phase,
-                                                            __FLAG_sub_sample);
 
 
         std::cout << "log [calculate_AOA_profile]: corrected CFO " << std::endl;

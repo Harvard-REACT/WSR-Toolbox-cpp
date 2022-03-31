@@ -36,7 +36,6 @@ int main(int argc, char *argv[])
     string timestmp = "";
     string grountruth_pos_fn = foldername+"/"+"groundtruth_positions.json";
     string csi_fn = "csi";
-    std::string current_round_ts;
 
     //Read all unique timestamps
     for (const auto & entry : fs::directory_iterator(foldername)) 
@@ -59,7 +58,7 @@ int main(int argc, char *argv[])
     std::cout << "Processing data for RX_SAR_robot : " << rx_csi_pre + latest_ts + ".dat" << std::endl;
     std::cout << "***********************************************************************************" << std::endl;
     // std::string config = utils.__homedir+"/catkin_ws/src/csitoolbox/config/config_3D_SAR.json";
-    std::string config = "../config/config_3D_SAR_multi.json";
+    std::string config = "../config/config_3D_SAR.json";
     // std::string config = "../config/config_spoofer_WSR_Dataset.json";
     WSR_Module run_module(config);
 
@@ -148,8 +147,8 @@ int main(int argc, char *argv[])
 
 
     std::cout << "log [WSR_Module]: Calculating AOA " << std::endl;
-    // int ret = run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
-    int ret = run_module.calculate_spoofed_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
+    int ret = run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
+    // int ret = run_module.calculate_spoofed_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
 
     if(ret == 0)
     {
@@ -168,7 +167,6 @@ int main(int argc, char *argv[])
           
           std::string tx_id = itr.first;
           std::string ts = tx_profile_timestamp[itr.first];
-          current_round_ts = ts;
           auto profile = itr.second;
           std::vector<double> aoa_confidence = all_confidences[tx_id];
 
@@ -227,8 +225,5 @@ int main(int argc, char *argv[])
         std::cout << "Error processing AOA profile for one or more TX" << std::endl;
     }
     std::cout << all_dir_stats.dump(4) << std::endl;
-    std::string json_op_fn = run_module.__rx_name+"_ouptut_"+current_round_ts+".json" ;
-    std::ofstream file(json_op_fn);
-    file << all_dir_stats;
     return 0;
 }

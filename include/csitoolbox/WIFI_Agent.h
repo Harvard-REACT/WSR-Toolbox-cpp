@@ -43,6 +43,8 @@ class WIFI_Agent {
         void simulate_spoofed_data_multiple(int spoofed_count,
                                             std::string illegit_mac_id);
         int __packet_id_counter=0, __transmission_id=1;
+        void simulate_spoofed_data_second(int spoofed_count,
+                                          std::string illegit_mac_id);
         
 };
 

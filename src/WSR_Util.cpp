@@ -256,7 +256,7 @@ void WSR_Util::read_bfee_timestamp_mac(uint8_t *inBytes, WIFI_Agent& robot)
 	wifi_data_packet.perm [2] = ((antenna_sel >> 4) & 0x3) + 1;
 
 
-    printf("%d, ", wifi_data_packet.frame_count );
+    // printf("%d, ", wifi_data_packet.frame_count );
     // robot.__packet_id_counter+=1;
     // if(robot.__packet_id_counter%2!=0)
     
@@ -469,8 +469,8 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
         {
             if (tx_robot[itr_k].frame_count == rx_robot[itr_l].frame_count)
             {
-                std::cout << "RX MAC: " << tx_robot[itr_k].mac_real << ", TX MAC:" << rx_robot[itr_l].mac_real << std::endl;
-                std::cout << "RX frame: " << tx_robot[itr_k].frame_count << ", TX frame:" << rx_robot[itr_l].frame_count << std::endl;
+                // std::cout << "RX MAC: " << tx_robot[itr_k].mac_real << ", TX MAC:" << rx_robot[itr_l].mac_real << std::endl;
+                // std::cout << "RX frame: " << tx_robot[itr_k].frame_count << ", TX frame:" << rx_robot[itr_l].frame_count << std::endl;
                 //multiply forward and reverse channel
                 for(int h_i = 0;h_i< 30; h_i++)
                 {

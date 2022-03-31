@@ -37,11 +37,11 @@
     },
     "scnum_start":{
         "desc":"starting subcarrier number for forward-reverse music/bartlett. Total subcarriers 30, start 0, mid 15, end  30 ",
-        "value":15
+        "value":12
     },
     "scnum_end":{
         "desc":"end subcarrier number for forward-reverse music/bartlett. Total subcarriers 30",
-        "value":16
+        "value":18
     },
     "multiple_sub_carriers":{
         "desc":"Use multiple sub-carriers. Used when using relative channel",
@@ -189,19 +189,11 @@
             },
             "tx3":{
                 "mac_id_val":"0:33:106:48:210:60",
-<<<<<<< HEAD
                 "mac_id":"00:21:6A:3F:17:5A",
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
             },
             "tx4":{
                 "mac_id":"00:21:6A:AC:9C:6A",
-=======
-                "mac_id":"00:21:6A:30:D2:3C0",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
-            },
-            "tx4":{
-                "mac_id":"00:21:6A:B2:6E:FA0",
->>>>>>> 1d271913380e66effe5824c26874c284d5d835d0
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_202550.dat"
             }
         }
@@ -291,7 +283,7 @@
     },
     "sub_sample_channel_data": {
         "desc": "flag for enabling subsampling of channle data to reduce packet count",
-        "value": true
+        "value": false
     },
     "antenna_position_offset": {
         "desc": "offset between center of displacement center and antenna tip (meters)",

@@ -19,13 +19,29 @@
         "desc": "subcarrier for the channel [1,..,30]. Default is 15.5 that corresponds to the center freqency.",
         "value": 15.5
     },
+    "fastFlag": {
+        "desc":"don't set to true",
+        "value":false
+    },
+    "plotFlag":{
+        "desc":"Plot if it's not in 'fast mode'",
+        "value":true
+    },
+    "nfft":{
+        "desc":"Number of sub-carriers",
+        "value":1
+    },
+    "tauSteps":{
+        "desc":"Resolution of TOFs",
+        "value":2
+    },
     "scnum_start":{
         "desc":"starting subcarrier number for forward-reverse music/bartlett. Total subcarriers 30, start 0, mid 15, end  30 ",
-        "value":15
+        "value":12
     },
     "scnum_end":{
         "desc":"end subcarrier number for forward-reverse music/bartlett. Total subcarriers 30",
-        "value":16
+        "value":18
     },
     "multiple_sub_carriers":{
         "desc":"Use multiple sub-carriers. Used when using relative channel",
@@ -54,6 +70,22 @@
     "theta_max":{
         "desc":"Maximum elevation angle",
         "value":180
+    },
+    "tau_min":{
+        "desc":"N/A",
+        "value":-50e-9
+    },
+    "tau_max":{
+        "desc":"N/A",
+        "value":50e-9
+    },
+    "speedFlag":{
+        "desc":"N/A",
+        "value":50e-9
+    },
+    "refineFlag":{
+        "desc":"N/A",
+        "value":50e-9
     },
     "normalize_profile":{
         "desc":"Normalize the profile",
@@ -146,34 +178,34 @@
     "input_TX_channel_csi_fn":{
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
+            "tx1":{
+                "mac_id":"00:21:6A:3F:16:DA"            
+            },
             "tx2":{
-                "mac_id_illegitimate":"00:21:6A:3E:F5:7E",
-                "mac_id_legitimate":"00:21:6A:3F:17:3",
-                "mac_id":"00:21:6A:3F:17:5A",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
-            },
-            "tx2s1":{
-                "mac_id":"00:21:6A:3F:17:1",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
-            },
-            "tx2s2":{
-                "mac_id":"00:21:6A:3F:17:2",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
+                "mac_id":"00:21:6A:3E:F5:7E"            
             },
             "tx3":{
-                "mac_id":"00:21:6A:30:D2:3C",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"
+                "mac_id":"00:21:6A:AC:9C:6A"
             },
             "tx4":{
-                "mac_id":"00:21:6A:B2:6E:FA",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
+                "mac_id":"00:21:6A:3F:17:5A"            
+            },
+            "s3":{
+                "mac_id":"00:21:6A:AC:9C:1"            
+            },
+            "s4":{
+                "mac_id":"00:21:6A:3F:17:1"            
             }
         }
+    },
+    "RX_mac_ID_list":{
+        "desc":"List of all mac-ids",
+        "value":["00:21:6A:3F:16:DA","00:21:6A:3E:F5:7E","00:21:6A:AC:9C:6A","00:21:6A:3F:17:5A","00:21:6A:AC:9C:1","00:21:6A:3F:17:1"]
     },
     "input_RX_channel_csi_fn":{
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
         "value":{           
-            "mac_id":"00:21:6A:53:89:D2",
+            "mac_id":"00:21:6A:3F:16:DA",
             "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_202550.dat"
         }
     },
@@ -235,7 +267,7 @@
     },
     "interpolate_phase": {
         "desc": "flag for phase angle interpolation",
-        "value": true
+        "value": false
     },
     "time_offset": {
         "desc": "offset for time diff on different robots",
@@ -247,7 +279,7 @@
     },
     "peak_radius": {
         "desc" : "radius of patch to ignore neighbor peak in degree",
-        "value": 4
+        "value": 10
     },
     "trajectory_type": {
         "desc" : "Trajectory of robots (2D or 3D). Impacts AOA error calculation",
@@ -273,7 +305,7 @@
     },
     "top_N_magnitude":{
         "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
-        "value": 20
+        "value": 25
     },
     "offboard_computation":{
         "desc":"Perform computation offboard with high number of CPU cores",

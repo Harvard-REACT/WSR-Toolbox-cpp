@@ -288,7 +288,64 @@ void WIFI_Agent::simulate_spoofed_data_multiple(int spoofed_count,
         {
             unique_mac_ids_packets_spoofed[temp.mac_real] = 1;
         }
-
-        
     }
+    
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+void WIFI_Agent::simulate_spoofed_data_second(int spoofed_count,
+                                                std::string illegit_mac_id)
+{
+
+    int k = 0;
+    std::vector <std::string> mac_val; 
+    std::stringstream check1(illegit_mac_id); 
+    std::string intermediate; 
+    while(getline(check1, intermediate, ':')) 
+    { 
+        mac_val.push_back(intermediate); 
+    } 
+
+    std::vector<std::string> spoofed_mac_id;
+
+    spoofed_mac_id.push_back(illegit_mac_id);
+
+    for(int i=0; i<spoofed_count; i++)
+    {
+        spoofed_mac_id.push_back(mac_val[0]+ ":" + mac_val[1] + ":" +
+                                mac_val[2] + ":" + mac_val[3] + ":" +
+                                mac_val[4] + ":" + dec2hex(i+1));
+    }
+
+    for(int i=0;i<spoofed_mac_id.size(); i++)
+    {
+        std::cout << spoofed_mac_id[i] << std::endl;
+    }
+
+
+    for (int i=0;i < wifi_spoofed_data_packet_array.size();i++)
+    {
+        if(k>spoofed_count) k = 0;
+
+        if(wifi_spoofed_data_packet_array[i].mac_real == illegit_mac_id) 
+        {
+            wifi_spoofed_data_packet_array[i].mac_real = spoofed_mac_id[k];
+            k+=1;
+
+            //Only update count for spoofed agent, @BUG: will lead to incorrect number for the illegitimate client
+            if (unique_mac_ids_packets_spoofed.find(wifi_spoofed_data_packet_array[i].mac_real) != unique_mac_ids_packets_spoofed.end())
+            {
+                unique_mac_ids_packets_spoofed[wifi_spoofed_data_packet_array[i].mac_real] = unique_mac_ids_packets_spoofed[wifi_spoofed_data_packet_array[i].mac_real] +1;
+            }
+            else
+            {
+                unique_mac_ids_packets_spoofed[wifi_spoofed_data_packet_array[i].mac_real] = 1;
+            }
+        }
+
+    }
+    
 }

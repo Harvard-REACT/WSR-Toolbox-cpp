@@ -45,7 +45,9 @@ def main():
     plt.scatter(np.arange(0,len(data_json),1),
                 traj["center_subcarrier_phase"],s=1)
     plt.title('RX Robot Channel Phase')
-    plt.show()
+    plt.show(block=False)
+    plt.pause(2)
+    plt.close()
 
 
 if __name__ == "__main__":
