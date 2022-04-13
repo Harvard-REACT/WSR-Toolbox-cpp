@@ -20,8 +20,10 @@ def wsr_cb(msg):
         print("Profile saved as profile_"+tx.id+".csv")
 
         homedir = expanduser("~")
+        catkin_ws_name = rospy.get_param('~ws_name', 'catkin_ws')
+        rootdir = homedir+'/'+catkin_ws_name+"/src/WSR-Toolbox-cpp/debug/"
         aoa_profile = np.asarray(tx.aoa_profile).reshape((tx.azimuth_dim, tx.elevation_dim))
-        np.savetxt(homedir+'/catkin_ws/src/WSR-Toolbox-cpp/debug/profile_'+tx.id+'.csv', aoa_profile, delimiter=',')
+        np.savetxt(rootdir+'/profile_'+tx.id+'.csv', aoa_profile, delimiter=',')
 
 def main():
     

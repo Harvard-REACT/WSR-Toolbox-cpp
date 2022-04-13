@@ -8,4 +8,16 @@
 	<param name="d_type" value="$(arg d_type)" />
 </node>
 
+
+<node pkg="wsr_toolbox_cpp" name="verify_csi" type="verify_csi.py" output="screen">
+        <param name="config_fn" value="$(arg config_fn)" />
+        <param name="d_type" value="$(arg d_type)" />
+        <param name="ws_name" value="$(arg ws_name)" />
+</node>
+
+<node pkg="wsr_toolbox_cpp" name="main_sub" type="main_sub.py" output="screen">
+	<param name="ws_name" value="$(arg ws_name)" />
+</node>
+
+
 </launch>
