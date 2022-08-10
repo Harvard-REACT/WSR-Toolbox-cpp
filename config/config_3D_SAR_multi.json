@@ -200,7 +200,8 @@
     },
     "RX_mac_ID_list":{
         "desc":"List of all mac-ids",
-        "value":["00:21:6A:3F:16:DA","00:21:6A:3E:F5:7E","00:21:6A:AC:9C:6A","00:21:6A:3F:17:5A","00:21:6A:AC:9C:1","00:21:6A:3F:17:1"]
+        "value_spoof":["00:21:6A:3F:16:DA","00:21:6A:3E:F5:7E","00:21:6A:AC:9C:6A","00:21:6A:3F:17:5A","00:21:6A:AC:9C:1","00:21:6A:3F:17:1"],
+        "value":["00:21:6A:3F:16:DA","00:21:6A:3E:F5:7E","00:21:6A:AC:9C:6A","00:21:6A:3F:17:5A"]
     },
     "input_RX_channel_csi_fn":{
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",

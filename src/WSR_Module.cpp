@@ -2420,7 +2420,7 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
         // auto H_csv_img = nc::NdArray<double>(cddataPtr00, H.rows(), H.cols(), __takeOwnership);
         // util_obj.writeToFile(H_csv_img,"H_imag_"+std::to_string(d)+".csv");
 
-        // std::cout << "rows = " << h_list_eigen.rows() << ",  cols = " << h_list_eigen.cols() << std::endl;
+        std::cout << "rows = " << h_list_eigen.rows() << ",  cols = " << h_list_eigen.cols() << std::endl;
         // std::cout << "rows = " << h_list_single_channel_complex_conjugate.rows() << ",  cols = " << h_list_single_channel_complex_conjugate.cols() << std::endl;
         // std::cout << "rows = " << H.rows() << ",  cols = " << H.cols() << std::endl;
 
@@ -2449,7 +2449,7 @@ nc::NdArray<double> WSR_Module::compute_profile_music_offboard(
 
 
         // std::cout << "*******************" << std::endl;
-        // std::cout << "rows = " << e_term_exp.rows() << ",  cols = " << e_term_exp.cols() << std::endl;
+        std::cout << "rows = " << e_term_exp.rows() << ",  cols = " << e_term_exp.cols() << std::endl;
         // std::cout << "rows = " << H_eigen_vectors.rows() << ",  cols = " << H_eigen_vectors.cols() << std::endl;
         // std::cout << "*******************" << std::endl;
         

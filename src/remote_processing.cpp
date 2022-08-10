@@ -148,8 +148,8 @@ int main(int argc, char *argv[])
 
 
     std::cout << "log [WSR_Module]: Calculating AOA " << std::endl;
-    // int ret = run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
-    int ret = run_module.calculate_spoofed_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
+    int ret = run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
+    // int ret = run_module.calculate_spoofed_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);
 
     if(ret == 0)
     {
