@@ -315,5 +315,10 @@
     "openmp":{
         "desc":"Enable openmp usage for elementwise operation",
         "value":true
+    },
+    "use_two_antennas":
+    {
+        "desc":"Use 2 antenna SAR formulation",
+        "value":true
     }
 }

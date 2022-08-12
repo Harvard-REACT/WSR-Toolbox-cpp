@@ -104,7 +104,6 @@ class WSR_Util{
                                                             int start_index,
                                                             int end_index);
         void writeRssiToFile(std::vector<std::vector<int>>& rssi_rx_robot, std::string fn) ;                                                       
-
 };
 
 

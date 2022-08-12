@@ -129,7 +129,9 @@ int main(int argc, char *argv[]){
     nlohmann::json true_positions_tx = run_module.__precompute_config["true_tx_positions"];
     auto all_true_AOA = utils.get_true_aoa(trajectory_rx, true_positions_tx); //Fix this when using moving ends.
 
-    run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,displacement_timestamp);
+    std::cout << "Size of displacement cols:" << nc::shape(displacement).cols << std::endl;
+    // run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,displacement_timestamp);
+    run_module.calculate_AOA_using_csi_conjugate(rx_robot_csi,displacement,displacement_timestamp);
     auto all_aoa_profile = run_module.get_all_aoa_profile();
     auto all_topN_angles = run_module.get_TX_topN_angles();
     auto all_confidences = run_module.get_all_confidence();

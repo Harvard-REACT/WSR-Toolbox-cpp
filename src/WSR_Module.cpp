@@ -49,6 +49,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     bool __FLAG_use_multiple_sub_carriers = bool(__precompute_config["multiple_sub_carriers"]["value"]);
     bool __FLAG_use_magic_mac = bool(__precompute_config["use_magic_mac"]["value"]);
     __FLAG_use_relative_displacement = bool(__precompute_config["use_relative_trajectory"]["value"]);
+    __FLAG_two_antenna = bool(__precompute_config["use_two_antennas"]["value"]);
 
     //calculate channel freqeuency based on channel and subcarrier number
     double centerfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
@@ -70,10 +71,15 @@ WSR_Module::WSR_Module(std::string config_fn)
     __snum_end = int(__precompute_config["scnum_end"]["value"]);
     __trajType = __precompute_config["trajectory_type"]["value"];
     __relative_magnitude_threshold = int(__precompute_config["top_N_magnitude"]["value"]);
+    __antenna_separation = float(__precompute_config["antenna_separation"]["value"]);
 
     if (__FLAG_use_magic_mac)
     {
         __RX_SAR_robot_MAC_ID = __precompute_config["Magic_MAC_ID"]["value"];
+    }
+    else if(__FLAG_two_antenna)
+    {
+         __RX_SAR_robot_MAC_ID = __precompute_config["input_RX_channel_csi_fn"]["value"]["mac_id"];       
     }
     else
     {
@@ -103,7 +109,6 @@ WSR_Module::WSR_Module(std::string config_fn)
     __eigen_precomp_rep_theta = EigenDoubleMatrixMap(precomp_rep_theta.data(),
                                                      precomp_rep_theta.numRows(),
                                                      precomp_rep_theta.numCols());
-
     if (__FLAG_threading || __FLAG_offboard)
     {
         // std::thread t1 (&WSR_Module::get_repmat, this,
@@ -998,29 +1003,22 @@ void WSR_Module::get_bterm_all(EigencdMatrix &e_term_exp,
                                EigenDoubleMatrix &eigen_pitch_list, EigenDoubleMatrix &eigen_yaw_list, EigenDoubleMatrix &rep_rho)
 {
 
-    // EigenDoubleMatrix eigen_precomp_rep_phi = EigenDoubleMatrixMap(precomp_rep_phi.data(),
-    //                                                precomp_rep_phi.numRows(),
-    //                                                precomp_rep_phi.numCols());
-    EigenDoubleMatrix eigen_precomp_rep_theta = EigenDoubleMatrixMap(precomp_rep_theta.data(),
-                                                     precomp_rep_theta.numRows(),
-                                                     precomp_rep_theta.numCols());
-
     int i = 0;
     int j = 0;
-#pragma omp parallel for shared(e_term_exp, eigen_precomp_rep_theta, eigen_pitch_list, eigen_yaw_list, rep_rho) private(i, j) collapse(2)
+#pragma omp parallel for shared(e_term_exp, __eigen_precomp_rep_theta, eigen_pitch_list, eigen_yaw_list, rep_rho) private(i, j) collapse(2)
     for (i = 0; i < e_term_exp.rows(); i++)
     {
         for (j = 0; j < e_term_exp.cols(); j++)
         {
-            e_term_exp(i, j) = exp((sin(eigen_precomp_rep_theta(i, 0)) * cos(eigen_pitch_list(0,j)) * cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j)) +
-                                 sin(eigen_pitch_list(0, j)) * cos(eigen_precomp_rep_theta(i, 0))) *
+            e_term_exp(i, j) = exp((sin(__eigen_precomp_rep_theta(i, 0)) * cos(eigen_pitch_list(0,j)) * cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j)) +
+                                 sin(eigen_pitch_list(0, j)) * cos(__eigen_precomp_rep_theta(i, 0))) *
                                 rep_rho(0, j) * (-4.0 * std::complex<double>(0, 1) * M_PI / __lambda));
         }
     }
 }
 //=============================================================================================================================
 /**
- * Description: 
+ * Description: Does not include division by lambda in the exponential term; can be used for different subcarriers 
  * Input:
  * Output:
  */
@@ -1028,22 +1026,15 @@ void WSR_Module::get_bterm_all_subcarrier(EigenDoubleMatrix &e_term,
                                EigenDoubleMatrix &eigen_pitch_list, EigenDoubleMatrix &eigen_yaw_list, EigenDoubleMatrix &rep_rho)
 {
 
-    // EigenDoubleMatrix eigen_precomp_rep_phi = EigenDoubleMatrixMap(precomp_rep_phi.data(),
-    //                                                precomp_rep_phi.numRows(),
-    //                                                precomp_rep_phi.numCols());
-    EigenDoubleMatrix eigen_precomp_rep_theta = EigenDoubleMatrixMap(precomp_rep_theta.data(),
-                                                     precomp_rep_theta.numRows(),
-                                                     precomp_rep_theta.numCols());
-
     int i = 0;
     int j = 0;
-#pragma omp parallel for shared(e_term, eigen_precomp_rep_theta, eigen_pitch_list, eigen_yaw_list, rep_rho) private(i, j) collapse(2)
+#pragma omp parallel for shared(e_term, __eigen_precomp_rep_theta, eigen_pitch_list, eigen_yaw_list, rep_rho) private(i, j) collapse(2)
     for (i = 0; i < e_term.rows(); i++)
     {
         for (j = 0; j < e_term.cols(); j++)
         {
-            e_term(i, j) = (sin(eigen_precomp_rep_theta(i, 0)) * cos(eigen_pitch_list(0,j)) * cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j)) +
-                                 sin(eigen_pitch_list(0, j)) * cos(eigen_precomp_rep_theta(i, 0))) * rep_rho(0, j);
+            e_term(i, j) = (sin(__eigen_precomp_rep_theta(i, 0)) * cos(eigen_pitch_list(0,j)) * cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j)) +
+                                 sin(eigen_pitch_list(0, j)) * cos(__eigen_precomp_rep_theta(i, 0))) * rep_rho(0, j);
         }
     }
 }
@@ -2547,4 +2538,606 @@ void WSR_Module::getExponential(EigencdMatrix &out,
 int WSR_Module::get_peak_num_above_threshold(const std::string &tx_mac_id)
 {
     return __all_topN_above_threshold[tx_mac_id];
+}
+
+
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+int WSR_Module::test_csi_data_conjugate(std::string rx_csi_file)
+{
+    std::cout << "============ Testing CSI data ==============" << std::endl;
+
+    WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR
+    nc::NdArray<std::complex<double>> h_list_all, h_list_static, h_list;
+    nc::NdArray<double> csi_timestamp_all, csi_timestamp;
+    double cal_ts_offset, moving_channel_ang_diff_mean, moving_channel_ang_diff_stdev,
+    static_channel_ang_mean, static_channel_ang_stdev;
+    std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
+    debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());
+    int ret_val = 0;
+
+    std::cout << "log [test_csi_data_conjugate]: Parsing CSI Data " << std::endl;
+
+    auto temp1 = utils.readCsiData(rx_csi_file, RX_SAR_robot, __FLAG_debug);
+
+    // std::vector<std::string> mac_id_tx;
+    std::vector<std::string> mac_id_tx;
+
+    std::cout << "log [test_csi_data_conjugate]: Neighbouring TX robot IDs count = " << RX_SAR_robot.unique_mac_ids_packets.size() << std::endl;
+
+    for (auto key : RX_SAR_robot.unique_mac_ids_packets)
+    {
+        if (__FLAG_debug)
+            std::cout << "log [test_csi_data_conjugate]: Detected MAC ID = " << key.first
+                      << ", Packet count: = " << key.second << std::endl;
+        mac_id_tx.push_back(key.first);
+    }
+
+    //Get AOA profile for each of the RX neighboring robots
+    if (__FLAG_debug) std::cout << "log [test_csi_data_conjugate]: Getting AOA profiles" << std::endl;
+    
+    std::vector<DataPacket> data_packets_RX, data_packets_TX;
+
+    for (int num_tx = 0; num_tx < mac_id_tx.size(); num_tx++)
+    {
+        WIFI_Agent TX_Neighbor_robot; // Neighbouring robots who reply back
+        std::pair<nc::NdArray<std::complex<double>>, nc::NdArray<double>> csi_data;
+
+        std::cout << "log [test_csi_data_conjugate]: =========================" << std::endl;
+        std::cout << "log [test_csi_data_conjugate]: Profile for RX_SAR_robot MAC-ID: " << __RX_SAR_robot_MAC_ID
+                  << ", TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
+
+        data_packets_RX = RX_SAR_robot.get_wifi_data(mac_id_tx[num_tx]);          //Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
+
+        std:: cout << "-----------------------------------------" << std::endl;
+
+        std::cout << "log [test_csi_data_conjugate]: Packets for TX_Neighbor_robot collected by RX_SAR_robot : "
+                    << data_packets_RX.size() << std::endl;
+
+        std::cout << "log [test_csi_data_conjugate]: Calculating Complex conjugate product" << std::endl;
+        //Complex conjugate to correct for channel phase
+        csi_data = utils.getConjugateProductChannel(data_packets_RX,
+                                                    __FLAG_interpolate_phase,
+                                                    __FLAG_sub_sample);
+
+
+        std::cout << "log [test_csi_data_conjugate]: corrected CFO " << std::endl;
+        h_list_all = csi_data.first;
+        csi_timestamp_all = csi_data.second;
+
+        bool moving = true;
+        utils.get_phase_diff_metrics(h_list_all,
+                                     moving_channel_ang_diff_mean,
+                                     moving_channel_ang_diff_stdev,
+                                     __FLAG_interpolate_phase,
+                                     moving);
+
+        if (h_list_all.shape().rows < __min_packets_to_process)
+        {
+            std::cout << "log [test_csi_data_conjugate]: Not enough CSI packets." << std::endl;
+            std::cout << "log [test_csi_data_conjugate]: Return Empty AOA profile" << std::endl;
+            //Return empty dummpy AOA profile
+            __aoa_profile = nc::zeros<double>(1, 1);
+        }
+        else
+        {
+            std::cout << "log [test_csi_data_conjugate]: CSI_packets_used = " << csi_timestamp_all.shape() << std::endl;
+            std::cout << "log [test_csi_data_conjugate]: h_list size  = " << h_list_all.shape() << std::endl;
+
+            std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
+            debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());
+
+            //Store phase and timestamp of the channel for debugging
+            std::string channel_data_all = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
+            std::cout << channel_data_all << std::endl;
+            utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all, __FLAG_interpolate_phase);
+
+            auto starttime = std::chrono::high_resolution_clock::now();
+            auto endtime = std::chrono::high_resolution_clock::now();
+            float processtime = std::chrono::duration<float, std::milli>(endtime - starttime).count();
+            /*Interpolate the trajectory and csi data*/
+            __paired_pkt_count[mac_id_tx[num_tx]] = csi_timestamp_all.shape().rows;
+            __calculated_ts_offset[mac_id_tx[num_tx]] = cal_ts_offset;
+            __rx_pkt_size[mac_id_tx[num_tx]] = data_packets_RX.size();
+            __tx_pkt_size[mac_id_tx[num_tx]] = data_packets_TX.size();
+            __perf_aoa_profile_cal_time[mac_id_tx[num_tx]] = processtime / 1000;
+            __channel_phase_diff_mean[mac_id_tx[num_tx]] = moving_channel_ang_diff_mean;
+            __channel_phase_diff_stdev[mac_id_tx[num_tx]] = moving_channel_ang_diff_stdev;
+        }
+
+        //TODO: get azimuth and elevation from beta_profile
+        std::cout << "log [test_csi_data_conjugate]: Completed Testing CSI data" << std::endl;
+        TX_Neighbor_robot.reset();
+    }
+
+    std::cout << "============ Test complete ==============" << std::endl;
+    RX_SAR_robot.reset();
+
+    return 0;
+    
+}
+
+//=============================================================================================================================
+/**
+ *Calculates the AOA profiles for TX robots using only the CSI data received by the RX robot
+ * It uses the complex conjugate of the CSI data and using the orientation of the robots.
+ * */
+int WSR_Module::calculate_AOA_using_csi_conjugate(std::string rx_csi_file,
+                                        nc::NdArray<double> displacement,
+                                        nc::NdArray<double> displacement_timestamp)
+{
+    std::cout << "============ Testing WSR module ==============" << std::endl;
+
+    WIFI_Agent RX_SAR_robot; //Receives the broadcasted packets from the Neighboring robots
+    nc::NdArray<std::complex<double>> h_list_all, h_list_static, h_list;
+    nc::NdArray<double> csi_timestamp_all, csi_timestamp;
+    double cal_ts_offset;
+    int ret_val = 0;
+    std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
+    debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());
+    
+    /**
+     * ------------------------------------------------------------------------------------------
+     * Parse CSI data collected on the receiver robot and extract the mac-ids of the transmitters.
+     * ------------------------------------------------------------------------------------------
+     * */
+    std::cout << "log [calculate_AOA_using_csi_conjugate]: Parsing CSI Data " << std::endl;
+    auto temp1 = utils.readCsiData(rx_csi_file, RX_SAR_robot, __FLAG_debug);
+    std::vector<std::string> mac_id_tx;
+
+    std::cout << "log [calculate_AOA_using_csi_conjugate]: Neighbouring TX robot IDs count = " << RX_SAR_robot.unique_mac_ids_packets.size() << std::endl;
+
+    for (auto key : RX_SAR_robot.unique_mac_ids_packets)
+    {
+        if (__FLAG_debug)
+            std::cout << "log [calculate_AOA_using_csi_conjugate]: Detected MAC ID = " << key.first
+                      << ", Packet count: = " << key.second << std::endl;
+        mac_id_tx.push_back(key.first);
+    }
+
+    /**
+     * -----------------------------------------------------
+     * Get AOA profile for each of the RX neighboring robots
+     * -----------------------------------------------------
+     * */
+    if (__FLAG_debug) std::cout << "log [calculate_AOA_using_csi_conjugate]: Getting AOA profiles" << std::endl;
+    std::vector<DataPacket> data_packets_RX, data_packets_TX;
+    for (int num_tx = 0; num_tx < mac_id_tx.size(); num_tx++)
+    {
+        WIFI_Agent TX_Neighbor_robot; // Neighbouring robots who reply back
+        std::pair<nc::NdArray<std::complex<double>>, nc::NdArray<double>> csi_data;
+
+        std::cout << "log [calculate_AOA_using_csi_conjugate]: =========================" << std::endl;
+        std::cout << "log [calculate_AOA_using_csi_conjugate]: Profile for RX_SAR_robot MAC-ID: " << __RX_SAR_robot_MAC_ID
+                  << ", TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
+
+        data_packets_RX = RX_SAR_robot.get_wifi_data(mac_id_tx[num_tx]); //Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
+        std::cout << "log [calculate_AOA_using_csi_conjugate]: Packets for TX_Neighbor_robot collected by RX_SAR_robot : "
+                    << data_packets_RX.size() << std::endl;
+
+        std::cout << "log [calculate_AOA_using_csi_conjugate]: Calculating Complex conjugate product" << std::endl;
+        
+        //Complex conjugate to correct for channel phase
+        csi_data = utils.getConjugateProductChannel(data_packets_RX,
+                                                    __FLAG_interpolate_phase,
+                                                    __FLAG_sub_sample);
+
+
+        std::cout << "log [calculate_AOA_using_csi_conjugate]: corrected CFO " << std::endl;
+        h_list_all = csi_data.first;
+        csi_timestamp_all = csi_data.second;
+
+
+        if (csi_timestamp_all.size() < __min_packets_to_process)
+        {
+            std::cout << csi_timestamp_all.size() << std::endl;
+            if (__FLAG_debug)
+                std::cout << "log [calculate_AOA_using_csi_conjugate]: Very few CSI data packets left after forward-backward product" << std::endl;
+            break;
+        }
+
+        if (__FLAG_debug) std::cout << "log [calculate_AOA_using_csi_conjugate]: Removing unused csi data" << std::endl;
+        std::pair<int, int> csi_timestamp_range = utils.returnClosestIndices(csi_timestamp_all, displacement_timestamp);
+        int start_index = csi_timestamp_range.first, end_index = csi_timestamp_range.second;
+
+        /*Slice the csi_timestamp using the indices to remove unused CSI values
+        * Note: Make sure that the packet transmission freqency is high enough when random_packets is used, 
+        * such that about 400 left after slicing even if the trajectory duration is small. 
+        * */
+        if (__FLAG_debug) std::cout << "log [calculate_AOA_using_csi_conjugate]: Slicing CSI timestamps" << std::endl;
+        csi_timestamp = csi_timestamp_all({start_index, end_index}, csi_timestamp_all.cSlice());
+        h_list = h_list_all({start_index, end_index}, h_list_all.cSlice());
+
+        if (h_list.shape().rows < __min_packets_to_process)
+        {
+            std::cout << "log [calculate_AOA_using_csi_conjugate]: Not enough CSI packets." << std::endl;
+            std::cout << "log [calculate_AOA_using_csi_conjugate]: Return Empty AOA profile" << std::endl;
+            //Return empty dummpy AOA profile
+            __aoa_profile = nc::zeros<double>(1, 1);
+        }
+        else
+        {
+            /*Interpolate the trajectory using the csi data timestamps*/
+            if (__FLAG_debug) std::cout << "log [calculate_AOA_using_csi_conjugate]: interpolating the displacement and csi " << std::endl;
+            
+            std::cout << "Size of displacement cols:" << nc::shape(displacement).cols << std::endl;
+            
+            auto interpolated_data = utils.interpolate(csi_timestamp, displacement_timestamp, displacement);
+            nc::NdArray<double> pose_list = interpolated_data.first;
+
+            if (__FLAG_debug)
+            {
+                std::cout << "log [calculate_AOA_using_csi_conjugate]: CSI_packets_used = " << csi_timestamp.shape() << std::endl;
+                std::cout << "log [calculate_AOA_using_csi_conjugate]: pose_list size  = " << pose_list.shape() << std::endl;
+                std::cout << "log [calculate_AOA_using_csi_conjugate]: h_list size  = " << h_list.shape() << std::endl;
+
+                //Store phase and timestamp of the channel for debugging
+                std::string channel_data_sliced = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_sliced_channel_data.json";
+                utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_sliced, __FLAG_interpolate_phase);
+
+                std::string channel_data_all = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
+                utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all, __FLAG_interpolate_phase);
+
+                //Store the packet distribution to check for spotty packets
+                std::string packet_dist = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_packet_dist.json";
+                utils.writePacketDistributionToJsonFile(csi_timestamp, displacement_timestamp, displacement, packet_dist);
+
+                //Store interpolated trajectory for debugging
+                std::string interpl_trajectory = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_interpl_trajectory.json";
+                utils.writeTrajToFile(pose_list, interpl_trajectory);
+            }
+
+            /*Interpolate the trajectory and csi data*/
+            std::cout << "log [calculate_AOA_profile]: Calculating AOA profile..." << std::endl;
+            auto starttime = std::chrono::high_resolution_clock::now();
+
+            // if (__FLAG_threading)
+            // {
+            // __aoa_profile = compute_profile_music_offboard(h_list, pose_list);
+            // __aoa_profile = compute_profile_bartlett_offboard(h_list, pose_list);
+            // __aoa_profile = compute_conjugate_profile_bartlett_multithread(h_list, pose_list);
+            __aoa_profile = compute_conjuate_profile_music_offboard(h_list, pose_list);
+            // }
+            // else
+            // {
+            //     __aoa_profile = compute_conjugate_profile_bartlett_singlethread(h_list, pose_list);
+            // }
+
+            auto endtime = std::chrono::high_resolution_clock::now();
+            float processtime = std::chrono::duration<float, std::milli>(endtime - starttime).count();
+            
+            //Stats
+            std::pair<std::vector<double>, std::vector<double>> top_N = find_topN();
+            __TX_top_N_angles[mac_id_tx[num_tx]] = top_N;
+            __paired_pkt_count[mac_id_tx[num_tx]] = csi_timestamp.shape().rows;
+            __perf_aoa_profile_cal_time[mac_id_tx[num_tx]] = processtime / 1000;
+            __memory_used[mac_id_tx[num_tx]] = utils.mem_usage() / 1000000;
+            __calculated_ts_offset[mac_id_tx[num_tx]] = cal_ts_offset;
+            __rx_pkt_size[mac_id_tx[num_tx]] = data_packets_RX.size();
+            __tx_pkt_size[mac_id_tx[num_tx]] = data_packets_TX.size();
+            __top_peak_confidence[mac_id_tx[num_tx]] = __aoa_profile_variance[0];
+            __all_topN_magnitudes[mac_id_tx[num_tx]] = __peak_magnitudes;
+            __all_topN_above_threshold[mac_id_tx[num_tx]] = __num_peaks_above_threshold;
+        }
+
+        /*Store the aoa_profile*/
+        __all_aoa_profiles[mac_id_tx[num_tx]] = __aoa_profile;
+        __all_topN_confidence[mac_id_tx[num_tx]] = __aoa_profile_variance;
+
+        std::cout << "log [test_csi_data]: Completed Testing CSI data" << std::endl;
+    }
+
+    std::cout << "============ Test complete ==============" << std::endl;
+    RX_SAR_robot.reset();
+
+    return 0;
+    
+}
+
+
+/**=======================================================================================================
+ * Description: Uses the complex conjugate steering vector formulation for SAR to compute AOA profile
+ * Input: Relative channel and robot displacement
+ * Output: AOA profile
+ * */
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+nc::NdArray<double> WSR_Module::compute_conjugate_profile_bartlett_multithread(
+                                const nc::NdArray<std::complex<double>> &input_h_list,
+                                const nc::NdArray<double> &input_pose_list)
+{
+    auto total_start  = std::chrono::high_resolution_clock::now();
+    EigencdMatrix eigen_eterm_3DAdjustment, e_term_prod;
+    EigenDoubleMatrix eigen_rep_lambda, eigen_rep_phi, eigen_rep_theta, diff_phi_yaw, eigen_rep_yaw, eigen_rep_pitch, eigen_rep_rho;
+
+    int total_packets = input_h_list.shape().rows;
+    if (total_packets != input_pose_list.shape().rows)
+    {
+        THROW_CSI_INVALID_ARGUMENT_ERROR("number of CSI and poses are different.\n");
+    }
+
+    int max_packets = total_packets;
+    /*Use max packets*/
+    if (__FLAG_packet_threshold)
+    {
+        max_packets = input_h_list.shape().rows > __max_packets_to_process ? __max_packets_to_process : input_h_list.shape().rows;
+    }
+
+    nc::NdArray<std::complex<double>> h_list = input_h_list(nc::Slice(0, max_packets), input_h_list.cSlice());
+    nc::NdArray<double> pose_list = input_pose_list(nc::Slice(0, max_packets), input_pose_list.cSlice());
+
+    if (__FLAG_debug)
+        std::cout << "log [compute_conjugate_profile_bartlett_multithread] Total packets: " << total_packets << ", Max packets used: " << max_packets << std::endl;
+
+    std::cout.precision(15);
+    nc::NdArray<std::complex<double>> h_list_single_channel;
+
+    if (__FLAG_interpolate_phase)
+        h_list_single_channel = h_list(h_list.rSlice(), 30);
+    else
+        h_list_single_channel = h_list(h_list.rSlice(), 15);
+
+    auto num_poses = nc::shape(pose_list).rows;
+    if (h_list_single_channel.shape().cols == 0)
+    {
+        THROW_CSI_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
+    }
+
+    if (__FLAG_debug)
+        std::cout << "log [compute_conjugate_profile_bartlett_multithread] : get lambda and phi" << std::endl;
+    
+    auto start = std::chrono::high_resolution_clock::now();
+    if (__FLAG_debug)
+        std::cout << "log [compute_conjugate_profile_bartlett_multithread] : get yaw, pitch and rho values" << std::endl;
+    auto pose_x = pose_list(pose_list.rSlice(), 0);
+    auto pose_y = pose_list(pose_list.rSlice(), 1);
+    auto pose_z = pose_list(pose_list.rSlice(), 2);
+    auto yaw_list = pose_list(pose_list.rSlice(), 3);
+
+    std::cout << yaw_list*(180/M_PI) << std::endl;
+
+    // auto yaw_list = nc::arctan2(pose_y, pose_x);
+    // yaw_list = nc::angle(-nc::exp(nc::multiply(yaw_list, std::complex<double>(0, 1))));
+    // EigenDoubleMatrix eigen_yaw_list_tmp = EigenDoubleMatrixMap(yaw_list.data(),
+    //                                                             yaw_list.numRows(),
+    //                                                             yaw_list.numCols());
+    // EigenDoubleMatrix eigen_yaw_list = eigen_yaw_list_tmp.transpose();
+    EigenDoubleMatrix eigen_yaw_list = EigenDoubleMatrixMap(yaw_list.data(),
+                                                                yaw_list.numRows(),
+                                                                yaw_list.numCols());
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << " Time elapsed for repmat operation: " << (end - start) / std::chrono::milliseconds(1) << std::endl;
+
+    if (__FLAG_debug)
+        std::cout << "log [compute_conjugate_profile_bartlett_multithread] : Element-wise sin and cos for theta,pitch" << std::endl;
+ 
+
+    //===========Openmp implementation 0.2 sec faster =============.
+    start = std::chrono::high_resolution_clock::now();
+    std::cout << "Computing e_term_prod...." << std::endl;
+    EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
+    get_two_antenna_bterm_all(std::ref(e_term_exp), std::ref(eigen_yaw_list));
+    end = std::chrono::high_resolution_clock::now();
+    std::cout << " Time elapsed for eterm_prod and eterm_exp:  " << (end - start) / std::chrono::milliseconds(1) << std::endl;
+    //===========Openmp implementation=============.
+
+    std::complex<double> *cddataPtr = new std::complex<double>[e_term_exp.rows() * e_term_exp.cols()];
+    EigencdMatrixMap(cddataPtr, e_term_exp.rows(), e_term_exp.cols()) = e_term_exp;
+    auto e_term = nc::NdArray<std::complex<double>>(cddataPtr, e_term_exp.rows(), e_term_exp.cols(), __takeOwnership);
+    
+    if (__FLAG_debug)
+        std::cout << "log [compute_conjugate_profile_bartlett_multithread] : getting profile using matmul" << std::endl;
+    
+    //Really quick, no need to check time
+    auto result_mat = nc::matmul(e_term, h_list_single_channel);
+    auto betaProfileProd = nc::power(nc::abs(result_mat), 2);
+    auto beta_profile = nc::reshape(betaProfileProd, __ntheta, __nphi);
+
+    if (__FLAG_normalize_profile)
+    {
+        auto sum_val = nc::sum(nc::sum(beta_profile));
+        beta_profile = beta_profile / sum_val(0, 0);
+    }
+
+    if (__FLAG_debug)
+        std::cout << "log [compute_conjugate_profile_bartlett_multithread] : Getting transpose and returning profile" << std::endl;
+    
+    beta_profile = nc::transpose((beta_profile));
+    auto total_end = std::chrono::high_resolution_clock::now();
+    std::cout << "log [compute_conjugate_profile_bartlett_multithread] Computation spent " << (total_end- total_start)/std::chrono::milliseconds(1)<< " ms"<< std::endl;
+
+    return beta_profile;
+}
+
+//=============================================================================================================================
+/**
+ * Description: 
+ * Input:
+ * Output:
+ */
+void WSR_Module::get_two_antenna_bterm_all(EigencdMatrix &e_term_exp,
+                                           EigenDoubleMatrix &eigen_yaw_list)
+{
+
+    std::cout << "Antenna Separation = " << __antenna_separation << std::endl;
+    int i = 0;
+    int j = 0;
+#pragma omp parallel for shared(e_term_exp,eigen_yaw_list) private(i, j) collapse(2)
+    for (i = 0; i < e_term_exp.rows(); i++)
+    {
+        for (j = 0; j < e_term_exp.cols(); j++)
+        {
+            e_term_exp(i, j) = exp(__antenna_separation*cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(j,0))*sin(__eigen_precomp_rep_theta(i, 0)-90)*(-2.0 * std::complex<double>(0, 1) * M_PI / __lambda));
+        }
+    }
+    //+ or - for 2j?? -> this just flips the angles
+}
+
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+nc::NdArray<double> WSR_Module::compute_conjuate_profile_music_offboard(
+                                const nc::NdArray<std::complex<double>> &input_h_list,
+                                const nc::NdArray<double> &input_pose_list)
+{
+    auto total_start  = std::chrono::high_resolution_clock::now();
+    EigencdMatrix eigen_eterm_3DAdjustment, e_term_prod;
+    EigenDoubleMatrix eigen_rep_lambda, eigen_rep_phi, eigen_rep_theta, diff_phi_yaw, eigen_rep_yaw, eigen_rep_pitch, eigen_rep_rho;
+    WSR_Util util_obj;
+
+    int total_packets = input_h_list.shape().rows;
+    if (total_packets != input_pose_list.shape().rows)
+    {
+        THROW_CSI_INVALID_ARGUMENT_ERROR("number of CSI and poses are different.\n");
+    }
+
+    int max_packets = total_packets;
+    /*Use max packets*/
+    if (__FLAG_packet_threshold)
+    {
+        max_packets = input_h_list.shape().rows > __max_packets_to_process ? __max_packets_to_process : input_h_list.shape().rows;
+    }
+
+    nc::NdArray<std::complex<double>> h_list = input_h_list(nc::Slice(0, max_packets), input_h_list.cSlice());
+    nc::NdArray<double> pose_list = input_pose_list(nc::Slice(0, max_packets), input_pose_list.cSlice());
+        auto num_poses = nc::shape(pose_list).rows;
+
+    if (__FLAG_debug)
+        std::cout << "log [compute_AOA] Total packets: " << total_packets << ", Max packets used: " << max_packets << std::endl;
+
+    std::cout.precision(15);
+
+    if (__FLAG_debug)
+        std::cout << "log [compute_AOA] : get lambda, phi and theta values" << std::endl;
+
+    
+    auto start = std::chrono::high_resolution_clock::now();
+    if (__FLAG_debug)
+        std::cout << "log [compute_AOA] : get yaw, pitch and rho values" << std::endl;
+    auto pose_x = pose_list(pose_list.rSlice(), 0);
+    auto pose_y = pose_list(pose_list.rSlice(), 1);
+    auto pose_z = pose_list(pose_list.rSlice(), 2);
+    auto yaw_list = pose_list(pose_list.rSlice(), 3);
+
+    std::cout << yaw_list*(180/M_PI) << std::endl;
+
+    // yaw_list = nc::angle(-nc::exp(nc::multiply(yaw_list, std::complex<double>(0, 1))));
+    EigenDoubleMatrix eigen_yaw_list = EigenDoubleMatrixMap(yaw_list.data(),
+                                                                yaw_list.numRows(),
+                                                                yaw_list.numCols());
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << " Time elapsed for repmat operation: " << (end - start) / std::chrono::milliseconds(1) << std::endl;
+
+    if (__FLAG_debug)
+        std::cout << "log [compute_AOA] : Element-wise sin and cos for theta,pitch" << std::endl;
+ 
+
+    start = std::chrono::high_resolution_clock::now();
+    std::cout << "Computing e_term_prod...." << std::endl;
+    EigenDoubleMatrix e_term(__nphi * __ntheta, num_poses);
+
+    //===========Openmp implementation 0.2 sec faster =============.
+    get_bterm_all_subcarrier_conjugate(std::ref(e_term), std::ref(eigen_yaw_list));
+    std::cout << " Time elapsed for eterm_prod and eterm_exp:  " << (end - start) / std::chrono::milliseconds(1) << std::endl;
+    //===========Openmp implementation=============.
+
+    
+    if (__FLAG_debug)
+        std::cout << "log [compute_AOA] : getting profile using matmul" << std::endl;
+    
+    EigenDoubleMatrix eigen_betaProfile_final;
+    bool first = true;
+    for(int h_i=__snum_start; h_i<__snum_end; h_i++)
+    {
+        std::cout << "Subcarrier : " << h_i << std::endl;
+        int d = std::rand();
+        std::cout << d << std::endl;
+
+        double centerfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
+                        (double(__precompute_config["subCarrier"]["value"]) - h_i) * 20e6 / 30;
+        double lambda_inv =  centerfreq/double(__precompute_config["c"]["value"]);
+        EigencdMatrix temp1 = e_term * (-2.0 * std::complex<double>(0, 1) * M_PI * lambda_inv);
+        EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
+        getExponential(e_term_exp, temp1);
+        
+        nc::NdArray<std::complex<double>> h_list_single_channel;
+        h_list_single_channel = h_list(h_list.rSlice(), h_i);
+        
+        if (h_list_single_channel.shape().cols == 0)
+        {
+            THROW_CSI_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
+        }
+
+        //Get complex conjugate of the channel  
+        auto h_list_eigen = EigencdMatrixMap(h_list_single_channel.data(), h_list_single_channel.numRows(), h_list_single_channel.numCols());
+
+        std::cout << "rows = " << h_list_eigen.rows() << ",  cols = " << h_list_eigen.cols() << std::endl;
+        std::cout << "rows = " << e_term_exp.rows() << ",  cols = " << e_term_exp.cols() << std::endl;
+
+        EigenDoubleMatrix eigen_betaProfileProd = (e_term_exp * h_list_eigen).cwiseAbs2();    
+        EigenDoubleMatrixMap eigen_betaProfile(eigen_betaProfileProd.data(),__ntheta, __nphi);
+        std::cout << "beta profile rows = " << eigen_betaProfile.rows() << ",  beta profile cols = " << eigen_betaProfile.cols() << std::endl;
+
+        if(first)
+        {
+            eigen_betaProfile_final = eigen_betaProfile;
+            first = false;
+        }
+        else
+        {
+            eigen_betaProfile_final = eigen_betaProfile_final.cwiseProduct(eigen_betaProfile);
+        }
+    }
+    
+    double *cddataPtr2 = new double[eigen_betaProfile_final.rows() * eigen_betaProfile_final.cols()];
+    EigenDoubleMatrixMap(cddataPtr2, eigen_betaProfile_final.rows(), eigen_betaProfile_final.cols()) = eigen_betaProfile_final;
+    auto beta_profile = nc::NdArray<double>(cddataPtr2, eigen_betaProfile_final.rows(), eigen_betaProfile_final.cols(), __takeOwnership);
+
+    std::cout << beta_profile.shape() << std::endl;
+
+    if (__FLAG_normalize_profile || (__snum_end -__snum_start > 1)) //Always normalize if using multiple subcarriers.
+    {
+        auto sum_val = nc::sum(nc::sum(beta_profile));
+        beta_profile = beta_profile / sum_val(0, 0);
+    }
+
+    if (__FLAG_debug)
+        std::cout << "log [compute_AOA] : Getting transpose and returning profile" << std::endl;
+
+    beta_profile = nc::transpose((beta_profile));
+    auto total_end = std::chrono::high_resolution_clock::now();
+    std::cout << "Offboard Computation spent " << (total_end- total_start)/std::chrono::milliseconds(1)<< " ms"<< std::endl;
+
+    return beta_profile;
+}
+
+//=============================================================================================================================
+/**
+ * Description: Does not include division by lambda in the exponential term; can be used for different subcarriers 
+ * Input:
+ * Output:
+ */
+void WSR_Module::get_bterm_all_subcarrier_conjugate(EigenDoubleMatrix &e_term,
+                                                    EigenDoubleMatrix &eigen_yaw_list)
+{
+    int i = 0;
+    int j = 0;
+#pragma omp parallel for shared(e_term, eigen_yaw_list) private(i, j) collapse(2)
+    for (i = 0; i < e_term.rows(); i++)
+    {
+        for (j = 0; j < e_term.cols(); j++)
+        {                                                                                        //Pitch is 90 (clockwise from z-axis)
+           e_term(i, j) = __antenna_separation*cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(j,0))*sin(__eigen_precomp_rep_theta(i, 0)-90);
+        }
+    }
 }

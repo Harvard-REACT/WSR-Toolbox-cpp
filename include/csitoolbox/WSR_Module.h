@@ -19,6 +19,7 @@ class WSR_Module
 {   
     private:
         double __lambda,__time_offset,__time_threshold,__peak_radius;
+        float __antenna_separation;
         size_t __nphi, __ntheta, __snum_start, __snum_end;
         std::unordered_map<std::string, double> __perf_aoa_profile_cal_time,__memory_used, __calculated_ts_offset,
                                                 __channel_phase_diff_mean,__channel_phase_diff_stdev,
@@ -49,7 +50,7 @@ class WSR_Module
         nc::NdArray<double> phi_list,precomp_rep_phi,theta_list, precomp_rep_theta;
         bool __FLAG_normalize_profile = true, __FLAG_packet_threshold = false, __FLAG_debug = true, __FLAG_threading=false,
             __FLAG_interpolate_phase = true, __FLAG_sub_sample = false, __FLag_use_packet_id = true, __FLAG_offboard=false,
-            __FLAG_openmp=false, __FLAG_use_relative_displacement=false;
+            __FLAG_openmp=false, __FLAG_use_relative_displacement=false,__FLAG_two_antenna=false;
         nc::NdArray<double> __aoa_profile;
         std::unordered_map<std::string, nc::NdArray<double>> __all_aoa_profiles;
         std::unordered_map<std::string, std::vector<double>> __all_topN_confidence;
@@ -168,7 +169,20 @@ class WSR_Module
                                     EigenDoubleMatrix &rep_rho);
         void getExponential(EigencdMatrix &out, EigencdMatrix &in);
         int get_peak_num_above_threshold(const std::string &tx_mac_id);
-
+        int test_csi_data_conjugate(std::string rx_csi_file);
+        int calculate_AOA_using_csi_conjugate(std::string rx_csi_file,
+                                        nc::NdArray<double> displacement,
+                                        nc::NdArray<double> displacement_timestamp);
+        nc::NdArray<double> compute_conjugate_profile_bartlett_multithread(
+                                        const nc::NdArray<std::complex<double>> &input_h_list,
+                                        const nc::NdArray<double> &input_pose_list);
+        void get_two_antenna_bterm_all(EigencdMatrix &e_term_exp,
+                                        EigenDoubleMatrix &eigen_yaw_list);
+        void get_bterm_all_subcarrier_conjugate(EigenDoubleMatrix &e_term,
+                                                EigenDoubleMatrix &eigen_yaw_list);
+        nc::NdArray<double> compute_conjuate_profile_music_offboard(
+                            const nc::NdArray<std::complex<double>> &input_h_list,
+                            const nc::NdArray<double> &input_pose_list);                                                
 };
 
 

@@ -679,7 +679,8 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     Eigen::Matrix3f rotationMatrix;
     Eigen::Vector3f offset_vector(antenna_offset[0],antenna_offset[1],antenna_offset[2]), position_vector(antenna_offset[0],antenna_offset[1],antenna_offset[2]);
 
-    std::cout << rx_trajectory.size() << std::endl;
+    std::cout << "Vals in each pose of displacement:" << rx_trajectory[0].size() << std::endl;
+
     for(int i=0; i<rx_trajectory.size(); i++){
         nsec_timestamp = rx_trajectory[i][0] + rx_trajectory[i][1]*0.000000001;
         trajectory_timestamp(i,0) = nsec_timestamp; //timestamp  //TODO: fix bug #8
@@ -734,7 +735,10 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
 
     //Find first and last moving index
     //@TODO : Figure out for z_displacment when 3D traj (vertical motion)
-    double first_x = sorted_displacement(0, 0), first_y = sorted_displacement(0, 1), first_z = sorted_displacement(0, 2);
+    double first_x = sorted_displacement(0, 0), 
+            first_y = sorted_displacement(0, 1), 
+            first_z = sorted_displacement(0, 2),
+            first_yaw = sorted_displacement(0, 3);
     double lastX = sorted_displacement(-1,0), lastY =sorted_displacement(-1,1), lastZ = sorted_displacement(-1,2);
     nc::NdArray<double> temp1 = abs(sorted_displacement(sorted_displacement.rSlice(),0)-first_x);
     nc::NdArray<double> temp2 = abs(sorted_displacement(sorted_displacement.rSlice(),1)-first_y);
@@ -777,6 +781,7 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     first_x = sorted_displacement(start_index, 0);
     first_y = sorted_displacement(start_index, 1);
     first_z = sorted_displacement(start_index, 2);
+    first_yaw = sorted_displacement(start_index, 3);
     if(__Flag_get_mean_pos)
     {
         pos = nc::mean(sorted_displacement({start_index,end_index},sorted_displacement.cSlice()),nc::Axis::ROW);
@@ -792,13 +797,14 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
         sorted_displacement.put(i,0,sorted_displacement(i, 0) - first_x);
         sorted_displacement.put(i,1,sorted_displacement(i, 1) - first_y);
         sorted_displacement.put(i,2,sorted_displacement(i, 2) - first_z);
+        sorted_displacement.put(i,3,sorted_displacement(i, 3) - first_yaw);
     }
 
     // std::cout << sorted_trajectory_timestamp({start_index,end_index},sorted_trajectory_timestamp.cSlice()).shape() <<std::endl;
     //std::cout << "sorted traj shape " << sorted_displacement({start_index,end_index},nc::Slice(0, 3)).shape() << std::endl;
 
     return std::make_pair(sorted_trajectory_timestamp({start_index,end_index},sorted_trajectory_timestamp.cSlice()), 
-                         sorted_displacement({start_index,end_index},nc::Slice(0, 3)));
+                         sorted_displacement({start_index,end_index},nc::Slice(0, 4)));
 }
 
 
@@ -870,10 +876,10 @@ std::pair<nc::NdArray<double>,std::vector<size_t> > WSR_Util::interpolate(const 
         std::cout << "time list and pose list should have same length" << std::endl;
     }
     
-    if (nc::shape(inFp).cols != 3)
+    if (nc::shape(inFp).cols != 4) //x,y,z,yaw
     {
         THROW_CSI_INVALID_ARGUMENT_ERROR("the shape of pose matrix should be n by 3");
-        std::cout << "the shape of pose matrix should be n by 3" << std::endl;
+        std::cout << "the shape of pose matrix should be n by 4" << std::endl;
     }
     
     if (inX(0,0) > inXp(-1,0) || inX(-1,0)<inXp(0,0))
@@ -898,7 +904,7 @@ std::pair<nc::NdArray<double>,std::vector<size_t> > WSR_Util::interpolate(const 
     auto cleaned_inX = inX(nc::Slice(start_idx,end_idx+1),inX.cSlice());
     // sort the input inX array
     nc::NdArray<double> sortedX = sort(cleaned_inX);
-    nc::NdArray<double> returnArray( cleaned_inX.size(),3);
+    nc::NdArray<double> returnArray( cleaned_inX.size(),4);
     nc::uint32 currXpIdx = 0;
     nc::uint32 currXidx = 0;
     
@@ -908,9 +914,10 @@ std::pair<nc::NdArray<double>,std::vector<size_t> > WSR_Util::interpolate(const 
         {
             const double percent = static_cast<double>(sortedX[currXidx] - inXp[currXpIdx]) /
                                     static_cast<double>(inXp[currXpIdx + 1] - inXp[currXpIdx]);
-            returnArray.put(currXidx,0, nc::utils::interp(inFp(currXpIdx,0), inFp(currXpIdx + 1,0), percent));
-            returnArray.put(currXidx,1, nc::utils::interp(inFp(currXpIdx,1), inFp(currXpIdx + 1,1), percent));
-            returnArray.put(currXidx++,2, nc::utils::interp(inFp(currXpIdx,2), inFp(currXpIdx + 1,2), percent));
+            returnArray.put(currXidx,0, nc::utils::interp(inFp(currXpIdx,0), inFp(currXpIdx + 1,0), percent));    //x
+            returnArray.put(currXidx,1, nc::utils::interp(inFp(currXpIdx,1), inFp(currXpIdx + 1,1), percent));    //y
+            returnArray.put(currXidx,2, nc::utils::interp(inFp(currXpIdx,2), inFp(currXpIdx + 1,2), percent));    //z
+            returnArray.put(currXidx++,3, nc::utils::interp(inFp(currXpIdx,3), inFp(currXpIdx + 1,3), percent));  //yaw
         }
         else
         {

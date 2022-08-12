@@ -61,7 +61,8 @@ int main(){
     
 
     /*Test CSI data files*/
-    run_module.test_csi_data(rx_robot_csi,tx_robot_csi);
+    // run_module.test_csi_data(rx_robot_csi,tx_robot_csi);
+    run_module.test_csi_data_conjugate(rx_robot_csi);
     auto detected_tx = run_module.get_paired_pkt_count();
 
     for(auto & itr : detected_tx)
