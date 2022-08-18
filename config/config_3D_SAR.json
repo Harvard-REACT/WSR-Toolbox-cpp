@@ -37,11 +37,11 @@
     },
     "scnum_start":{
         "desc":"starting subcarrier number for forward-reverse music/bartlett. Total subcarriers 30, start 0, mid 15, end  30 ",
-        "value":12
+        "value":15
     },
     "scnum_end":{
         "desc":"end subcarrier number for forward-reverse music/bartlett. Total subcarriers 30",
-        "value":18
+        "value":16
     },
     "multiple_sub_carriers":{
         "desc":"Use multiple sub-carriers. Used when using relative channel",
@@ -189,11 +189,13 @@
             "tx3":{
                 "mac_id_sample":"00:21:6A:3F:17:5A",
                 "mac_id":"00:21:6A:3E:F5:7E",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
+                "csi_fn_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2022-08-17_142858.dat"
             },
             "tx4":{
                 "mac_id":"00:21:6A:AC:9C:6A",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_202550.dat"
+                "csi_fn_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_202550.dat",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2022-08-17_142858.dat"
             }
         }
     },
@@ -202,13 +204,13 @@
         "value":{           
             "mac_id":"00:21:6A:53:89:D2",
             "csi_fn_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_202550.dat",
-            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/csi_rx_2022-08-12_184235.dat"
+            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/csi_rx_2022-08-17_142858.dat"
         }
     },
     "input_trajectory_csv_fn_rx":{
         "desc":"Trajectory fiile",
         "value_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/rx_trajectory_2021-06-27_202550_.csv",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/rx_trajectory_2022-08-12_184235.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/rx_trajectory_2022-08-17_142858.csv"
     },
     "input_trajectory_csv_fn_rx_t265":{
         "desc":"Trajectory fiile",
@@ -217,7 +219,7 @@
     "input_trajectory_csv_fn_rx_odom":{
         "desc":"Trajectory fiile",
         "value_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/odom_rx_trajectory_2021-06-27_202550.csv",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/odom_rx_trajectory_2022-08-12_184235.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/odom_rx_trajectory_2022-08-17_142858.csv"
     },
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
@@ -315,7 +317,7 @@
     },
     "antenna_separation":{
         "desc": "(meters) Used with complex conjugate channel formulation",
-        "value": 0.27
+        "value": 0.28
     },
     "use_two_antennas":
     {

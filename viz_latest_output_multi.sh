@@ -26,7 +26,7 @@ do
      
     echo "====== Fetching latest files for visualization TX : $tx ======"
 
-    csi_phase_fn=$(ls -t1 ../debug |  head -n $nrf | grep $tx | grep all_channel)
+    csi_phase_fn=$(ls -t1 ../debug |  head -n $nrf | grep $tx | grep sliced_channel_dat)
     echo "CSI Phase for $csi_phase_fn"
     python3.8 viz_channel_data.py --file ../debug/$csi_phase_fn
 

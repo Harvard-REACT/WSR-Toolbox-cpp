@@ -179,34 +179,40 @@
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
             "tx1":{
-                "mac_id":"00:21:6A:3F:16:DA"            
+                "mac_id":"00:21:6A:3F:16:DA",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"            
             },
             "tx2":{
-                "mac_id":"00:21:6A:3E:F5:7E"            
+                "mac_id":"00:21:6A:30:D2:3C",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"            
             },
             "tx3":{
-                "mac_id":"00:21:6A:AC:9C:6A"
+                "mac_id":"00:21:6A:3F:17:5A",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"            
             },
             "tx4":{
-                "mac_id":"00:21:6A:3F:17:5A"            
+                "mac_id":"00:21:6A:AC:9C:6A",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_202550.dat"
             },
             "s3":{
-                "mac_id":"00:21:6A:AC:9C:1"            
+                "mac_id":"00:21:6A:AC:9C:1",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"            
             },
             "s4":{
-                "mac_id":"00:21:6A:3F:17:1"            
+                "mac_id":"00:21:6A:3F:17:1",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
             }
         }
     },
     "RX_mac_ID_list":{
         "desc":"List of all mac-ids",
-        "value_spoof":["00:21:6A:3F:16:DA","00:21:6A:3E:F5:7E","00:21:6A:AC:9C:6A","00:21:6A:3F:17:5A","00:21:6A:AC:9C:1","00:21:6A:3F:17:1"],
-        "value":["00:21:6A:3F:16:DA","00:21:6A:3E:F5:7E","00:21:6A:AC:9C:6A","00:21:6A:3F:17:5A"]
+        "value_spoof":["00:21:6A:3F:16:DA","00:21:6A:30:D2:3C","00:21:6A:3F:17:5A","00:21:6A:AC:9C:6A","00:21:6A:AC:9C:1","00:21:6A:3F:17:1"],
+        "value":["00:21:6A:3F:16:DA","00:21:6A:30:D2:3C","00:21:6A:AC:9C:6A","00:21:6A:3F:17:5A"]
     },
     "input_RX_channel_csi_fn":{
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
         "value":{           
-            "mac_id":"00:21:6A:3F:16:DA",
+            "mac_id":"00:21:6A:53:89:D2",
             "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_202550.dat"
         }
     },
@@ -316,9 +322,13 @@
         "desc":"Enable openmp usage for elementwise operation",
         "value":true
     },
+    "antenna_separation":{
+        "desc": "(meters) Used with complex conjugate channel formulation",
+        "value": 0.28
+    },
     "use_two_antennas":
     {
         "desc":"Use 2 antenna SAR formulation",
-        "value":true
+        "value":false
     }
 }

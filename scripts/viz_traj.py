@@ -13,6 +13,7 @@ import glob, os
 import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
 import argparse
+import numpy as np
 
 SMALL_SIZE = 8
 MEDIUM_SIZE = 10
@@ -50,8 +51,24 @@ def main():
     ax.set_xlabel("X-axis(m)")
     ax.set_ylabel("Y-axis(m)")
     ax.set_zlabel("Z-axis(m)")
-
+    ax.set_title("X-Y-Z Postions")
     ax.scatter(x, y, z,marker='x',s=8)
+    plt.show()
+
+    '''
+    Plot orientation
+    '''
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    x = traj['x']
+    y = traj['y']
+    z = traj['z']
+    yaw = traj['yaw']
+
+    ax.set_xlabel("X-axis(m)")
+    ax.set_ylabel("Y-axis(m)")
+    ax.set_title("Orientation")
+    ax.scatter(np.cos(yaw), np.sin(yaw), marker='x',s=8)
     plt.show()
 
 

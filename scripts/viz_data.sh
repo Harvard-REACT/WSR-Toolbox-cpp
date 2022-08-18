@@ -18,13 +18,13 @@ do
 
     echo "====== Fetching latest files for visualization TX : $tx ======"
 
-    csi_phase_fn=$(ls -t1 $1 |  head -n $nrf | grep $tx | grep all_channel)
+    csi_phase_fn=$(ls -t1 $1 |  head -n $nrf | grep $tx | grep sliced_channel_data)
     echo "CSI Phase for $csi_phase_fn"
-    python3.8 ~/catkin_ws/src/wsr_ros/scripts/viz_channel_data.py --file $1/$csi_phase_fn
+    python3.8 ~/WSR_Project/WSR-Toolbox-cpp/scripts/viz_channel_data.py --file $1/$csi_phase_fn
 
     traj_pkt_fn=$(ls -t1 $1 |  head -n $nrf | grep $tx | grep packet)
     echo "Packet distribution along the trajectory for $traj_pkt_fn"
-    python3.8 ~/catkin_ws/src/wsr_ros/scripts/viz_traj.py --file $1/$traj_pkt_fn
+    python3.8 ~/WSR_Project/WSR-Toolbox-cpp/scripts/viz_traj.py --file $1/$traj_pkt_fn
 
     profile_fn=$(ls -t1 $1 |  head -n $nrf | grep $tx | grep aoa)
     echo "AOA profile for $profile_fn"
