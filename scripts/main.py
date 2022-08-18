@@ -16,7 +16,7 @@ def main():
     args = parser.parse_args()
     
     homedir = expanduser("~")    
-    config_fn = homedir + "/WSR_Project/WSR-Toolbox-cpp/config/config_3D_SAR.json"
+    config_fn = homedir + "/WSR_Project/WSR-Toolbox-cpp/config/config_3D_SAR_multi.json"
     
 
     # #Make C++ function calls to calculate AOA profile

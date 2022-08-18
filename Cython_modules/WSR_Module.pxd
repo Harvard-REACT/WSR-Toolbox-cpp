@@ -20,7 +20,7 @@ cdef extern from "WSR_Main.h":
     cdef cppclass WSR_Main:
         WSR_Main() except +
         WSR_Main(string, string) except +
-        pair[vector[string], vector[double]] generate_aoa()
+        pair[vector[string], vector[vector[double]]] generate_aoa()
 
 cdef extern from "WSR_Module.h":
     cdef cppclass WSR_Module:
