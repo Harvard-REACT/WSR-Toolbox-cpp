@@ -98,7 +98,16 @@ WSR_Module::WSR_Module(std::string config_fn)
     phi_list = nc::linspace(_phi_min * M_PI / 180, _phi_max * M_PI / 180, __nphi);
     precomp_rep_phi = nc::repeat(phi_list.transpose(), __ntheta, 1);
     precomp_rep_theta = nc::repeat(theta_list.transpose(), 1, __nphi);
+    
+    // std::cout << "Precomp rep phi =" << precomp_rep_phi.shape() << std::endl;
+    // std::cout << "Precomp rep theta =" << precomp_rep_theta.shape() << std::endl;
+    
     precomp_rep_theta = nc::reshape(precomp_rep_theta, __nphi * __ntheta, 1);
+    // std::cout << "Precomp rep theta =" << precomp_rep_theta.shape() << std::endl;
+
+    __debug_dir = __precompute_config["debug_dir"]["value"].dump();
+    __debug_dir.erase(remove(__debug_dir.begin(), __debug_dir.end(), '\"'), __debug_dir.end());
+
     nc::NdArray<double> lambda_list = {__lambda};
     __eigen_lambda_list = EigenDoubleMatrixMap(lambda_list.data(),
                                                lambda_list.numRows(),
@@ -109,6 +118,8 @@ WSR_Module::WSR_Module(std::string config_fn)
     __eigen_precomp_rep_theta = EigenDoubleMatrixMap(precomp_rep_theta.data(),
                                                      precomp_rep_theta.numRows(),
                                                      precomp_rep_theta.numCols());
+    
+    
     if (__FLAG_threading || __FLAG_offboard)
     {
         // std::thread t1 (&WSR_Module::get_repmat, this,
@@ -2600,20 +2611,14 @@ int WSR_Module::test_csi_data_conjugate(std::string rx_csi_file)
         std::cout << "log [test_csi_data_conjugate]: Calculating Complex conjugate product" << std::endl;
         //Complex conjugate to correct for channel phase
         csi_data = utils.getConjugateProductChannel(data_packets_RX,
-                                                    __FLAG_interpolate_phase,
-                                                    __FLAG_sub_sample);
+                                                    __FLAG_sub_sample,
+                                                    __snum_start,
+                                                    __snum_end);
 
 
         std::cout << "log [test_csi_data_conjugate]: corrected CFO " << std::endl;
         h_list_all = csi_data.first;
         csi_timestamp_all = csi_data.second;
-
-        bool moving = true;
-        utils.get_phase_diff_metrics(h_list_all,
-                                     moving_channel_ang_diff_mean,
-                                     moving_channel_ang_diff_stdev,
-                                     __FLAG_interpolate_phase,
-                                     moving);
 
         if (h_list_all.shape().rows < __min_packets_to_process)
         {
@@ -2632,8 +2637,10 @@ int WSR_Module::test_csi_data_conjugate(std::string rx_csi_file)
 
             //Store phase and timestamp of the channel for debugging
             std::string channel_data_all = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
+            std::string channel_sub_15_csv = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_channel_sub15_data.csv";
             std::cout << channel_data_all << std::endl;
             utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all, __FLAG_interpolate_phase);
+            utils.writeCSIToFile(h_list_all, csi_timestamp_all, channel_sub_15_csv);
 
             auto starttime = std::chrono::high_resolution_clock::now();
             auto endtime = std::chrono::high_resolution_clock::now();
@@ -2672,12 +2679,10 @@ int WSR_Module::calculate_AOA_using_csi_conjugate(std::string rx_csi_file,
     std::cout << "============ Testing WSR module ==============" << std::endl;
 
     WIFI_Agent RX_SAR_robot; //Receives the broadcasted packets from the Neighboring robots
-    nc::NdArray<std::complex<double>> h_list_all, h_list_static, h_list;
+    nc::NdArray<std::complex<double>> h_list_all, h_list_static, h_list, csi_ant_1, csi_ant_2;
     nc::NdArray<double> csi_timestamp_all, csi_timestamp;
     double cal_ts_offset;
     int ret_val = 0;
-    std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
-    debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());
     
     /**
      * ------------------------------------------------------------------------------------------
@@ -2709,6 +2714,7 @@ int WSR_Module::calculate_AOA_using_csi_conjugate(std::string rx_csi_file,
     {
         WIFI_Agent TX_Neighbor_robot; // Neighbouring robots who reply back
         std::pair<nc::NdArray<std::complex<double>>, nc::NdArray<double>> csi_data;
+        std::pair<nc::NdArray<std::complex<double>>, nc::NdArray<std::complex<double>>> raw_csi_data;
 
         std::cout << "log [calculate_AOA_using_csi_conjugate]: =========================" << std::endl;
         std::cout << "log [calculate_AOA_using_csi_conjugate]: Profile for RX_SAR_robot MAC-ID: " << __RX_SAR_robot_MAC_ID
@@ -2718,17 +2724,30 @@ int WSR_Module::calculate_AOA_using_csi_conjugate(std::string rx_csi_file,
         std::cout << "log [calculate_AOA_using_csi_conjugate]: Packets for TX_Neighbor_robot collected by RX_SAR_robot : "
                     << data_packets_RX.size() << std::endl;
 
-        std::cout << "log [calculate_AOA_using_csi_conjugate]: Calculating Complex conjugate product" << std::endl;
+        std::cout << "log [calculate_AOA_using_csi_conjugate]: Getting Raw CSI data" << std::endl;
         
         //Complex conjugate to correct for channel phase
+        std::cout << "log [calculate_AOA_using_csi_conjugate]: Calculating Complex conjugate product" << std::endl;
         csi_data = utils.getConjugateProductChannel(data_packets_RX,
-                                                    __FLAG_interpolate_phase,
-                                                    __FLAG_sub_sample);
+                                                    __FLAG_sub_sample,
+                                                    __snum_start,
+                                                    __snum_end);
 
 
         std::cout << "log [calculate_AOA_using_csi_conjugate]: corrected CFO " << std::endl;
         h_list_all = csi_data.first;
         csi_timestamp_all = csi_data.second;
+
+        // raw_csi_data = utils.getRawCSIData(data_packets_RX);
+        // std::string csi_antenna_1 = __debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_csi_antenna_1.csv";
+        // std::cout << "log [calculate_AOA_using_csi_conjugate]: Saving Raw CSI data antenna 1" << std::endl;
+        // csi_ant_1 = raw_csi_data.first;
+        // utils.writeCSIToFile(csi_ant_1, csi_timestamp_all, csi_antenna_1);
+        
+        // std::cout << "log [calculate_AOA_using_csi_conjugate]: Saving Raw CSI data antenna 2" << std::endl;
+        // std::string csi_antenna_2 = __debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_csi_antenna_2.csv";
+        // csi_ant_2 = raw_csi_data.second;
+        // utils.writeCSIToFile(csi_ant_2, csi_timestamp_all, csi_antenna_2);
 
 
         if (csi_timestamp_all.size() < __min_packets_to_process)
@@ -2763,7 +2782,14 @@ int WSR_Module::calculate_AOA_using_csi_conjugate(std::string rx_csi_file,
             /*Interpolate the trajectory using the csi data timestamps*/
             if (__FLAG_debug) std::cout << "log [calculate_AOA_using_csi_conjugate]: interpolating the displacement and csi " << std::endl;
             
-            std::cout << "Size of displacement cols:" << nc::shape(displacement).cols << std::endl;
+            std::cout << "Size of displacement cols:" << nc::shape(displacement) << std::endl;
+
+            //Convert the angles from -PitoPi to 0toPI to enable correct interpolation
+            for(int i=0; i<nc::shape(displacement).rows; i++)
+            {
+                // std::cout << displacement(i,0) <<"," << displacement(i,1) <<"," << displacement(i,3) << std::endl; 
+                displacement(i,3) = utils.wrap0to2Pi(displacement(i,3));
+            }
             
             auto interpolated_data = utils.interpolate(csi_timestamp, displacement_timestamp, displacement);
             nc::NdArray<double> pose_list = interpolated_data.first;
@@ -2775,18 +2801,18 @@ int WSR_Module::calculate_AOA_using_csi_conjugate(std::string rx_csi_file,
                 std::cout << "log [calculate_AOA_using_csi_conjugate]: h_list size  = " << h_list.shape() << std::endl;
 
                 //Store phase and timestamp of the channel for debugging
-                std::string channel_data_sliced = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_sliced_channel_data.json";
+                std::string channel_data_sliced = __debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_sliced_channel_data.json";
                 utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_sliced, __FLAG_interpolate_phase);
 
-                std::string channel_data_all = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
+                std::string channel_data_all = __debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
                 utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all, __FLAG_interpolate_phase);
 
                 //Store the packet distribution to check for spotty packets
-                std::string packet_dist = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_packet_dist.json";
+                std::string packet_dist = __debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_packet_dist.json";
                 utils.writePacketDistributionToJsonFile(csi_timestamp, displacement_timestamp, displacement, packet_dist);
 
                 //Store interpolated trajectory for debugging
-                std::string interpl_trajectory = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_interpl_trajectory.json";
+                std::string interpl_trajectory = __debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_interpl_trajectory.json";
                 utils.writeTrajToFile(pose_list, interpl_trajectory);
             }
 
@@ -2794,17 +2820,8 @@ int WSR_Module::calculate_AOA_using_csi_conjugate(std::string rx_csi_file,
             std::cout << "log [calculate_AOA_profile]: Calculating AOA profile..." << std::endl;
             auto starttime = std::chrono::high_resolution_clock::now();
 
-            // if (__FLAG_threading)
-            // {
-            // __aoa_profile = compute_profile_music_offboard(h_list, pose_list);
-            // __aoa_profile = compute_profile_bartlett_offboard(h_list, pose_list);
-            // __aoa_profile = compute_conjugate_profile_bartlett_multithread(h_list, pose_list);
-            __aoa_profile = compute_conjuate_profile_music_offboard(h_list, pose_list);
-            // }
-            // else
-            // {
-            //     __aoa_profile = compute_conjugate_profile_bartlett_singlethread(h_list, pose_list);
-            // }
+            __aoa_profile = compute_conjugate_profile_bartlett_multithread(h_list, pose_list);
+            // __aoa_profile = compute_conjuate_profile_music_offboard(h_list, pose_list);
 
             auto endtime = std::chrono::high_resolution_clock::now();
             float processtime = std::chrono::duration<float, std::milli>(endtime - starttime).count();
@@ -2843,11 +2860,7 @@ int WSR_Module::calculate_AOA_using_csi_conjugate(std::string rx_csi_file,
  * Input: Relative channel and robot displacement
  * Output: AOA profile
  * */
-//=============================================================================================================================
-/**
- *
- *
- * */
+//=======================================================================================================
 nc::NdArray<double> WSR_Module::compute_conjugate_profile_bartlett_multithread(
                                 const nc::NdArray<std::complex<double>> &input_h_list,
                                 const nc::NdArray<double> &input_pose_list)
@@ -2876,18 +2889,7 @@ nc::NdArray<double> WSR_Module::compute_conjugate_profile_bartlett_multithread(
         std::cout << "log [compute_conjugate_profile_bartlett_multithread] Total packets: " << total_packets << ", Max packets used: " << max_packets << std::endl;
 
     std::cout.precision(15);
-    nc::NdArray<std::complex<double>> h_list_single_channel;
-
-    if (__FLAG_interpolate_phase)
-        h_list_single_channel = h_list(h_list.rSlice(), 30);
-    else
-        h_list_single_channel = h_list(h_list.rSlice(), 15);
-
     auto num_poses = nc::shape(pose_list).rows;
-    if (h_list_single_channel.shape().cols == 0)
-    {
-        THROW_CSI_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
-    }
 
     if (__FLAG_debug)
         std::cout << "log [compute_conjugate_profile_bartlett_multithread] : get lambda and phi" << std::endl;
@@ -2898,19 +2900,17 @@ nc::NdArray<double> WSR_Module::compute_conjugate_profile_bartlett_multithread(
     auto pose_x = pose_list(pose_list.rSlice(), 0);
     auto pose_y = pose_list(pose_list.rSlice(), 1);
     auto pose_z = pose_list(pose_list.rSlice(), 2);
-    auto yaw_list = pose_list(pose_list.rSlice(), 3);
+    nc::NdArray<double> orientation_list = pose_list(pose_list.rSlice(), 3);
+    // std::cout << orientation_list*(180/M_PI) << std::endl;
 
-    std::cout << yaw_list*(180/M_PI) << std::endl;
+    //Wrap the angles again. The -ve sign for exp flips the angles
+    // std::cout << "------------------------------------------" << std::endl;
+    orientation_list = nc::angle(nc::exp(nc::multiply(orientation_list, std::complex<double>(0, 1))));
+    // std::cout << orientation_list*(180/M_PI) << std::endl;
 
-    // auto yaw_list = nc::arctan2(pose_y, pose_x);
-    // yaw_list = nc::angle(-nc::exp(nc::multiply(yaw_list, std::complex<double>(0, 1))));
-    // EigenDoubleMatrix eigen_yaw_list_tmp = EigenDoubleMatrixMap(yaw_list.data(),
-    //                                                             yaw_list.numRows(),
-    //                                                             yaw_list.numCols());
-    // EigenDoubleMatrix eigen_yaw_list = eigen_yaw_list_tmp.transpose();
-    EigenDoubleMatrix eigen_yaw_list = EigenDoubleMatrixMap(yaw_list.data(),
-                                                                yaw_list.numRows(),
-                                                                yaw_list.numCols());
+    EigenDoubleMatrix eigen_yaw_list = EigenDoubleMatrixMap(orientation_list.data(),
+                                                                orientation_list.numRows(),
+                                                                orientation_list.numCols());
 
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << " Time elapsed for repmat operation: " << (end - start) / std::chrono::milliseconds(1) << std::endl;
@@ -2922,24 +2922,59 @@ nc::NdArray<double> WSR_Module::compute_conjugate_profile_bartlett_multithread(
     //===========Openmp implementation 0.2 sec faster =============.
     start = std::chrono::high_resolution_clock::now();
     std::cout << "Computing e_term_prod...." << std::endl;
-    EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
-    get_two_antenna_bterm_all(std::ref(e_term_exp), std::ref(eigen_yaw_list));
+    EigenDoubleMatrix e_term(__nphi * __ntheta, num_poses);
+    get_bterm_all_subcarrier_conjugate(std::ref(e_term), std::ref(eigen_yaw_list));
     end = std::chrono::high_resolution_clock::now();
     std::cout << " Time elapsed for eterm_prod and eterm_exp:  " << (end - start) / std::chrono::milliseconds(1) << std::endl;
     //===========Openmp implementation=============.
-
-    std::complex<double> *cddataPtr = new std::complex<double>[e_term_exp.rows() * e_term_exp.cols()];
-    EigencdMatrixMap(cddataPtr, e_term_exp.rows(), e_term_exp.cols()) = e_term_exp;
-    auto e_term = nc::NdArray<std::complex<double>>(cddataPtr, e_term_exp.rows(), e_term_exp.cols(), __takeOwnership);
     
-    if (__FLAG_debug)
-        std::cout << "log [compute_conjugate_profile_bartlett_multithread] : getting profile using matmul" << std::endl;
-    
-    //Really quick, no need to check time
-    auto result_mat = nc::matmul(e_term, h_list_single_channel);
-    auto betaProfileProd = nc::power(nc::abs(result_mat), 2);
-    auto beta_profile = nc::reshape(betaProfileProd, __ntheta, __nphi);
+    EigenDoubleMatrix eigen_betaProfile_final;
+    bool first = true;
+    for(int h_i=__snum_start; h_i<=__snum_end; h_i++)
+    {
+        std::cout << "Subcarrier : " << h_i << std::endl;
+        double centerfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
+                        (double(__precompute_config["subCarrier"]["value"]) - h_i) * 20e6 / 30;
+        double lambda_inv =  centerfreq/double(__precompute_config["c"]["value"]);
+        EigencdMatrix temp1 = e_term * (2.0 * std::complex<double>(0, 1) * M_PI * lambda_inv);
+        EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
+        getExponential(e_term_exp, temp1);
+        
+        nc::NdArray<std::complex<double>> h_list_single_channel;
+        h_list_single_channel = h_list(h_list.rSlice(), h_i);
+        
+        if (h_list_single_channel.shape().cols == 0)
+        {
+            THROW_CSI_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
+        }
 
+        if (__FLAG_debug)
+            std::cout << "log [compute_conjugate_profile_bartlett_multithread] : getting profile using matmul" << std::endl;
+        
+        auto h_list_eigen = EigencdMatrixMap(h_list_single_channel.data(), h_list_single_channel.numRows(), h_list_single_channel.numCols());
+        std::cout << "rows = " << h_list_eigen.rows() << ",  cols = " << h_list_eigen.cols() << std::endl;
+        std::cout << "rows = " << e_term_exp.rows() << ",  cols = " << e_term_exp.cols() << std::endl;
+
+        EigenDoubleMatrix eigen_betaProfileProd = (e_term_exp * h_list_eigen).cwiseAbs2();    
+        EigenDoubleMatrixMap eigen_betaProfile(eigen_betaProfileProd.data(),__ntheta, __nphi);
+        std::cout << "beta profile rows = " << eigen_betaProfile.rows() << ",  beta profile cols = " << eigen_betaProfile.cols() << std::endl;
+
+        if(first)
+        {
+            eigen_betaProfile_final = eigen_betaProfile;
+            first = false;
+        }
+        else
+        {
+            eigen_betaProfile_final = eigen_betaProfile_final.cwiseProduct(eigen_betaProfile);
+        }
+    }
+
+    double *cddataPtr2 = new double[eigen_betaProfile_final.rows() * eigen_betaProfile_final.cols()];
+    EigenDoubleMatrixMap(cddataPtr2, eigen_betaProfile_final.rows(), eigen_betaProfile_final.cols()) = eigen_betaProfile_final;
+    auto beta_profile = nc::NdArray<double>(cddataPtr2, eigen_betaProfile_final.rows(), eigen_betaProfile_final.cols(), __takeOwnership);
+
+       
     if (__FLAG_normalize_profile)
     {
         auto sum_val = nc::sum(nc::sum(beta_profile));
@@ -2973,11 +3008,11 @@ void WSR_Module::get_two_antenna_bterm_all(EigencdMatrix &e_term_exp,
     for (i = 0; i < e_term_exp.rows(); i++)
     {
         for (j = 0; j < e_term_exp.cols(); j++)
-        {
-            e_term_exp(i, j) = exp(__antenna_separation*cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(j,0))*sin(__eigen_precomp_rep_theta(i, 0)-90)*(-2.0 * std::complex<double>(0, 1) * M_PI / __lambda));
+        {                                                                                                      //Trig identity simplifies and also cancels out the -ve sign in -2j
+            e_term_exp(i, j) = exp(__antenna_separation*cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(j,0))*cos(__eigen_precomp_rep_theta(i, 0))*(2.0 * std::complex<double>(0, 1) * M_PI / __lambda));
+            //e_term_exp(i, j) = exp((2.0 * std::complex<double>(0, 1) * M_PI * double(__antenna_separation) / __lambda)*cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(j,0)));
         }
     }
-    //+ or - for 2j?? -> this just flips the angles
 }
 
 //=============================================================================================================================
@@ -3028,9 +3063,11 @@ nc::NdArray<double> WSR_Module::compute_conjuate_profile_music_offboard(
     auto pose_z = pose_list(pose_list.rSlice(), 2);
     auto yaw_list = pose_list(pose_list.rSlice(), 3);
 
-    std::cout << yaw_list*(180/M_PI) << std::endl;
+    //std::cout << yaw_list*(180/M_PI) << std::endl;
 
+    //This flips the angles
     // yaw_list = nc::angle(-nc::exp(nc::multiply(yaw_list, std::complex<double>(0, 1))));
+
     EigenDoubleMatrix eigen_yaw_list = EigenDoubleMatrixMap(yaw_list.data(),
                                                                 yaw_list.numRows(),
                                                                 yaw_list.numCols());
@@ -3130,14 +3167,16 @@ nc::NdArray<double> WSR_Module::compute_conjuate_profile_music_offboard(
 void WSR_Module::get_bterm_all_subcarrier_conjugate(EigenDoubleMatrix &e_term,
                                                     EigenDoubleMatrix &eigen_yaw_list)
 {
+    std::cout << "Yaw list rows: " << eigen_yaw_list.rows() << std::endl;
+    std::cout << "Yaw list cols: " << eigen_yaw_list.cols() << std::endl;
     int i = 0;
     int j = 0;
 #pragma omp parallel for shared(e_term, eigen_yaw_list) private(i, j) collapse(2)
     for (i = 0; i < e_term.rows(); i++)
     {
         for (j = 0; j < e_term.cols(); j++)
-        {                                                                                        //Pitch is 90 (clockwise from z-axis)
-           e_term(i, j) = __antenna_separation*cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(j,0))*sin(__eigen_precomp_rep_theta(i, 0)-90);
+        {                                                                                                      //Trig identity simplifies and also cancels out the -ve sign in -2j
+            e_term(i, j) = __antenna_separation*cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(j,0))*cos(__eigen_precomp_rep_theta(i, 0));
         }
     }
 }

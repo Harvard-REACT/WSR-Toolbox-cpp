@@ -771,6 +771,10 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
     
     int start_index = std::min(std::min(start_x_val,start_y_val), start_z_val);
     int end_index = std::max(std::max(end_x_val,end_y_val), end_z_val); 
+
+    std::cout << "First moving index = " << start_index << std::endl;
+    std::cout << "Last moving index = " << end_index << std::endl;
+    
     int mid_index = (start_index + end_index) / 2;
     // //normalize based on first moving pose
     // first_x = sorted_displacement(start_index, 0);
@@ -797,7 +801,7 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
         sorted_displacement.put(i,0,sorted_displacement(i, 0) - first_x);
         sorted_displacement.put(i,1,sorted_displacement(i, 1) - first_y);
         sorted_displacement.put(i,2,sorted_displacement(i, 2) - first_z);
-        sorted_displacement.put(i,3,sorted_displacement(i, 3) - first_yaw);
+        sorted_displacement.put(i,3,sorted_displacement(i, 3));
     }
 
     // std::cout << sorted_trajectory_timestamp({start_index,end_index},sorted_trajectory_timestamp.cSlice()).shape() <<std::endl;
@@ -956,33 +960,32 @@ void WSR_Util::writeToFile(nc::NdArray<double>& nd_array, std::string fn)
 }
 //=============================================================================================================================
 /**
- * Inputs: inXp ==> csi_timestamp, inX ==> trajectory_timestamp, inFp ==> trajectory
+ * Inputs:
  * 
  * */ 
-void WSR_Util::writeCSIToFile(nc::NdArray<std::complex<double>>& nd_array, string fn)
-{
+void WSR_Util::writeCSIToFile(nc::NdArray<std::complex<double>>& nd_array,
+                              nc::NdArray<double>& timestamp,
+                              string fn)
+{   
+    string output_file = __homedir+"/"+fn;
     std::cout.precision(15);
-    ofstream myfile1 (fn+"_real.csv");
-    ofstream myfile2 (fn+"_img.csv");
+    ofstream myfile1 (output_file);
 
-    if (myfile1.is_open() && myfile2.is_open())
+    if (myfile1.is_open())
     {
         for(size_t i = 0; i < nd_array.shape().rows; i++)
         {
-            for(size_t j = 0; j < nd_array.shape().cols; j++) {
-                auto value = nd_array(i,j);
-                // std::cout << fixed << value << std::endl;
-                myfile1 << fixed << value.real() << ",";
-                myfile2 << fixed << value.imag() << ",";
+            myfile1 << fixed << timestamp(i,0) << ",";
+            for(int j=0; j<30; j++)
+            {
+                myfile1 << nd_array(i,j).real() <<","<< nd_array(i,j).imag() << ",";
             }
             // break;
             myfile1 << "\n";
-            myfile2 << "\n";
         }
         
     }
     myfile1.close();
-    myfile2.is_open();
 }
 //=============================================================================================================================
 /**
@@ -1014,6 +1017,8 @@ void WSR_Util::writeCSIToJsonFile(nc::NdArray<std::complex<double>>& nd_array,
 
             interpl_traj["channel_packets"][key]["center_subcarrier_phase"] = std::arg(value);
             interpl_traj["channel_packets"][key]["timestamp"] = timestamp(i,0);
+            interpl_traj["channel_packets"][key]["real"] = value.real();
+            interpl_traj["channel_packets"][key]["imag"] = value.imag();
             // interpl_traj["channel_packets"][key]["numcpp_center_subcarrier"] = nc::angle(value);
         }
         myfile << interpl_traj;
@@ -1028,7 +1033,8 @@ void WSR_Util::writeCSIToJsonFile(nc::NdArray<std::complex<double>>& nd_array,
 void WSR_Util::writeTrajToFile(std::vector<std::vector<double>>& rx_trajectory, std::string fn)
 {
     std::cout.precision(15);
-    ofstream myfile (fn);
+    string output_file = __homedir+"/"+fn;
+    ofstream myfile (output_file);
     std::vector<double> temp;
 
     std::cout << "Trajectory size " << rx_trajectory.size() << std::endl;
@@ -1356,7 +1362,8 @@ void WSR_Util::writePacketDistributionToJsonFile(const nc::NdArray<double>& csi_
                     nlohmann::json temp = {
                         {"x",displacement(k,0)},
                         {"y",displacement(k,1)},
-                        {"z",displacement(k,2)}, 
+                        {"z",displacement(k,2)},
+                        {"yaw",displacement(k,3)} 
                     };
                     key = std::to_string(i);
                     packet_distribution["pose_list"][key] = temp;
@@ -1374,8 +1381,9 @@ void WSR_Util::writePacketDistributionToJsonFile(const nc::NdArray<double>& csi_
  **/
 std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getConjugateProductChannel(
                                                                 std::vector<DataPacket> rx_robot,
-                                                                bool interpolate_phase,
-                                                                bool sub_sample){
+                                                                bool sub_sample,
+                                                                int __snum_start,
+                                                                int __snum_end){
     int rx_length = int(rx_robot.size());
     int itr_k=0, itr_l=0;
     double a;
@@ -1394,20 +1402,11 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getCo
 
     while(itr_l < rx_length) { //&& not(isempty(receiver{k}))){
         //multiply forward and reverse channel
-        for(int h_i = 0;h_i< 30; h_i++)
+        for(int h_i = __snum_start;h_i<= __snum_end; h_i++)
         {
+            //Antenna 1---->2. The orientation is calculated from antenna 2's perspective.
+            //h2 . h1*
             temp1(0,h_i) = rx_robot[itr_l].csi[h_i][1] * nc::conj(rx_robot[itr_l].csi[h_i][0]); //using complex conjugate
-        }
-        if(interpolate_phase) 
-        {
-            auto central_snum = nc::NdArray<double>(1, 1) = 15.5;
-            auto xp = nc::arange<double>(1, 31);
-            auto fp = unwrap(nc::angle(temp1(0,temp1.cSlice())));
-            auto mag1 = nc::abs(temp1(0,15));
-            auto mag2 = nc::abs(temp1(0,16));
-            auto fitted =  nc::polynomial::Poly1d<double>::fit(xp.transpose(),fp.transpose(),1);
-            interpolated_phase = nc::unwrap(fitted(central_snum(0,0)));
-            interpolated_h = (mag1+mag2)/2*nc::exp(std::complex<double>(0,1)*interpolated_phase);
         }
         assert(temp2(0,0) != rx_robot[itr_l].ts);
         temp2(0,0) = rx_robot[itr_l].ts;
@@ -1416,24 +1415,17 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getCo
 
         if(first_csi_val)
         {
-            if(interpolate_phase)
-                forward_reverse_channel_product = nc::NdArray<std::complex<double>>{interpolated_h};
-            else
-                forward_reverse_channel_product = temp1;
-
+            forward_reverse_channel_product = temp1;
             csi_timestamp = temp2;
             first_csi_val = false;
         }
         else
         {
             if(sub_sample && itr_l%2!=0) continue;
-            
+
             csi_timestamp = nc::append(csi_timestamp, temp2, nc::Axis::ROW);
             assert(csi_timestamp(-2,0)  < csi_timestamp(-1,0));
-            if(interpolate_phase)
-                forward_reverse_channel_product = nc::append(forward_reverse_channel_product,nc::NdArray<std::complex<double>>{interpolated_h},nc::Axis::ROW);
-            else
-                forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);
+            forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);
                             
         }
     }
@@ -1625,4 +1617,45 @@ void WSR_Util::writeRssiToFile(std::vector<std::vector<int>>& rssi_rx_robot, std
         myfile << signal_strength;   
     }
     myfile.close();
+}
+
+//=============================================================================================================================
+/**
+ * 
+ * 
+ * */
+std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<std::complex<double>>> WSR_Util::getRawCSIData(
+                                                                std::vector<DataPacket> rx_robot){
+    int rx_length = int(rx_robot.size());
+    int itr_l=0;
+
+    nc::NdArray<std::complex<double>> rx_1 = nc::zeros<std::complex<double>>(nc::Shape(rx_length,30));
+    nc::NdArray<std::complex<double>> rx_2 = nc::zeros<std::complex<double>>(nc::Shape(rx_length,30));
+    // nc::NdArray<std::complex<double>> rx_3 = nc::zeros<std::complex<double>>(nc::Shape(rx_length,30));
+    std::cout << "storing raw csi data " << std::endl;
+    while(itr_l < rx_length) 
+    { 
+        for(int h_i = 0;h_i< 30; h_i++)
+        {
+            rx_1(itr_l,h_i) = rx_robot[itr_l].csi[h_i][0];
+            rx_2(itr_l,h_i) = rx_robot[itr_l].csi[h_i][1];
+        }
+        itr_l += 1;
+    }
+    std::cout << "returning raw csi data " << std::endl;
+    return std::make_pair(rx_1, rx_2);
+}
+
+//=============================================================================================================================
+/**
+ * 
+ * 
+ * */
+double WSR_Util::wrap0to2Pi(double val) {
+    val = fmod(val, 2*PI);
+
+    if (val < 0)
+        val += 2*PI;
+
+    return val;
 }

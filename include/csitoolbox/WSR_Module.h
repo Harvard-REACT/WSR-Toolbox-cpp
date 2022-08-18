@@ -61,6 +61,7 @@ class WSR_Module
         std::vector<double> __peak_magnitudes;
         std::unordered_map<std::string, int>  __all_topN_above_threshold;
         int __num_peaks_above_threshold;
+        std::string __debug_dir;
         
     public:
         nlohmann::json __precompute_config; 
@@ -182,7 +183,8 @@ class WSR_Module
                                                 EigenDoubleMatrix &eigen_yaw_list);
         nc::NdArray<double> compute_conjuate_profile_music_offboard(
                             const nc::NdArray<std::complex<double>> &input_h_list,
-                            const nc::NdArray<double> &input_pose_list);                                                
+                            const nc::NdArray<double> &input_pose_list);
+                                               
 };
 
 

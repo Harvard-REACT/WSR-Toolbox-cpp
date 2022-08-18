@@ -47,7 +47,8 @@ class WSR_Util{
 
         void writeToFile(nc::NdArray<double>& nd_array, 
                         std::string fn);
-        void writeCSIToFile(nc::NdArray<std::complex<double>>& nd_array, 
+        void writeCSIToFile(nc::NdArray<std::complex<double>>& nd_array,
+                            nc::NdArray<double>&timestamp,  
                             string fn);
         void writeCSIToJsonFile(nc::NdArray<std::complex<double>>& nd_array, 
                                 nc::NdArray<double>&timestamp, 
@@ -81,8 +82,9 @@ class WSR_Util{
                                                 std::string fn);
         std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> getConjugateProductChannel(
                                                                 std::vector<DataPacket> rx_robot,
-                                                                bool interpolate_phase,
-                                                                bool sub_sample);
+                                                                bool sub_sample,
+                                                                int __snum_start,
+                                                                int __snum_end);
         std::string dec2hex(unsigned int i);
         std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> getForwardReverseChannelCounter(
                                                                 std::vector<DataPacket> rx_robot,
@@ -103,7 +105,10 @@ class WSR_Util{
         std::vector<std::vector<int>> get_signal_strength(std::vector<DataPacket>& rx_robot_data,
                                                             int start_index,
                                                             int end_index);
-        void writeRssiToFile(std::vector<std::vector<int>>& rssi_rx_robot, std::string fn) ;                                                       
+        void writeRssiToFile(std::vector<std::vector<int>>& rssi_rx_robot, std::string fn) ;
+        std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<std::complex<double>>> getRawCSIData(
+                                                        std::vector<DataPacket> rx_robot);
+        double wrap0to2Pi(double val);                                                                                                                
 };
 
 
