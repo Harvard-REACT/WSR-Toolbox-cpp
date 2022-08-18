@@ -17,7 +17,7 @@ WSR_Main::WSR_Main(std::string config_fn,
     __d_type = displacement_type;
 }
 
-std::pair<std::vector<std::string>, std::vector<double>> WSR_Main::generate_aoa()
+std::pair<std::vector<std::string>, std::vector<vector<double>>> WSR_Main::generate_aoa()
 {
     
     WSR_Util utils;
@@ -79,6 +79,7 @@ std::pair<std::vector<std::string>, std::vector<double>> WSR_Main::generate_aoa(
         run_module.tx_name_list[tx_mac_id] = tx_name;
     }
 
+
     //load trajectory
     std::vector<std::vector<double>> trajectory_tx;
 
@@ -120,10 +121,66 @@ std::pair<std::vector<std::string>, std::vector<double>> WSR_Main::generate_aoa(
         displacement = return_val.second;
     }
 
+    // //Get all True AOA angles
+    // nlohmann::json true_positions_tx = run_module.__precompute_config["true_tx_positions"];
+    // auto all_true_AOA = utils.get_true_aoa(trajectory_rx, true_positions_tx); //Fix this when using moving ends.
+
+    // run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,displacement_timestamp);
+    // auto all_aoa_profile = run_module.get_all_aoa_profile();
+    // auto all_topN_angles = run_module.get_TX_topN_angles();
+    // auto all_confidences = run_module.get_all_confidence();
+    // string trajType = run_module.__precompute_config["trajectory_type"]["value"];
+    // double true_phi, true_theta;
+
+    // std::cout << "Getting AOA profile stats for TX Neighbor robots" << std::endl;
+    // std::vector<std::string> tx_ids_all;
+    // std::vector<double> tx_top_aoa_peak;
+    
+    // for(auto & itr : all_aoa_profile)
+    // {
+    //     std::cout << "-----------------------------" << std::endl;
+        
+    //     std::string tx_id = itr.first;
+    //     std::string ts = run_module.data_sample_ts[tx_id];
+    //     tx_ids_all.push_back(run_module.tx_name_list[tx_id]);
+    //     auto profile = itr.second;
+    //     std::vector<double> aoa_confidence = all_confidences[tx_id];
+
+    //     if(profile.shape().rows == 1) 
+    //     {
+    //         //Dummy profile, error in AOA calculation
+    //         std::cout << "Phi angle = 0" <<  std::endl;
+    //         std::cout << "Theta angle = 0" << std::endl;
+    //     }
+    //     else
+    //     {
+    //         string profile_op_fn = utils.__homedir+output+"/"+run_module.tx_name_list[tx_id]+"_aoa_profile_"+ts+".csv";
+    //         utils.writeToFile(profile,profile_op_fn);
+
+    //         true_phi = all_true_AOA[run_module.tx_name_list[tx_id]].first;
+    //         true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
+
+    //         auto topN_angles = all_topN_angles[tx_id];
+    //         tx_top_aoa_peak.push_back(topN_angles.first[0]);
+
+    //         std::vector<std::vector<float>> aoa_error = run_module.get_aoa_error(topN_angles,
+    //                                                                             all_true_AOA[run_module.tx_name_list[tx_id]],
+    //                                                                             trajType);
+            
+    //         auto stats = run_module.get_stats(true_phi, true_theta, aoa_error,
+    //                                             tx_id, run_module.tx_name_list[tx_id],
+    //                                             pos,pos,true_positions_tx,1); // Only estimatd pos used here. True_pos is used only when compiling aggregate results.
+    //         //Display output
+    //         std::cout << stats.dump(4) << std::endl;
+    //     }
+    // }
+    
+    
     //Get all True AOA angles
     nlohmann::json true_positions_tx = run_module.__precompute_config["true_tx_positions"];
     auto all_true_AOA = utils.get_true_aoa(trajectory_rx, true_positions_tx); //Fix this when using moving ends.
 
+    std::cout << "Size of displacement cols:" << nc::shape(displacement).cols << std::endl;
     run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,displacement_timestamp);
     auto all_aoa_profile = run_module.get_all_aoa_profile();
     auto all_topN_angles = run_module.get_TX_topN_angles();
@@ -133,8 +190,8 @@ std::pair<std::vector<std::string>, std::vector<double>> WSR_Main::generate_aoa(
 
     std::cout << "Getting AOA profile stats for TX Neighbor robots" << std::endl;
     std::vector<std::string> tx_ids_all;
-    std::vector<double> tx_top_aoa_peak;
-    
+    std::vector<vector<double>> tx_top_aoa_peak;
+
     for(auto & itr : all_aoa_profile)
     {
         std::cout << "-----------------------------" << std::endl;
@@ -154,26 +211,31 @@ std::pair<std::vector<std::string>, std::vector<double>> WSR_Main::generate_aoa(
         else
         {
             string profile_op_fn = utils.__homedir+output+"/"+run_module.tx_name_list[tx_id]+"_aoa_profile_"+ts+".csv";
+            std::cout << profile_op_fn << std::endl;
             utils.writeToFile(profile,profile_op_fn);
 
             true_phi = all_true_AOA[run_module.tx_name_list[tx_id]].first;
             true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
 
             auto topN_angles = all_topN_angles[tx_id];
-            tx_top_aoa_peak.push_back(topN_angles.first[0]);
+            tx_top_aoa_peak.push_back(topN_angles.first);
+
+            std::cout << "Got profile" << std::endl;
 
             std::vector<std::vector<float>> aoa_error = run_module.get_aoa_error(topN_angles,
                                                                                 all_true_AOA[run_module.tx_name_list[tx_id]],
                                                                                 trajType);
-            
+            std::cout << "Got Error" << std::endl;
             auto stats = run_module.get_stats(true_phi, true_theta, aoa_error,
                                                 tx_id, run_module.tx_name_list[tx_id],
                                                 pos,pos,true_positions_tx,1); // Only estimatd pos used here. True_pos is used only when compiling aggregate results.
+            
+            std::cout << "Got Stats" << std::endl;
+            
             //Display output
             std::cout << stats.dump(4) << std::endl;
         }
     }
-    
     std::cout << "Completed" << std::endl;
 
     return std::make_pair(tx_ids_all, tx_top_aoa_peak);

@@ -72,6 +72,10 @@ class WSR_Module
                                     std::unordered_map<std::string, std::string> rx_csi_file, 
                                     nc::NdArray<double> rx_displacement,
                                     nc::NdArray<double> displacement_timestamp);
+        int calculate_AOA_profile_multi(std::string rx_csi_file,
+                                      std::unordered_map<std::string, std::string> tx_csi_file,
+                                      nc::NdArray<double> displacement,
+                                      nc::NdArray<double> displacement_timestamp);
         WSR_Module();
         ~WSR_Module();
         WSR_Module(std::string config_fn);

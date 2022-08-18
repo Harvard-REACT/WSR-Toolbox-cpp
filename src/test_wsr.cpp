@@ -13,7 +13,7 @@ int main(int argc, char *argv[]){
     // std::string config = utils.__homedir+"/catkin_ws/src/csitoolbox/config/config_3D_SAR.json";
     string traj_type = argv[1];
     std::cout << "Processing trajectory type: " << traj_type << std::endl;
-    std::string config = "../config/config_3D_SAR.json";
+    std::string config = "../config/config_3D_SAR_multi.json";
     WSR_Module run_module(config); // TODO: How can this be initialized only once without hardcoding config fn? maybe use if else?
     
     // omp_set_num_threads(64);
