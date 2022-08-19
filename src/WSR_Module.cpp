@@ -1394,6 +1394,7 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
             tmp_row = (phi_idx + i) % __nphi;
         else
             tmp_row = i + phi_idx;
+        
         for (int j = -radius; j < radius; j++)
         {
             if (theta_idx + j < 0)
@@ -1446,6 +1447,7 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
                 tmp_row = (phi_idx + i) % __nphi;
             else
                 tmp_row = phi_idx + i;
+            
             for (int j = -radius; j < radius && check_peak; j++)
             {
                 if (theta_idx + j < 0)
@@ -1455,6 +1457,7 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
                 else
                     tmp_col = theta_idx + j;
                 //if the nearby pos is checked before or value is greater than current peak value
+                
                 if (ind_profile(tmp_row, tmp_col) ||
                     __aoa_profile(tmp_col, tmp_row) > __aoa_profile(phi_idx, theta_idx))
                 { //BUG?
@@ -1478,6 +1481,7 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
             //            phi_indexes_stored(0,phi_idx) = 1;
             //            theta_indexes_stored(0,theta_idx) = 1;
             __peak_magnitudes.push_back(__aoa_profile(phi_idx, theta_idx));
+            std::cout << "Phi idx = " << phi_idx << ", theta idx = " << theta_idx << std::endl;
 
             if (relative_peak_magnitude >= __relative_magnitude_threshold)
                 __num_peaks_above_threshold+=1;
@@ -1491,15 +1495,18 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
                     tmp_row = (phi_idx + i) % __nphi;
                 else
                     tmp_row = phi_idx + i;
+                
                 for (int j = -radius; j < radius; j++)
                 {
                     if (theta_idx + j < 0)
-                        tmp_row = __ntheta + j;
+                        tmp_col = __ntheta + j;
                     else if (theta_idx + j >= __ntheta)
-                        tmp_row = (__ntheta + j) % __ntheta;
+                        tmp_col = (__ntheta + j) % __ntheta;
                     else
                         tmp_col = theta_idx + j;
+                    
                     //if the nearby pos is checked before or value is greater than current peak value
+                    // std::cout << "temp_row:" << phi_list(0, tmp_row) * 180 / M_PI << " tmp_col:" << theta_list(0, tmp_col) * 180 / M_PI << std::endl; 
                     ind_profile(tmp_row, tmp_col) = true;
                 }
             }
