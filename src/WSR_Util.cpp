@@ -708,7 +708,13 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
                      Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitZ());
             rotationMatrix = q_diff.normalized().toRotationMatrix();
             position_vector = rotationMatrix*offset_vector;
-            displacement(i,3) = get_yaw(rx_trajectory[i][5],rx_trajectory[i][6],rx_trajectory[i][7],rx_trajectory[i][8]); //Yaw
+            
+            //Calculate the displacement using angular velocity instead of reading from the odometery
+            // displacement(i,3) = get_yaw(rx_trajectory[i][5],rx_trajectory[i][6],rx_trajectory[i][7],rx_trajectory[i][8]); //Yaw
+
+                                                                        //velocity x time
+            if(i>0) displacement(i,3) = displacement(i-1,3) + rx_trajectory[i][14] * (trajectory_timestamp(i,0) - trajectory_timestamp(i-1,0));
+            //The final AOA should be added with the current odom orientation value
         }
 
         displacement(i,0) = rx_trajectory[i][2] + position_vector[0]; //x
@@ -1406,7 +1412,7 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getCo
         {
             //Antenna 1---->2. The orientation is calculated from antenna 2's perspective.
             //h2 . h1*
-            temp1(0,h_i) = rx_robot[itr_l].csi[h_i][1] * nc::conj(rx_robot[itr_l].csi[h_i][0]); //using complex conjugate
+            temp1(0,h_i) = rx_robot[itr_l].csi[h_i][0] * nc::conj(rx_robot[itr_l].csi[h_i][1]); //using complex conjugate
         }
         assert(temp2(0,0) != rx_robot[itr_l].ts);
         temp2(0,0) = rx_robot[itr_l].ts;
