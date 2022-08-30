@@ -13,7 +13,7 @@ int main(int argc, char *argv[]){
     // std::string config = utils.__homedir+"/catkin_ws/src/csitoolbox/config/config_3D_SAR.json";
     string traj_type = argv[1];
     std::cout << "Processing trajectory type: " << traj_type << std::endl;
-    std::string config = "../config/config_3D_SAR_multi.json";
+    std::string config = "../config/config_3D_SAR.json";
     WSR_Module run_module(config); // TODO: How can this be initialized only once without hardcoding config fn? maybe use if else?
     
     // omp_set_num_threads(64);
@@ -113,13 +113,13 @@ int main(int argc, char *argv[]){
     if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
     {          
         //get relative trajectory
-        auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos,true);
+        auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,traj_type,__Flag_get_mean_pos,true);
         displacement_timestamp = return_val.first;
         displacement = return_val.second;
     }
     else
     {
-        auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,pos,__Flag_get_mean_pos,true);
+        auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,pos,traj_type,__Flag_get_mean_pos,true);
         // auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset_true,true_pos,__Flag_get_mean_pos,true);
         displacement_timestamp = return_val.first;
         displacement = return_val.second;

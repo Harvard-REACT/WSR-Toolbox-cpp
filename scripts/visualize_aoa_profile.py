@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import pandas as pd
 
 def main():
@@ -23,12 +24,18 @@ def main():
     x_range = 2*args.nphi
     x_val, y_val = np.linspace(-args.nphi, args.nphi, x_range), np.linspace(0, args.ntheta, args.ntheta)
     z_data = pd.read_csv(args.file).T
-    fig = go.Figure(data=[go.Surface(z=z_data.values,x=x_val,y=y_val)])
-    fig.update_layout(title='AOA profile')
+
+    #Reference: https://plotly.com/python/mixed-subplots/
+    fig = make_subplots(
+                    rows=1, cols=2,
+                    specs=[[{"type": "surface"},{"type": "heatmap"}]])
+
+
+    fig.add_trace(go.Surface(z=z_data.values,x=x_val,y=y_val),row=1, col=1)
+    fig.add_trace(go.Heatmap(z=z_data.values,x=x_val,y=y_val),row=1, col=2)
+    fig.update_layout(title='AOA profile', xaxis_title="Azimuth angle(Degrees)", yaxis_title="Elevation angle (degrees)",)
     fig.show()
 
-
-    
     # X = np.arange(0, 2*args.nphi-1, 1).flatten()
     # Y = np.arange(0, args.ntheta-1, 1).flatten()
     # X, Y = np.meshgrid(X, Y)

@@ -509,7 +509,8 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                 }
                 else
                 {
-                    if(sub_sample && itr_l%2!=0) continue;  //if used for spoof testing, change based on the number of spoofed agents.
+                    // if(sub_sample && itr_l%2!=0) continue;
+                    if(sub_sample && itr_l%2==0) continue;  //if used for spoof testing, change based on the number of spoofed agents.
                     
                     csi_timestamp = nc::append(csi_timestamp, temp2, nc::Axis::ROW);
                     forward_reverse_channel_product = nc::append(forward_reverse_channel_product, temp1, nc::Axis::ROW);
@@ -571,16 +572,18 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::getRelativeTraject
                                                     std::vector<std::vector<double>>& trajectory_tx,
                                                     std::vector<std::vector<double>>& trajectory_rx,
                                                     std::vector<double>& antenna_offset,
-                                                    bool __Flag_get_mean_pos,bool __Flag_offset)
+                                                    string& traj_type,
+                                                    bool __Flag_get_mean_pos,
+                                                    bool __Flag_offset)
 {
 
     //TODO : return mean pos for the relative trajectory.
     nc::NdArray<double> mean_pos1,mean_pos2;
-    auto ret_val = formatTrajectory_v2(trajectory_tx,antenna_offset,mean_pos1,__Flag_get_mean_pos,__Flag_offset); //Assumes both robots have identical antenna offset to local displacement sensor
+    auto ret_val = formatTrajectory_v2(trajectory_tx,antenna_offset,mean_pos1,traj_type,__Flag_get_mean_pos,__Flag_offset); //Assumes both robots have identical antenna offset to local displacement sensor
     nc::NdArray<double> timestamp_tx = ret_val.first;
     nc::NdArray<double> displacement_tx = ret_val.second;
 
-    auto ret_val2 = formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos2,__Flag_get_mean_pos,__Flag_offset);
+    auto ret_val2 = formatTrajectory_v2(trajectory_rx,antenna_offset,mean_pos2,traj_type,__Flag_get_mean_pos,__Flag_offset);
     nc::NdArray<double> timestamp_rx = ret_val2.first;
     nc::NdArray<double> displacement_rx = ret_val2.second;
     
@@ -665,6 +668,7 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
                             std::vector<std::vector<double>>& rx_trajectory,
                             std::vector<double>& antenna_offset,
                             nc::NdArray<double>& pos,
+                            string& traj_type,
                             bool __Flag_get_mean_pos,
                             bool __Flag_offset)
 {
@@ -710,11 +714,12 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
             position_vector = rotationMatrix*offset_vector;
             
             //Calculate the displacement using angular velocity instead of reading from the odometery
-            // displacement(i,3) = get_yaw(rx_trajectory[i][5],rx_trajectory[i][6],rx_trajectory[i][7],rx_trajectory[i][8]); //Yaw
-
-                                                                        //velocity x time
-            if(i>0) displacement(i,3) = displacement(i-1,3) + rx_trajectory[i][14] * (trajectory_timestamp(i,0) - trajectory_timestamp(i-1,0));
-            //The final AOA should be added with the current odom orientation value
+            if(traj_type == "gt")
+                displacement(i,3) = get_yaw(rx_trajectory[i][5],rx_trajectory[i][6],rx_trajectory[i][7],rx_trajectory[i][8]); //Yaw
+                                                                                                        
+            else if                                                                                          
+                (traj_type == "odom" && i>0) displacement(i,3) = displacement(i-1,3) + rx_trajectory[i][14] * (trajectory_timestamp(i,0) - trajectory_timestamp(i-1,0));
+            //The final AOA should be added with the current odom orientation value              //velocity x time
         }
 
         displacement(i,0) = rx_trajectory[i][2] + position_vector[0]; //x
@@ -810,7 +815,7 @@ std::pair<nc::NdArray<double>, nc::NdArray<double>> WSR_Util::formatTrajectory_v
         sorted_displacement.put(i,3,sorted_displacement(i, 3));
     }
 
-    // std::cout << sorted_trajectory_timestamp({start_index,end_index},sorted_trajectory_timestamp.cSlice()).shape() <<std::endl;
+    std::cout << sorted_trajectory_timestamp({start_index,end_index},sorted_trajectory_timestamp.cSlice()).shape() <<std::endl;
     //std::cout << "sorted traj shape " << sorted_displacement({start_index,end_index},nc::Slice(0, 3)).shape() << std::endl;
 
     return std::make_pair(sorted_trajectory_timestamp({start_index,end_index},sorted_trajectory_timestamp.cSlice()), 

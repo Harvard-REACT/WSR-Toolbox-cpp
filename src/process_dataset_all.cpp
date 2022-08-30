@@ -32,6 +32,8 @@ int main(int argc, char *argv[])
     
     int dir_idx = 1;
     nlohmann::json all_stats;
+    std::vector<vector<double>> tx_top_aoa_peak;
+    std::vector<int> tx_top_aoa_peak_above_threshold_count;
 
     //Process the dataset one subfolder at a time
     for (const auto & entry : fs::directory_iterator(dataset))
@@ -84,11 +86,11 @@ int main(int argc, char *argv[])
         bool __Flag_get_mean_pos = bool(run_module.__precompute_config["get_mean_pose_RX"]["value"]);
         output.erase(remove( output.begin(), output.end(), '\"' ),output.end());
         std::string rx_robot_csi = foldername + "/" + rx_csi_pre + *ts_it + ".dat";
-        std::string traj_fn_rx = foldername + "/" + traj_pre + *ts_it + "_.csv";
-        std::string true_traj_fn_rx = foldername + "/" + true_traj_pre + *ts_it + "_.csv";
+        std::string traj_fn_rx = foldername + "/" + traj_pre + *ts_it + ".csv";
+        std::string true_traj_fn_rx = foldername + "/" + true_traj_pre + *ts_it + ".csv";
         std::cout << "Trajectory fn" << traj_fn_rx << std::endl;
         std::vector<std::vector<double>> trajectory_rx = utils.loadTrajFromCSV(traj_fn_rx); //Robot performing SAR
-        std::vector<std::vector<double>> true_trajectory_rx = utils.loadTrajFromCSV(true_traj_fn_rx); //Robot performing SAR
+        // std::vector<std::vector<double>> true_trajectory_rx = utils.loadTrajFromCSV(true_traj_fn_rx); //Robot performing SAR
         nc::NdArray<double> displacement;
         nc::NdArray<double> trajectory_timestamp;
         std::unordered_map<std::string,std::string> tx_robot_csi;
@@ -155,24 +157,27 @@ int main(int argc, char *argv[])
         if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
         {          
           //get relative trajectory
-          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos,true);
+          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,traj_type,__Flag_get_mean_pos,true);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
         else
         {
-          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,pos,__Flag_get_mean_pos,true);
-          auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset_true,true_pos,__Flag_get_mean_pos,true);
+          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,pos,traj_type,__Flag_get_mean_pos,true);
+          // auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset_true,true_pos,traj_type,__Flag_get_mean_pos,true);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
+
+        true_pos =  pos; //Dummy placeholder if groundtruth information is not available.
 
         //Get all True AOA angles
         nlohmann::json true_positions_tx = TX_gt_positions["true_tx_positions"];
         loc_idx = int(TX_gt_positions["true_rx_position"]["value"]);
         auto all_true_AOA = utils.get_true_aoa_v2(true_pos, true_positions_tx);
 
-        run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);    
+        // run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,trajectory_timestamp);    
+        run_module.calculate_AOA_using_csi_conjugate(rx_robot_csi,displacement,trajectory_timestamp);
         
         auto all_aoa_profile = run_module.get_all_aoa_profile();
         auto all_topN_angles = run_module.get_TX_topN_angles();
@@ -207,6 +212,8 @@ int main(int argc, char *argv[])
             true_theta = all_true_AOA[run_module.tx_name_list[tx_id]].second;
 
             auto topN_angles = all_topN_angles[tx_id];
+            tx_top_aoa_peak.push_back(topN_angles.first);
+            tx_top_aoa_peak_above_threshold_count.push_back(run_module.get_peak_num_above_threshold(tx_id));
             // std::vector<double> top_aoa_error = run_module.top_aoa_error(topN_angles.first[0],
             //                                                               topN_angles.second[0],
             //                                                               all_true_AOA[run_module.tx_name_list[tx_id]],
@@ -215,7 +222,7 @@ int main(int argc, char *argv[])
             std::vector<std::vector<float>> aoa_error = run_module.get_aoa_error(topN_angles,
                                                                               all_true_AOA[run_module.tx_name_list[tx_id]],
                                                                               trajType);
-            
+            std::cout << "-----------------------------" << std::endl;
             auto stats = run_module.get_stats(true_phi, true_theta, aoa_error,
                                               tx_id, run_module.tx_name_list[tx_id],
                                               pos,true_pos,true_positions_tx,loc_idx);
@@ -223,9 +230,8 @@ int main(int argc, char *argv[])
             // auto stats = run_module.get_stats_old_json(true_phi, true_theta, aoa_error,
             //                                   tx_id, run_module.tx_name_list[tx_id],
             //                                   pos,true_pos,true_positions_tx,loc_idx);
-
+            std::cout << "-----------------------------" << std::endl;
             stats_per_sample.push_back(stats);
-
           }
         }
         if(all_dir_stats.size() == 0)
@@ -257,6 +263,18 @@ int main(int argc, char *argv[])
     }
 
     std::cout << all_stats.dump(4) << std::endl;
+
+    for(int val=0; val<tx_top_aoa_peak.size(); val++)
+    {    
+      std::cout << "Peaks above threshold = " << tx_top_aoa_peak_above_threshold_count[val] << std::endl;
+      std::cout << "[";
+      for(int val2 =0; val2<tx_top_aoa_peak[val].size();val2++)
+        std::cout << tx_top_aoa_peak[val][val2] <<",";
+      
+      std::cout << "]"<< std::endl;
+      std::cout << "-----------------------------" << std::endl;
+    }
+
     std::cout << dir_idx;
     std::ofstream file("key.json");
     file << all_stats;

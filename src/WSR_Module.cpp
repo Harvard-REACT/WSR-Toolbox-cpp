@@ -41,6 +41,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     __FLAG_offboard = bool(__precompute_config["offboard_computation"]["value"]);
     __FLAG_interpolate_phase = bool(__precompute_config["interpolate_phase"]["value"]);
     __FLAG_sub_sample = bool(__precompute_config["sub_sample_channel_data"]["value"]);
+    __FLAG_slice = bool(__precompute_config["slice_displacement"]["value"]);
 
 
     __FLAG_normalize_profile = bool(__precompute_config["normalize_profile"]["value"]);
@@ -1714,7 +1715,8 @@ double WSR_Module::get_top_confidence(const std::string &tx_mac_id)
  *
  * */
 nlohmann::json WSR_Module::get_stats(double true_phi,
-                                     double true_theta, std::vector<vector<float>> &aoa_error,
+                                     double true_theta, 
+                                     std::vector<vector<float>> &aoa_error,
                                      const std::string &tx_mac_id,
                                      const std::string &tx_name,
                                      const nc::NdArray<double> &rx_pos_est,
@@ -3020,6 +3022,22 @@ int WSR_Module::calculate_AOA_using_csi_conjugate(std::string rx_csi_file,
             
             auto interpolated_data = utils.interpolate(csi_timestamp, displacement_timestamp, displacement);
             nc::NdArray<double> pose_list = interpolated_data.first;
+            std::cout << "log [calculate_AOA_using_csi_conjugate]: PoseList after interpolation  = " << pose_list.shape() << std::endl;
+            
+            if(__FLAG_slice)
+            {
+                // int begin = 0, last=pose_list.shape().rows/2;
+                // int begin = 0, last=pose_list.shape().rows * 3/4;
+                // int begin = pose_list.shape().rows/2, last=pose_list.shape().rows;
+                int begin = pose_list.shape().rows*1/4, last=pose_list.shape().rows;
+                auto h_list_slicing = h_list({begin, last}, h_list.cSlice());
+                auto pose_list_slicing = pose_list({begin, last}, pose_list.cSlice());
+                auto csi_timestamp_slicing = csi_timestamp({begin, last}, csi_timestamp.cSlice());
+
+                h_list = h_list_slicing;
+                pose_list = pose_list_slicing;
+                csi_timestamp = csi_timestamp_slicing;
+            }
 
             if (__FLAG_debug)
             {

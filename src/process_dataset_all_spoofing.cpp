@@ -157,14 +157,14 @@ int main(int argc, char *argv[])
         if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
         {          
           //get relative trajectory
-          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos,true);
+          auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,traj_type,__Flag_get_mean_pos,true);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }
         else
         {
-          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,pos,__Flag_get_mean_pos,true);
-          auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset_true,true_pos,__Flag_get_mean_pos,true);
+          auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,pos,traj_type,__Flag_get_mean_pos,true);
+          auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset_true,true_pos,traj_type,__Flag_get_mean_pos,true);
           trajectory_timestamp = return_val.first;
           displacement = return_val.second;
         }

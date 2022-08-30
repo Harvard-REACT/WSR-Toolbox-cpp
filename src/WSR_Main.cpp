@@ -110,13 +110,13 @@ std::pair<std::vector<std::string>, std::vector<vector<double>>> WSR_Main::gener
     if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
     {          
         //get relative trajectory
-        auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__Flag_get_mean_pos,true);
+        auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__d_type,__Flag_get_mean_pos,true);
         displacement_timestamp = return_val.first;
         displacement = return_val.second;
     }
     else
     {
-        auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,pos,__Flag_get_mean_pos,true);
+        auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,pos,__d_type,__Flag_get_mean_pos,true);
         displacement_timestamp = return_val.first;
         displacement = return_val.second;
     }
