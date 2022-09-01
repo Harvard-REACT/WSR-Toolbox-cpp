@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
     nlohmann::json all_stats;
     std::vector<vector<double>> tx_top_aoa_peak;
     std::vector<int> tx_top_aoa_peak_above_threshold_count;
+    std::vector<std::string> filenames_processed;
 
     //Process the dataset one subfolder at a time
     for (const auto & entry : fs::directory_iterator(dataset))
@@ -86,10 +87,12 @@ int main(int argc, char *argv[])
         bool __Flag_get_mean_pos = bool(run_module.__precompute_config["get_mean_pose_RX"]["value"]);
         output.erase(remove( output.begin(), output.end(), '\"' ),output.end());
         std::string rx_robot_csi = foldername + "/" + rx_csi_pre + *ts_it + ".dat";
+        filenames_processed.push_back(rx_robot_csi);
         std::string traj_fn_rx = foldername + "/" + traj_pre + *ts_it + ".csv";
         std::string true_traj_fn_rx = foldername + "/" + true_traj_pre + *ts_it + ".csv";
         std::cout << "Trajectory fn" << traj_fn_rx << std::endl;
         std::vector<std::vector<double>> trajectory_rx = utils.loadTrajFromCSV(traj_fn_rx); //Robot performing SAR
+        
         // std::vector<std::vector<double>> true_trajectory_rx = utils.loadTrajFromCSV(true_traj_fn_rx); //Robot performing SAR
         nc::NdArray<double> displacement;
         nc::NdArray<double> trajectory_timestamp;
@@ -187,6 +190,7 @@ int main(int argc, char *argv[])
 
         nlohmann::json stats_per_sample;
         std::cout << "Getting AOA profile stats for TX Neighbor robots" << std::endl;
+        
         for(auto & itr : all_aoa_profile)
         {
           
@@ -266,6 +270,7 @@ int main(int argc, char *argv[])
 
     for(int val=0; val<tx_top_aoa_peak.size(); val++)
     {    
+      std::cout << "File: " << filenames_processed[val] << std::endl;
       std::cout << "Peaks above threshold = " << tx_top_aoa_peak_above_threshold_count[val] << std::endl;
       std::cout << "[";
       for(int val2 =0; val2<tx_top_aoa_peak[val].size();val2++)

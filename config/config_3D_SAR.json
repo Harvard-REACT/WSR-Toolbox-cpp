@@ -190,12 +190,12 @@
                 "mac_id_sample":"00:21:6A:3F:17:5A",
                 "mac_id":"00:21:6A:3E:F5:7E",
                 "csi_fn_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_174307.dat",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2022-08-30_141710.dat"
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2022-08-31_111526.dat"
             },
             "tx4":{
                 "mac_id":"00:21:6A:AC:9C:6A",
                 "csi_fn_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_174307.dat",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2022-08-30_141710.dat"
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2022-08-31_111526.dat"
             }
         }
     },
@@ -204,13 +204,13 @@
         "value":{           
             "mac_id":"00:21:6A:53:89:D2",
             "csi_fn_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_174307.dat",
-            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/csi_rx_2022-08-30_141710.dat"
+            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/csi_rx_2022-08-31_111526.dat"
         }
     },
     "input_trajectory_csv_fn_rx":{
         "desc":"Trajectory fiile",
         "value_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/rx_trajectory_2021-06-27_174307_.csv",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/rx_trajectory_2022-08-30_141710.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/rx_trajectory_2022-08-31_111526.csv"
     },
     "input_trajectory_csv_fn_rx_t265":{
         "desc":"Trajectory fiile",
@@ -219,7 +219,7 @@
     "input_trajectory_csv_fn_rx_odom":{
         "desc":"Trajectory fiile",
         "value_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/odom_rx_trajectory_2021-06-27_174307.csv",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/odom_rx_trajectory_2022-08-30_141710.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/odom_rx_trajectory_2022-08-31_111526.csv"
     },
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
@@ -327,6 +327,11 @@
     "slice_displacement":
     {
         "desc":"Slice the the diplacement into components",
+        "value":true
+    },
+    "slice_displacement_first":
+    {
+        "desc":"Slice the first diplacement component",
         "value":false
     }
 }

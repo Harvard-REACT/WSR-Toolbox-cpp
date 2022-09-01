@@ -42,6 +42,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     __FLAG_interpolate_phase = bool(__precompute_config["interpolate_phase"]["value"]);
     __FLAG_sub_sample = bool(__precompute_config["sub_sample_channel_data"]["value"]);
     __FLAG_slice = bool(__precompute_config["slice_displacement"]["value"]);
+    __FLAG_slice_first = bool(__precompute_config["slice_displacement_first"]["value"]);
 
 
     __FLAG_normalize_profile = bool(__precompute_config["normalize_profile"]["value"]);
@@ -3026,10 +3027,16 @@ int WSR_Module::calculate_AOA_using_csi_conjugate(std::string rx_csi_file,
             
             if(__FLAG_slice)
             {
-                // int begin = 0, last=pose_list.shape().rows/2;
-                // int begin = 0, last=pose_list.shape().rows * 3/4;
-                // int begin = pose_list.shape().rows/2, last=pose_list.shape().rows;
-                int begin = pose_list.shape().rows*1/4, last=pose_list.shape().rows;
+                int begin =0, last = 0;
+                if (__FLAG_slice_first)
+                {
+                    begin = 0, last=pose_list.shape().rows * 3/4;
+                }
+                else
+                {
+                    begin = pose_list.shape().rows*1/4, last=pose_list.shape().rows;
+                }
+
                 auto h_list_slicing = h_list({begin, last}, h_list.cSlice());
                 auto pose_list_slicing = pose_list({begin, last}, pose_list.cSlice());
                 auto csi_timestamp_slicing = csi_timestamp({begin, last}, csi_timestamp.cSlice());
