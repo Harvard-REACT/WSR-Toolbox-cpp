@@ -51,7 +51,7 @@ class WSR_Module
         bool __FLAG_normalize_profile = true, __FLAG_packet_threshold = false, __FLAG_debug = true, __FLAG_threading=false,
             __FLAG_interpolate_phase = true, __FLAG_sub_sample = false, __FLag_use_packet_id = true, __FLAG_offboard=false,
             __FLAG_openmp=false, __FLAG_use_relative_displacement=false,__FLAG_two_antenna=false,__FLAG_slice=false,
-            __FLAG_slice_first=false;
+            __FLAG_slice_first=false, __FLAG_slice_second=false;
         nc::NdArray<double> __aoa_profile;
         std::unordered_map<std::string, nc::NdArray<double>> __all_aoa_profiles;
         std::unordered_map<std::string, std::vector<double>> __all_topN_confidence;
@@ -189,7 +189,10 @@ class WSR_Module
         nc::NdArray<double> compute_conjuate_profile_music_offboard(
                             const nc::NdArray<std::complex<double>> &input_h_list,
                             const nc::NdArray<double> &input_pose_list);
-                                               
+        std::pair<std::vector<double>, std::vector<double>> find_topN_azimuth(); 
+        int calculate_AOA_using_csi_conjugate_multiple(std::string rx_csi_file,
+                                                        nc::NdArray<double> displacement,
+                                                        nc::NdArray<double> displacement_timestamp);                                            
 };
 
 

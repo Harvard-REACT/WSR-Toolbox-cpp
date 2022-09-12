@@ -132,6 +132,8 @@ int main(int argc, char *argv[]){
     std::cout << "Size of displacement cols:" << nc::shape(displacement).cols << std::endl;
     // run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,displacement_timestamp);
     run_module.calculate_AOA_using_csi_conjugate(rx_robot_csi,displacement,displacement_timestamp);
+    // run_module.calculate_AOA_using_csi_conjugate_multiple(rx_robot_csi,displacement,displacement_timestamp);
+    
     auto all_aoa_profile = run_module.get_all_aoa_profile();
     auto all_topN_angles = run_module.get_TX_topN_angles();
     auto all_confidences = run_module.get_all_confidence();

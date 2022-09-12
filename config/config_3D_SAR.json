@@ -41,7 +41,7 @@
     },
     "scnum_end":{
         "desc":"end subcarrier number for forward-reverse music/bartlett. Total subcarriers 30",
-        "value":17
+        "value":18
     },
     "multiple_sub_carriers":{
         "desc":"Use multiple sub-carriers. Used when using relative channel",
@@ -53,7 +53,7 @@
     },
     "ntheta":{
         "desc":"resolution of theta angle",
-        "value":180
+        "value":5
     },
     "phi_min":{
         "desc":"Minimum azimuth angle",
@@ -69,7 +69,7 @@
     },
     "theta_max":{
         "desc":"Maximum elevation angle",
-        "value":180
+        "value":1
     },
     "tau_min":{
         "desc":"N/A",
@@ -190,12 +190,12 @@
                 "mac_id_sample":"00:21:6A:3F:17:5A",
                 "mac_id":"00:21:6A:3E:F5:7E",
                 "csi_fn_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_174307.dat",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2022-08-31_111526.dat"
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2022-09-06_172822.dat"
             },
             "tx4":{
                 "mac_id":"00:21:6A:AC:9C:6A",
                 "csi_fn_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_174307.dat",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2022-08-31_111526.dat"
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2022-09-06_172822.dat"
             }
         }
     },
@@ -204,13 +204,13 @@
         "value":{           
             "mac_id":"00:21:6A:53:89:D2",
             "csi_fn_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_174307.dat",
-            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/csi_rx_2022-08-31_111526.dat"
+            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/csi_rx_2022-09-06_172822.dat"
         }
     },
     "input_trajectory_csv_fn_rx":{
         "desc":"Trajectory fiile",
         "value_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/rx_trajectory_2021-06-27_174307_.csv",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/rx_trajectory_2022-08-31_111526.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/rx_trajectory_2022-09-06_172822.csv"
     },
     "input_trajectory_csv_fn_rx_t265":{
         "desc":"Trajectory fiile",
@@ -219,7 +219,7 @@
     "input_trajectory_csv_fn_rx_odom":{
         "desc":"Trajectory fiile",
         "value_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/odom_rx_trajectory_2021-06-27_174307.csv",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/odom_rx_trajectory_2022-08-31_111526.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/odom_rx_trajectory_2022-09-06_172822.csv"
     },
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
@@ -279,7 +279,7 @@
     },
     "peak_radius": {
         "desc" : "radius of patch to ignore neighbor peak in degree",
-        "value": 4
+        "value": 6
     },
     "trajectory_type": {
         "desc" : "Trajectory of robots (2D or 3D). Impacts AOA error calculation",
@@ -305,7 +305,7 @@
     },
     "top_N_magnitude":{
         "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
-        "value": 20
+        "value": 10
     },
     "offboard_computation":{
         "desc":"Perform computation offboard with high number of CPU cores",
@@ -332,6 +332,11 @@
     "slice_displacement_first":
     {
         "desc":"Slice the first diplacement component",
+        "value":true
+    },
+    "slice_displacement_second":
+    {
+        "desc":"Slice the second diplacement component",
         "value":false
     }
 }

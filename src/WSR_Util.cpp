@@ -1413,11 +1413,11 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getCo
 
     while(itr_l < rx_length) { //&& not(isempty(receiver{k}))){
         //multiply forward and reverse channel
-        for(int h_i = __snum_start;h_i<= __snum_end; h_i++)
+        for(int h_i = 0;h_i< 30; h_i++)
         {
             //Antenna 1---->2. The orientation is calculated from antenna 2's perspective.
             //h2 . h1*
-            temp1(0,h_i) = rx_robot[itr_l].csi[h_i][0] * nc::conj(rx_robot[itr_l].csi[h_i][1]); //using complex conjugate
+            temp1(0,h_i) = rx_robot[itr_l].csi[h_i][1] * nc::conj(rx_robot[itr_l].csi[h_i][0]); //using complex conjugate
         }
         assert(temp2(0,0) != rx_robot[itr_l].ts);
         temp2(0,0) = rx_robot[itr_l].ts;
