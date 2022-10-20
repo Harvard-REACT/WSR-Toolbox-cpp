@@ -175,51 +175,79 @@
         "desc":"Flag to use magic mac-id or not",
         "value":false
     },
+    "other_robot_ID":{
+        "desc":"MAC-IDs of other robots (denoted as signal transmitters tx) in the team",
+        "value":{
+            "tx1":{
+                "mac_id":"00:21:6A:3F:16:DA"
+            },
+            "tx2":{
+                "mac_id":"00:21:6A:30:D2:3C"
+            },
+            "tx3":{
+                "mac_id":"00:21:6A:3F:17:5A"
+            },
+            "tx4":{
+                "mac_id":"00:21:6A:AC:9C:6A"
+            }
+        }
+    },
     "input_TX_channel_csi_fn":{
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
             "tx1":{
-                "mac_id":"00:21:6A:3F:17:3",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_174307.dat"
+                "mac_id":"00:21:6A:3F:16:DA",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"            
             },
             "tx2":{
                 "mac_id":"00:21:6A:30:D2:3C",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_174307.dat"
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"            
             },
             "tx3":{
-                "mac_id_sample":"00:21:6A:3F:17:5A",
-                "mac_id":"00:21:6A:3E:F5:7E",
-                "csi_fn_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_174307.dat",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2022-09-06_172822.dat"
+                "mac_id":"00:21:6A:3F:17:5A",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"            
             },
             "tx4":{
                 "mac_id":"00:21:6A:AC:9C:6A",
-                "csi_fn_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_174307.dat",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2022-09-06_172822.dat"
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_202550.dat"
+            },
+            "s3":{
+                "mac_id":"00:21:6A:AC:9C:1",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"            
+            },
+            "s4":{
+                "mac_id":"00:21:6A:3F:17:1",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
             }
         }
+    },
+    "RX_mac_ID_list":{
+        "desc":"List of all mac-ids",
+        "value_spoof":["00:21:6A:3F:16:DA","00:21:6A:30:D2:3C","00:21:6A:3F:17:5A","00:21:6A:AC:9C:6A","00:21:6A:AC:9C:1","00:21:6A:3F:17:1"],
+        "value":["00:21:6A:3F:16:DA","00:21:6A:30:D2:3C","00:21:6A:AC:9C:6A","00:21:6A:3F:17:5A"]
     },
     "input_RX_channel_csi_fn":{
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
         "value":{           
             "mac_id":"00:21:6A:53:89:D2",
-            "csi_fn_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_174307.dat",
-            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/csi_rx_2022-09-06_172822.dat"
+            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_202550.dat"
         }
     },
     "input_trajectory_csv_fn_rx":{
         "desc":"Trajectory fiile",
-        "value_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/rx_trajectory_2021-06-27_174307_.csv",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/rx_trajectory_2022-09-06_172822.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/rx_trajectory_2021-06-27_202550_.csv"
     },
     "input_trajectory_csv_fn_rx_t265":{
         "desc":"Trajectory fiile",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/t265_rx_trajectory_2021-06-27_174307_.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/t265_rx_trajectory_2021-06-27_202550_.csv"
     },
     "input_trajectory_csv_fn_rx_odom":{
         "desc":"Trajectory fiile",
-        "value_def":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/odom_rx_trajectory_2021-06-27_174307.csv",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/online_data/odom_rx_trajectory_2022-09-06_172822.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/odom_rx_trajectory_2021-06-27_202550.csv"
+    },
+    "input_orientation_csv_fn_rx_joint":{
+        "desc":"Orientation of indepdendently rotating platform (only supports 2D)",
+        "value":"/catkin_ws/src/wsr_exploration/data/motorjoint_displacement_2022-10-19_171432.csv"
     },
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
@@ -327,12 +355,12 @@
     "slice_displacement":
     {
         "desc":"Slice the the diplacement into components",
-        "value":true
+        "value":false
     },
     "slice_displacement_first":
     {
         "desc":"Slice the first diplacement component",
-        "value":true
+        "value":false
     },
     "slice_displacement_second":
     {

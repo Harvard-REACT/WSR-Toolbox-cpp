@@ -4,37 +4,19 @@
 #include <unordered_map>
 #include <chrono>
 
-int main(int argc, char *argv[]){
-    
+int main(int argc, char *argv[])
+{    
     WSR_Util utils;
-    // struct passwd *pw = getpwuid(getuid());
-    // std::string homedir = pw->pw_dir;
-    // std::string folder = "";
-    // std::string config = utils.__homedir+"/catkin_ws/src/csitoolbox/config/config_3D_SAR.json";
     string __d_type = argv[1];
     std::cout << "Processing trajectory type: " << __d_type << std::endl;
     std::string config = "../config/config_3D_SAR.json";
-    WSR_Module run_module(config); // TODO: How can this be initialized only once without hardcoding config fn? maybe use if else?
-    
-    // omp_set_num_threads(64);
-    // std::cout << "threads = " << omp_get_num_threads() << endl;
-    
-    //Fetch files from remote RX and TX 
-    // std::string csi_collect_cmd = homedir+"/catkin_ws/src/wsr_ros/scripts/collect_csi.sh" + rx_details + 
-    //                             tx_details + " " + tx2_details + " " +tx3_details +" "+ tx4_details+" "+tx5_details;
-
-    //RX_SAR_Robot: performs 3D SAR
-    //TX_SAR_Robot(s): Neighboring robots for which RX_SAR_robot calculates AOA
+    WSR_Module run_module(config);
 
     /*================== Process RX_SAR_Robot files ====================*/
     std::string reverse_csi = run_module.__precompute_config["input_RX_channel_csi_fn"]["value"]["csi_fn"].dump();
     std::string trajectory_file_rx;
     if(__d_type == "gt")
         trajectory_file_rx = run_module.__precompute_config["input_trajectory_csv_fn_rx"]["value"].dump();
-    else if(__d_type == "t265")
-        trajectory_file_rx = run_module.__precompute_config["input_trajectory_csv_fn_rx_t265"]["value"].dump();
-    else if(__d_type == "odom")
-        trajectory_file_rx = run_module.__precompute_config["input_trajectory_csv_fn_rx_odom"]["value"].dump();
     else if(__d_type == "joint")
         trajectory_file_rx = run_module.__precompute_config["input_orientation_csv_fn_rx_joint"]["value"].dump();
 
@@ -46,10 +28,24 @@ int main(int argc, char *argv[]){
     reverse_csi.erase(remove( reverse_csi.begin(), reverse_csi.end(), '\"' ),reverse_csi.end());
     trajectory_file_rx.erase(remove( trajectory_file_rx.begin(), trajectory_file_rx.end(), '\"' ),trajectory_file_rx.end());
     output.erase(remove( output.begin(), output.end(), '\"' ),output.end());
-
     std::string rx_robot_csi = utils.__homedir + reverse_csi;
     std::string traj_fn_rx = utils.__homedir + trajectory_file_rx;
-    // std::string true_traj_fn_rx = utils.__homedir + true_traj_pre + *ts_it + "_.csv";
+
+    //Extract timestamp from the CSI file so that it can be appended to the output files
+    std::string csi_name,ts,time_val,date_val; 
+    stringstream tokenize_string1(rx_robot_csi); 
+    while(getline(tokenize_string1, csi_name, '/'));
+    stringstream tokenize_string2(csi_name);
+    int count = 0;
+    while(getline(tokenize_string2, ts, '_'))
+    {
+    if(count == 2) date_val = ts;
+    count++;
+    }
+    stringstream tokenize_string3(ts);
+    getline(tokenize_string3, time_val, '.');
+
+
     std::vector<std::vector<double>> trajectory_rx = utils.loadTrajFromCSV(traj_fn_rx); //Robot performing SAR
     // std::vector<std::vector<double>> true_trajectory_rx = utils.loadTrajFromCSV(true_traj_fn_rx); //Robot performing SAR
     nc::NdArray<double> displacement;
@@ -58,88 +54,38 @@ int main(int argc, char *argv[]){
     /*============= Process the TX_SAR_Robot files =======================*/
     std::unordered_map<std::string,std::string> tx_robot_csi;
 
-    for (auto it = run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].begin(); 
-    it != run_module.__precompute_config["input_TX_channel_csi_fn"]["value"].end(); ++it)
+    for (auto it = run_module.__precompute_config["other_robot_ID"]["value"].begin(); 
+        it != run_module.__precompute_config["other_robot_ID"]["value"].end(); 
+        ++it)
     {
         const string& tx_name =  it.key();
         auto temp =  it.value();
         string tx_mac_id = temp["mac_id"];
-        string csi_data_file = temp["csi_fn"]; 
-        csi_data_file.erase(remove( csi_data_file.begin(), csi_data_file.end(), '\"' ),csi_data_file.end());
-        tx_robot_csi[tx_mac_id] = utils.__homedir + csi_data_file;
-        
-        //get timestamp for using to store AOA profile
-        std::string csi_name,ts,time_val,date_val; 
-        stringstream tokenize_string1(tx_robot_csi[tx_mac_id]); 
-        while(getline(tokenize_string1, csi_name, '/'));
-        stringstream tokenize_string2(csi_name);
-        int count = 0;
-        while(getline(tokenize_string2, ts, '_'))
-        {
-        if(count == 2) date_val = ts;
-        count++;
-        }
-        stringstream tokenize_string3(ts);
-        getline(tokenize_string3, time_val, '.');
         run_module.data_sample_ts[tx_mac_id] = date_val +"_"+ time_val;
         run_module.tx_name_list[tx_mac_id] = tx_name;
     }
 
-    //load trajectory
-    std::vector<std::vector<double>> trajectory_tx;
 
-    //Check if moving ends
-    if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
-    {
-      std::string trajectory_file_tx = run_module.__precompute_config["input_trajectory_csv_fn_tx"]["value"].dump();
-      trajectory_file_tx.erase(remove( trajectory_file_tx.begin(), trajectory_file_tx.end(), '\"' ),trajectory_file_tx.end());
-      std::string traj_fn_tx = utils.__homedir + trajectory_file_tx;
-      trajectory_tx = utils.loadTrajFromCSV(traj_fn_tx);
-    }
-    std::cout << "log [WSR_Module]: Preprocessing Displacement " << std::endl;
+    std::cout << "log [WSR_Module]: Preprocessing Displacement " << std::endl;    
     
-    std::vector<double> antenna_offset, antenna_offset_true;
-    antenna_offset_true = run_module.__precompute_config["antenna_position_offset"]["mocap_offset"].get<std::vector<double>>(); 
-
-    if (__d_type == "gt")
-        antenna_offset = antenna_offset_true;
-    else if (__d_type == "t265")
-        antenna_offset = run_module.__precompute_config["antenna_position_offset"]["t265_offset"].get<std::vector<double>>();
-    else if (__d_type == "odom")
-        antenna_offset = run_module.__precompute_config["antenna_position_offset"]["odom_offset"].get<std::vector<double>>();
-
-    std::cout << "log [WSR_Module]: Got offset " << std::endl;
-    nc::NdArray<double> pos,true_pos;
+    auto return_val = utils.formatDisplacementTwoAntenna(trajectory_rx,__d_type);
+    displacement_timestamp = return_val.first;
+    displacement = return_val.second;
     
-    if(bool(run_module.__precompute_config["use_relative_trajectory"]["value"]))
-    {          
-        //Get relative trajectory if moving ends
-        auto return_val = utils.getRelativeTrajectory(trajectory_rx,trajectory_tx,antenna_offset,__d_type,__Flag_get_mean_pos,true);
-        displacement_timestamp = return_val.first;
-        displacement = return_val.second;
-    }
-    else
-    {
-        auto return_val = utils.formatTrajectory_v2(trajectory_rx,antenna_offset,pos,__d_type,__Flag_get_mean_pos,true);
-        // auto true_return_val = utils.formatTrajectory_v2(true_trajectory_rx,antenna_offset_true,true_pos,__Flag_get_mean_pos,true);
-        displacement_timestamp = return_val.first;
-        displacement = return_val.second;
-    }
 
     //Get all True AOA angles
     nlohmann::json true_positions_tx = run_module.__precompute_config["true_tx_positions"];
     auto all_true_AOA = utils.get_true_aoa(trajectory_rx, true_positions_tx); //Fix this when using moving ends.
 
     std::cout << "Size of displacement cols:" << nc::shape(displacement).cols << std::endl;
-    // run_module.calculate_AOA_profile(rx_robot_csi,tx_robot_csi,displacement,displacement_timestamp);
     run_module.calculate_AOA_using_csi_conjugate(rx_robot_csi,displacement,displacement_timestamp);
-    // run_module.calculate_AOA_using_csi_conjugate_multiple(rx_robot_csi,displacement,displacement_timestamp);
     
     auto all_aoa_profile = run_module.get_all_aoa_profile();
     auto all_topN_angles = run_module.get_TX_topN_angles();
     auto all_confidences = run_module.get_all_confidence();
     string trajType = run_module.__precompute_config["trajectory_type"]["value"];
     double true_phi, true_theta;
+    nc::NdArray<double> pos = nc::zeros<double>(1, 4);
 
     std::cout << "Getting AOA profile stats for TX Neighbor robots" << std::endl;
     std::string viz_id = "";

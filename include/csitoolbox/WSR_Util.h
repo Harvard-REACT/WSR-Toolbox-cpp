@@ -108,7 +108,10 @@ class WSR_Util{
         void writeRssiToFile(std::vector<std::vector<int>>& rssi_rx_robot, std::string fn) ;
         std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<std::complex<double>>> getRawCSIData(
                                                         std::vector<DataPacket> rx_robot);
-        double wrap0to2Pi(double val);                                                                                                                
+        double wrap0to2Pi(double val); 
+        std::pair<nc::NdArray<double>, nc::NdArray<double>> formatDisplacementTwoAntenna(
+                                                            std::vector<std::vector<double>>& rx_displacement,
+                                                            string& displacement_type);                                                                                                               
 };
 
 

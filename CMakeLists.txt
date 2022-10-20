@@ -53,6 +53,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 
 add_executable(test_wsr src/test_wsr.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp src/WSR_Main.cpp)
+add_executable(test_wsr_two_antenna_rotor src/test_wsr_two_antenna_rotor.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp src/WSR_Main.cpp)
 add_executable(data_processing src/data_processing.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp src/WSR_Main.cpp)
 add_executable(process_dataset_all src/process_dataset_all.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp src/WSR_Main.cpp)
 add_executable(remote_processing src/remote_processing.cpp src/WIFI_Agent.cpp src/WSR_Module.cpp src/WSR_Util.cpp src/WSR_Main.cpp)
@@ -71,6 +72,10 @@ add_executable(process_dataset_all_spoof src/process_dataset_all_spoofing.cpp sr
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(test_wsr
+   -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
+   ${BOOST_LIBRARIES} OpenMP::OpenMP_CXX
+ )
+target_link_libraries(test_wsr_two_antenna_rotor
    -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
    ${BOOST_LIBRARIES} OpenMP::OpenMP_CXX
  )

@@ -1729,16 +1729,42 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
     nlohmann::json position = true_positions_tx["value"][tx_name];
     nlohmann::json output_stats =
         {
-            {"a_INFO_Transmitting_robot", {{"Name", tx_name}, {"MAC_ID", tx_mac_id}, {"groundtruth_position", {{"x", float(position["position"]["x"])}, {"y", float(position["position"]["y"])}, {"z", float(position["position"]["z"])}}}, {"groundtruth_azimuth", true_phi}, {"groundtruth_elevation", true_theta}}},
-            {"b_INFO_Receiving_robot", {{"id", pos_idx}, {"displacement_type", __trajType}, {"estimated_start_position", {{"x", rx_pos_est(0, 0)}, //Will be same as true positin when using gt flag
-                                                                                                                          {"y", rx_pos_est(0, 1)},
-                                                                                                                          {"z", rx_pos_est(0, 2)},
-                                                                                                                          {"yaw", rx_pos_est(0, 3)}}},
-                                        {"groundtruth_start_position", {{"x", rx_pos_true(0, 0)}, {"y", rx_pos_true(0, 1)}, {"z", rx_pos_true(0, 2)}, {"yaw", rx_pos_true(0, 3)}}}}},
-            {"c_INFO_Performance", {{"azimuth_profile_resolution", __nphi}, {"elevation_profile_resolution", __ntheta}, {"Forward_channel_packets", get_tx_pkt_count(tx_mac_id)}, {"Reverse_channel_packets", get_rx_pkt_count(tx_mac_id)}, {"Packets_Used", get_paired_pkt_count(tx_mac_id)}, {"time(sec)", get_processing_time(tx_mac_id)}, {"memory(GB)", get_memory_used(tx_mac_id)}}},
-            {"d_INFO_AOA_profile", {{"Profile_variance", get_top_confidence(tx_mac_id)},{"Top_N_threshold",__relative_magnitude_threshold},
+            {"a_INFO_Transmitting_robot", {{"Name", tx_name}, {"MAC_ID", tx_mac_id}, 
+                                            {"groundtruth_position", 
+                                            {{"x", float(position["position"]["x"])}, 
+                                             {"y", float(position["position"]["y"])}, 
+                                             {"z", float(position["position"]["z"])}}}, 
+                                            {"groundtruth_azimuth", true_phi}, 
+                                            {"groundtruth_elevation", true_theta}}},
+            {"b_INFO_Receiving_robot", {{"id", pos_idx}, 
+                                        {"displacement_type", __trajType}, 
+                                        {"estimated_start_position", 
+                                        {{"x", rx_pos_est(0, 0)}, //Will be same as true positin when using gt flag
+                                         {"y", rx_pos_est(0, 1)},
+                                         {"z", rx_pos_est(0, 2)},
+                                         {"yaw", rx_pos_est(0, 3)}}},
+                                        {"groundtruth_start_position", 
+                                        {{"x", rx_pos_true(0, 0)}, 
+                                        {"y", rx_pos_true(0, 1)}, 
+                                        {"z", rx_pos_true(0, 2)}, 
+                                        {"yaw", rx_pos_true(0, 3)}}}}},
+            {"c_INFO_Performance", {{"azimuth_profile_resolution", __nphi}, 
+                                    {"elevation_profile_resolution", __ntheta}, 
+                                    {"Forward_channel_packets", get_tx_pkt_count(tx_mac_id)}, 
+                                    {"Reverse_channel_packets", get_rx_pkt_count(tx_mac_id)}, 
+                                    {"Packets_Used", get_paired_pkt_count(tx_mac_id)}, 
+                                    {"time(sec)", get_processing_time(tx_mac_id)}, 
+                                    {"memory(GB)", get_memory_used(tx_mac_id)}}},
+            {"d_INFO_AOA_profile", {{"Profile_variance", get_top_confidence(tx_mac_id)},
+            {"Top_N_threshold",__relative_magnitude_threshold},
                                     {"Peaks_above_threshold", get_peak_num_above_threshold(tx_mac_id)}, 
-                                    {"Top_N_peaks", {{"1", {{"estimated_azimuth", aoa_error[0][0]}, {"estimated_elevation", aoa_error[0][1]}, {"Total_AOA_Error", aoa_error[0][2]}, {"azimuth_error", aoa_error[0][3]}, {"elevation_error", aoa_error[0][4]},{"magnitude",mag[0]}}}}}
+                                    {"Top_N_peaks", 
+                                    {{"1", {{"estimated_azimuth", aoa_error[0][0]}, 
+                                    {"estimated_elevation", aoa_error[0][1]}, 
+                                    {"Total_AOA_Error", aoa_error[0][2]}, 
+                                    {"azimuth_error", aoa_error[0][3]}, 
+                                    {"elevation_error", aoa_error[0][4]},
+                                    {"magnitude",mag[0]}}}}}
                                     }
             }
         };
@@ -3153,9 +3179,7 @@ nc::NdArray<double> WSR_Module::compute_conjugate_profile_bartlett_multithread(
     auto start = std::chrono::high_resolution_clock::now();
     if (__FLAG_debug)
         std::cout << "log [compute_conjugate_profile_bartlett_multithread] : get yaw, pitch and rho values" << std::endl;
-    auto pose_x = pose_list(pose_list.rSlice(), 0);
-    auto pose_y = pose_list(pose_list.rSlice(), 1);
-    auto pose_z = pose_list(pose_list.rSlice(), 2);
+
     nc::NdArray<double> orientation_list = pose_list(pose_list.rSlice(), 3);
     // std::cout << orientation_list*(180/M_PI) << std::endl;
 

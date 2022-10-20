@@ -175,6 +175,23 @@
         "desc":"Flag to use magic mac-id or not",
         "value":false
     },
+    "other_robot_ID":{
+        "desc":"MAC-IDs of other robots (denoted as signal transmitters tx) in the team",
+        "value":{
+            "tx1":{
+                "mac_id":"00:21:6A:3F:16:DA"
+            },
+            "tx2":{
+                "mac_id":"00:21:6A:30:D2:3C"
+            },
+            "tx3":{
+                "mac_id":"00:21:6A:3F:17:5A"
+            },
+            "tx4":{
+                "mac_id":"00:21:6A:AC:9C:6A"
+            }
+        }
+    },
     "input_TX_channel_csi_fn":{
         "desc":"Forward channel csi File for each of the neighboring TX robots",
         "value":{
@@ -231,6 +248,10 @@
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
         "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/tx_trajectory_2021-06-27_202550.csv"
+    },
+    "input_orientation_csv_fn_rx_joint":{
+        "desc":"Orientation of indepdendently rotating platform (only supports 2D)",
+        "value":"/catkin_ws/src/wsr_exploration/data/motorjoint_displacement_2022-10-19_171432.csv"
     },
     "output_aoa_profile_path":{
         "desc":"AOA profile",

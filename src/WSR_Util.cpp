@@ -1670,3 +1670,96 @@ double WSR_Util::wrap0to2Pi(double val) {
 
     return val;
 }
+//=============================================================================================================================
+/**
+ * 
+ * 
+ * */
+std::pair<nc::NdArray<double>, 
+nc::NdArray<double>> WSR_Util::formatDisplacementTwoAntenna(
+                        std::vector<std::vector<double>>& rx_displacement,
+                        string& displacement_type)
+{
+
+    nc::NdArray<double> displacement(rx_displacement.size(),4); //x,y,z,yaw
+    nc::NdArray<double> trajectory_timestamp(rx_displacement.size(),1);
+    std::cout.precision(9);
+    double nsec_timestamp;
+    Eigen::Quaternion<float> q,q_diff;
+    float yaw=0;
+
+    std::cout << "Vals in each pose of displacement:" << rx_displacement[0].size() << std::endl;
+
+    for(int i=0; i<rx_displacement.size(); i++)
+    {
+        nsec_timestamp = rx_displacement[i][0] + rx_displacement[i][1]*0.000000001;
+        trajectory_timestamp(i,0) = nsec_timestamp; //timestamp  //TODO: fix bug #8
+
+        if(displacement_type == "gt")
+        {
+            displacement(i,0) = rx_displacement[i][2]; //x
+            displacement(i,1) = rx_displacement[i][3]; //y
+            displacement(i,2) = rx_displacement[i][4]; //z  
+            displacement(i,3) = get_yaw(rx_displacement[i][5],
+                                        rx_displacement[i][6],
+                                        rx_displacement[i][7],
+                                        rx_displacement[i][8]); //Yaw
+        }
+        else
+        {
+            displacement(i,0) = 0; //x
+            displacement(i,1) = 0; //y
+            displacement(i,2) = 0; //z  
+            displacement(i,3) = rx_displacement[i][2];; //Yaw from the motorjoint file
+        }
+    }
+
+    std::cout << "Displacement updated" << std::endl;
+    nc::NdArray<nc::uint32> sortedIdxs = argsort(trajectory_timestamp);
+    nc::NdArray<double> sorted_trajectory_timestamp(trajectory_timestamp.size(),1);
+    nc::NdArray<double> sorted_displacement;
+    nc::uint32 counter = 0;
+
+    for (auto Idx : sortedIdxs)
+    {
+        // std::cout << counter << std::endl;
+        sorted_trajectory_timestamp.put(counter,0,trajectory_timestamp(Idx,0));
+        sorted_displacement = nc::vstack({sorted_displacement, 
+                                        displacement(Idx,displacement.cSlice())});
+        counter++;
+    }
+
+    //Find first and last moving index
+    //@TODO : Figure out for z_displacment when 3D traj (vertical motion)
+    double first_yaw = sorted_displacement(0, 3);
+    double lastYaw = sorted_displacement(-1, 3);
+    
+    nc::NdArray<double> temp1 = abs(sorted_displacement(sorted_displacement.rSlice(),0)-first_yaw);
+    nc::NdArray<double> temp2 = abs(sorted_displacement(sorted_displacement.rSlice(),0)-lastYaw);
+
+    auto start_yaw = nc::argwhere(temp1 > 0.006);
+    auto end_yaw = nc::argwhere(temp2 > 0.006);
+    
+    int start_yaw_val = sorted_displacement.shape().rows;
+    int end_yaw_val = 0;
+
+    //To handle no change along a specific dimension
+    if(start_yaw.shape().cols > 0) start_yaw_val = start_yaw(0,0);
+    if(end_yaw.shape().cols > 0) end_yaw_val = end_yaw(0,-1);
+    
+    int start_index = start_yaw_val;
+    int end_index = end_yaw_val; 
+
+    std::cout << "First moving index = " << start_index << std::endl;
+    std::cout << "Last moving index = " << end_index << std::endl;
+
+    // std::cout << sorted_trajectory_timestamp({start_index,end_index},sorted_trajectory_timestamp.cSlice()).shape() <<std::endl;
+    // //std::cout << "sorted traj shape " << sorted_displacement({start_index,end_index},nc::Slice(0, 3)).shape() << std::endl;
+
+    return std::make_pair
+    (
+    sorted_trajectory_timestamp({start_index,end_index},
+                                sorted_trajectory_timestamp.cSlice()), 
+    sorted_displacement({start_index,end_index},nc::Slice(0, 4))
+    );
+}
