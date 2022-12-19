@@ -167,14 +167,6 @@
             }
         }
       },
-    "Magic_MAC_ID":{
-        "desc":"MAC ID of RX_SAR robot",
-        "value":"00:16:EA:12:34:56"
-    },
-    "use_magic_mac":{
-        "desc":"Flag to use magic mac-id or not",
-        "value":false
-    },
     "other_robot_ID":{
         "desc":"MAC-IDs of other robots (denoted as signal transmitters tx) in the team",
         "value":{
@@ -349,8 +341,8 @@
     },
     "use_two_antennas":
     {
-        "desc":"Use 2 antenna SAR formulation",
-        "value":true
+        "desc":"Use 2 antenna SAR formulation and complex conjugate to correct for CFO",
+        "value":false
     },
     "slice_displacement":
     {

@@ -50,7 +50,7 @@ class WSR_Module
         nc::NdArray<double> phi_list,precomp_rep_phi,theta_list, precomp_rep_theta;
         bool __FLAG_normalize_profile = true, __FLAG_packet_threshold = false, __FLAG_debug = true, __FLAG_threading=false,
             __FLAG_interpolate_phase = true, __FLAG_sub_sample = false, __FLag_use_packet_id = true, __FLAG_offboard=false,
-            __FLAG_openmp=false, __FLAG_use_relative_displacement=false,__FLAG_two_antenna=false,__FLAG_slice=false,
+            __FLAG_openmp=false, __FLAG_use_relative_displacement=false,__FLAG_slice=false,
             __FLAG_slice_first=false, __FLAG_slice_second=false;
         nc::NdArray<double> __aoa_profile;
         std::unordered_map<std::string, nc::NdArray<double>> __all_aoa_profiles;
@@ -65,6 +65,7 @@ class WSR_Module
         std::string __debug_dir;
         
     public:
+        bool __FLAG_two_antenna=false;
         nlohmann::json __precompute_config; 
         std::unordered_map<std::string,std::string> data_sample_ts;
         std::unordered_map<std::string,std::string> tx_name_list;

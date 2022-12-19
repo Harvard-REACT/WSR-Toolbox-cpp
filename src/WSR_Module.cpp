@@ -35,57 +35,54 @@ WSR_Module::WSR_Module(std::string config_fn)
 
     input >> __precompute_config;
 
-    __FLAG_packet_threshold = bool(__precompute_config["use_max_packets_threshold"]["value"]);
-    __FLAG_debug = bool(__precompute_config["debug"]["value"]);
-    __FLAG_threading = bool(__precompute_config["multi_threading"]["value"]);
-    __FLAG_offboard = bool(__precompute_config["offboard_computation"]["value"]);
-    __FLAG_interpolate_phase = bool(__precompute_config["interpolate_phase"]["value"]);
-    __FLAG_sub_sample = bool(__precompute_config["sub_sample_channel_data"]["value"]);
-    __FLAG_slice = bool(__precompute_config["slice_displacement"]["value"]);
-    __FLAG_slice_first = bool(__precompute_config["slice_displacement_first"]["value"]);
-    __FLAG_slice_second = bool(__precompute_config["slice_displacement_second"]["value"]);
-
-    __FLAG_normalize_profile = bool(__precompute_config["normalize_profile"]["value"]);
-    __FLag_use_packet_id = bool(__precompute_config["use_packet_id"]["value"]);
-    __FLAG_openmp = bool(__precompute_config["openmp"]["value"]);
+    //Set flags
+    __FLAG_packet_threshold   = bool(__precompute_config["use_max_packets_threshold"]["value"]);
+    __FLAG_debug              = bool(__precompute_config["debug"]["value"]);
+    __FLAG_threading          = bool(__precompute_config["multi_threading"]["value"]);
+    __FLAG_offboard           = bool(__precompute_config["offboard_computation"]["value"]);
+    __FLAG_interpolate_phase  = bool(__precompute_config["interpolate_phase"]["value"]);
+    __FLAG_sub_sample         = bool(__precompute_config["sub_sample_channel_data"]["value"]);
+    __FLAG_slice              = bool(__precompute_config["slice_displacement"]["value"]);
+    __FLAG_slice_first        = bool(__precompute_config["slice_displacement_first"]["value"]);
+    __FLAG_slice_second       = bool(__precompute_config["slice_displacement_second"]["value"]);
+    __FLAG_normalize_profile  = bool(__precompute_config["normalize_profile"]["value"]);
+    __FLag_use_packet_id      = bool(__precompute_config["use_packet_id"]["value"]);
+    __FLAG_openmp             = bool(__precompute_config["openmp"]["value"]);
     bool __FLAG_use_multiple_sub_carriers = bool(__precompute_config["multiple_sub_carriers"]["value"]);
-    bool __FLAG_use_magic_mac = bool(__precompute_config["use_magic_mac"]["value"]);
     __FLAG_use_relative_displacement = bool(__precompute_config["use_relative_trajectory"]["value"]);
-    __FLAG_two_antenna = bool(__precompute_config["use_two_antennas"]["value"]);
+    __FLAG_two_antenna        = bool(__precompute_config["use_two_antennas"]["value"]);
 
-    //calculate channel freqeuency based on channel and subcarrier number
-    double centerfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
-                        (double(__precompute_config["subCarrier"]["value"]) - 15.5) * 20e6 / 30;
-    __time_offset = double(__precompute_config["time_offset"]["value"]);
-    __time_threshold = double(__precompute_config["time_threshold"]["value"]);
-    __lambda = double(__precompute_config["c"]["value"]) / centerfreq;
-    __nphi = int(__precompute_config["nphi"]["value"]);
-    __ntheta = int(__precompute_config["ntheta"]["value"]);
-    _phi_min = int(__precompute_config["phi_min"]["value"]);
-    _phi_max = int(__precompute_config["phi_max"]["value"]);
-    _theta_min = int(__precompute_config["theta_min"]["value"]);
-    _theta_max = int(__precompute_config["theta_max"]["value"]);
-    __snum_start = int(__precompute_config["scnum_start"]["value"]);
-    _topN_count = int(__precompute_config["topN_count"]["value"]);
-    __max_packets_to_process = int(__precompute_config["max_packets_to_process"]["value"]);
-    __min_packets_to_process = int(__precompute_config["min_packets_to_process"]["value"]);
-    __peak_radius = int(__precompute_config["peak_radius"]["value"]);
-    __snum_end = int(__precompute_config["scnum_end"]["value"]);
-    __trajType = __precompute_config["trajectory_type"]["value"];
+
+    //Set variables
+    double centerfreq         = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
+                                (double(__precompute_config["subCarrier"]["value"]) - 15.5) * 20e6 / 30;
+    __time_offset             = double(__precompute_config["time_offset"]["value"]);
+    __time_threshold          = double(__precompute_config["time_threshold"]["value"]);
+    __lambda                  = double(__precompute_config["c"]["value"]) / centerfreq;
+    __nphi                    = int(__precompute_config["nphi"]["value"]);
+    __ntheta                  = int(__precompute_config["ntheta"]["value"]);
+    _phi_min                  = int(__precompute_config["phi_min"]["value"]);
+    _phi_max                  = int(__precompute_config["phi_max"]["value"]);
+    _theta_min                = int(__precompute_config["theta_min"]["value"]);
+    _theta_max                = int(__precompute_config["theta_max"]["value"]);
+    __snum_start              = int(__precompute_config["scnum_start"]["value"]);
+    _topN_count               = int(__precompute_config["topN_count"]["value"]);
+    __max_packets_to_process  = int(__precompute_config["max_packets_to_process"]["value"]);
+    __min_packets_to_process  = int(__precompute_config["min_packets_to_process"]["value"]);
+    __peak_radius             = int(__precompute_config["peak_radius"]["value"]);
+    __snum_end                = int(__precompute_config["scnum_end"]["value"]);
+    __trajType                = __precompute_config["trajectory_type"]["value"];
     __relative_magnitude_threshold = int(__precompute_config["top_N_magnitude"]["value"]);
-    __antenna_separation = float(__precompute_config["antenna_separation"]["value"]);
+    __antenna_separation      = float(__precompute_config["antenna_separation"]["value"]);
 
-    if (__FLAG_use_magic_mac)
+
+    if(__FLAG_two_antenna)
     {
-        __RX_SAR_robot_MAC_ID = __precompute_config["Magic_MAC_ID"]["value"];
-    }
-    else if(__FLAG_two_antenna)
-    {
-         __RX_SAR_robot_MAC_ID = __precompute_config["input_RX_channel_csi_fn"]["value"]["mac_id"];       
+         __RX_SAR_robot_MAC_ID     = __precompute_config["input_RX_channel_csi_fn"]["value"]["mac_id"];       
     }
     else
     {
-        __RX_SAR_robot_MAC_ID = __precompute_config["input_RX_channel_csi_fn"]["value"]["mac_id"];
+        __RX_SAR_robot_MAC_ID      = __precompute_config["input_RX_channel_csi_fn"]["value"]["mac_id"];
         __RX_SAR_robot_MAC_ID_List = __precompute_config["RX_mac_ID_list"]["value"].get<std::vector<std::string>>();
     }
 
@@ -1786,9 +1783,9 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
 }
 //======================================================================================================================
 /**
- * Description: 
- * Input:
- * Output:
+ * Description: Checks the signal phase CFO correction using forward-reverse method (ref WSR IJRR 2022)
+ * Input: RX_SAR_ROBOT csi file name (reverse channel data) and TX_SAR_Robot(s) file(s) name(s)
+ * Output: none
  * */
 int WSR_Module::test_csi_data(std::string rx_csi_file,
                               std::unordered_map<std::string, std::string> tx_csi_file)
