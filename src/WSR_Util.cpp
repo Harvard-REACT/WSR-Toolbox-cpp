@@ -48,9 +48,7 @@ void WSR_Util::displayDataPacket(DataPacket wifi_data_packet, int packet_number)
  **/
 int WSR_Util::readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug){
     
-    std::cout << "Reading from file : " << std::endl;
-    std::cout << fn << std::endl;
-
+    std::cout << "log [Utils] Reading from file : " << fn << std::endl;
     FILE *csi_file;
     long file_length, byte_count = 1, total_bytes_data_sz=0, curr_loc=0;
     size_t result = -1;

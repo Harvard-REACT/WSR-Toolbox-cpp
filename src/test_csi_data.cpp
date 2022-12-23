@@ -8,14 +8,14 @@ int main(){
     
     WSR_Util utils;
     std::string config = "../config/config_3D_SAR.json";    
-    std::cout << "[test_csi_data] Config file : " << config << std::endl;
+    std::cout << "log [main] Config file : " << config << std::endl;
 
     WSR_Module run_module(config);
     
-    //RX_SAR_Robot: performs SAR
-    //TX_SAR_Robot(s): Neighboring robots for which RX_SAR_robot calculates AOA
 
-    /*================== Process RX_SAR_Robot files ====================*/
+    //================== Process RX_SAR_Robot files ====================
+    //RX_SAR_Robot: performs SAR
+    
     std::string reverse_csi = run_module.__precompute_config["input_RX_channel_csi_fn"]["value"]["csi_fn"].dump();
     std::string output = run_module.__precompute_config["output_aoa_profile_path"]["value"].dump();
 
@@ -24,7 +24,9 @@ int main(){
     output.erase(remove( output.begin(), output.end(), '\"' ),output.end());
     std::string rx_robot_csi = utils.__homedir + reverse_csi;
     
-    /*============= Process the TX_SAR_Robot files =======================*/
+    //============= Process the TX_SAR_Robot files =======================
+    //TX_SAR_Robot(s): Neighboring robots for which RX_SAR_robot calculates AOA
+
     std::unordered_map<std::string,std::string> tx_robot_csi;
     auto tx_csi_list = run_module.__precompute_config["input_TX_channel_csi_fn"]["value"];
     
@@ -37,7 +39,7 @@ int main(){
         csi_data_file.erase(remove( csi_data_file.begin(), csi_data_file.end(), '\"' ),csi_data_file.end());
         tx_robot_csi[tx_mac_id] = utils.__homedir + csi_data_file;
         
-        //get timestamp for using to store AOA profile
+        //extract timestamp from the files to use for naming the corresponding output files.
         std::string csi_name,ts,time_val,date_val; 
         stringstream tokenize_string1(tx_robot_csi[tx_mac_id]); 
         while(getline(tokenize_string1, csi_name, '/'));
@@ -52,15 +54,12 @@ int main(){
         getline(tokenize_string3, time_val, '.');
         run_module.data_sample_ts[tx_mac_id] = date_val +"_"+ time_val;
         run_module.tx_name_list[tx_mac_id] = tx_name;
-    }
+    }    
 
-    std::cout << rx_robot_csi << std::endl;
-    
-
-    /*Test CSI data files*/
+    //Check CSI data files
     if(run_module.__FLAG_two_antenna)
     {
-      //Uses complex conjugate method (only applicable to 2D)
+      //Uses complex conjugate method (only applicable to 2D motion)
       run_module.test_csi_data_conjugate(rx_robot_csi);
     }
     else
@@ -78,6 +77,7 @@ int main(){
       auto stats = run_module.get_performance_stats(tx_id, run_module.tx_name_list[tx_id]);
 
       std::cout << stats.dump(4) << std::endl;
+      system("python3.8 ../scripts/viz_channel_data.py --file ../debug/tx2_2021-06-28_193409_all_channel_data.json");
       std::cout << "********************************" << std::endl;
     }    
 

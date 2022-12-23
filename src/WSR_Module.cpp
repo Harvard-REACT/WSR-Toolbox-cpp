@@ -26,7 +26,7 @@ WSR_Module::~WSR_Module(void) {}
  * */
 WSR_Module::WSR_Module(std::string config_fn)
 {
-    std::cout << "log [Precomp]: Started Initializations" << std::endl;
+    std::cout << "log [Initialize]: ----- Started Initializations -----" << std::endl;
     std::ifstream input(config_fn);
     if (input.fail())
     {
@@ -162,7 +162,7 @@ WSR_Module::WSR_Module(std::string config_fn)
         std::cout << "  __FLAG_use_relative_displacement = " << utils.bool_to_string(__FLAG_use_relative_displacement) << std::endl;
     }
 
-    std::cout << "log [Precomp]: Finished Initializations" << std::endl;
+    std::cout << "log [Initialize]: ----- Finished Initializations ----- " << std::endl;
 }
 
 
@@ -1791,7 +1791,7 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
                               std::unordered_map<std::string, std::string> tx_csi_file)
 {
 
-    std::cout << "============ Testing CSI data ==============" << std::endl;
+    std::cout << "log [test_csi_data (forward-reverse channel)] ============ Testing CSI data ==============" << std::endl;
 
     WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR
     nc::NdArray<std::complex<double>> h_list_all, h_list_static, h_list;
@@ -1802,25 +1802,25 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
     debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());
     int ret_val = 0;
 
-    std::cout << "log [calculate_AOA_profile]: Parsing CSI Data " << std::endl;
+    std::cout << "log [test_csi_data (forward-reverse channel)]: Parsing CSI Data " << std::endl;
 
     auto temp1 = utils.readCsiData(rx_csi_file, RX_SAR_robot, __FLAG_debug);
 
     // std::vector<std::string> mac_id_tx;
     std::vector<std::string> mac_id_tx;
 
-    std::cout << "log [calculate_AOA_profile]: Neighbouring TX robot IDs count = " << RX_SAR_robot.unique_mac_ids_packets.size() << std::endl;
+    std::cout << "log [test_csi_data (forward-reverse channel)]: Neighbouring TX robot IDs count = " << RX_SAR_robot.unique_mac_ids_packets.size() << std::endl;
 
     for (auto key : RX_SAR_robot.unique_mac_ids_packets)
     {
         if (__FLAG_debug)
-            std::cout << "log [calculate_AOA_profile]: Detected MAC ID = " << key.first
+            std::cout << "log [test_csi_data (forward-reverse channel)]: Detected MAC ID = " << key.first
                       << ", Packet count: = " << key.second << std::endl;
         mac_id_tx.push_back(key.first);
     }
 
     //Get AOA profile for each of the RX neighboring robots
-    if (__FLAG_debug) std::cout << "log [calculate_AOA_profile]: Getting AOA profiles" << std::endl;
+    if (__FLAG_debug) std::cout << "log [test_csi_data (forward-reverse channel)]: Getting AOA profiles" << std::endl;
     
     std::vector<DataPacket> data_packets_RX, data_packets_TX;
 
@@ -1831,41 +1831,45 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
 
         if (tx_csi_file.find(mac_id_tx[num_tx]) == tx_csi_file.end())
         {
-            std::cout << "log [calculate_AOA_profile]: No CSI data available for TX Neighbor MAC-ID: "
+            std::cout << "log [test_csi_data (forward-reverse channel)]: No CSI data available for TX Neighbor MAC-ID: "
                           << mac_id_tx[num_tx] << ". Skipping" << std::endl;
             continue;
         }
-        std::cout << "log [calculate_AOA_profile]: =========================" << std::endl;
-        std::cout << "log [calculate_AOA_profile]: Profile for RX_SAR_robot MAC-ID: " << __RX_SAR_robot_MAC_ID
+        std::cout << "log [test_csi_data (forward-reverse channel)]: =========================" << std::endl;
+        std::cout << "log [test_csi_data (forward-reverse channel)]: Profile for RX_SAR_robot MAC-ID: " << __RX_SAR_robot_MAC_ID
                   << ", TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
 
         auto temp2 = utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], TX_Neighbor_robot, __FLAG_debug);
 
         for (auto key : TX_Neighbor_robot.unique_mac_ids_packets)
         {
-            std::cout << "log [calculate_AOA_profile]: Detected RX MAC IDs = " << key.first
+            std::cout << "log [test_csi_data (forward-reverse channel)]: Detected RX MAC IDs = " << key.first
                           << ", Packet count: = " << key.second << std::endl;
         }
 
         data_packets_RX = RX_SAR_robot.get_wifi_data(mac_id_tx[num_tx]);          //Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
         data_packets_TX = TX_Neighbor_robot.get_wifi_data(__RX_SAR_robot_MAC_ID); //Packets only of RX_SAR_robot in a TX_Neighbor_robot's csi file
 
-        std:: cout << "-----------------------------------------" << std::endl;
-        for(int i=0; i<100; i++)
+        if (__FLAG_debug)
         {
-            printf("%d, ", data_packets_TX[i].frame_count );
+            std:: cout << "log [test_csi_data (forward-reverse channel)]----------Checking packet frame counter-------------------------------" << std::endl;
+            for(int i=0; i<100; i++)
+            {
+                printf("%d, ", data_packets_TX[i].frame_count );
+            }
+            std:: cout << "\nlog [test_csi_data (forward-reverse channel)]----------Checking packet frame counter-------------------------------" << std::endl;
         }
-        std:: cout << "-----------------------------------------" << std::endl;
+        
 
-        std::cout << "log [calculate_AOA_profile]: Packets for TX_Neighbor_robot collected by RX_SAR_robot : "
+        std::cout << "log [test_csi_data (forward-reverse channel)]: Packets for TX_Neighbor_robot collected by RX_SAR_robot : "
                     << data_packets_RX.size() << std::endl;
-        std::cout << "log [calculate_AOA_profile]: Packets for RX_SAR_robot collected by TX_Neighbor_robot : "
+        std::cout << "log [test_csi_data (forward-reverse channel)]: Packets for RX_SAR_robot collected by TX_Neighbor_robot : "
                     << data_packets_TX.size() << std::endl;
 
 
         if (__FLag_use_packet_id)
         {
-            std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product using Counter " << std::endl;
+            std::cout << "log [test_csi_data (forward-reverse channel)]: Calculating forward-reverse channel product using Counter " << std::endl;
             csi_data = utils.getForwardReverseChannelCounter(data_packets_RX,
                                                              data_packets_TX,
                                                              __FLAG_interpolate_phase,
@@ -1873,7 +1877,7 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
         }
         else
         {
-            std::cout << "log [calculate_AOA_profile]: Calculating forward-reverse channel product using Timestamps " << std::endl;
+            std::cout << "log [test_csi_data (forward-reverse channel)]: Calculating forward-reverse channel product using Timestamps " << std::endl;
             csi_data = utils.getForwardReverseChannel_v2(data_packets_RX,
                                                          data_packets_TX,
                                                          __time_offset,
@@ -1883,8 +1887,7 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
                                                          __FLAG_sub_sample);
         }
 
-
-        std::cout << "log [test_csi_data]: corrected CFO " << std::endl;
+        std::cout << "log [test_csi_data (forward-reverse channel)]: corrected CFO " << std::endl;
         h_list_all = csi_data.first;
         csi_timestamp_all = csi_data.second;
 
@@ -1897,28 +1900,28 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
 
         if (h_list_all.shape().rows < __min_packets_to_process)
         {
-            std::cout << "log [test_csi_data]: Not enough CSI packets." << std::endl;
-            std::cout << "log [test_csi_data]: Return Empty AOA profile" << std::endl;
+            std::cout << "log [test_csi_data (forward-reverse channel)]: Not enough CSI packets." << std::endl;
+            std::cout << "log [test_csi_data (forward-reverse channel)]: Return Empty AOA profile" << std::endl;
             //Return empty dummpy AOA profile
             __aoa_profile = nc::zeros<double>(1, 1);
         }
         else
         {
-            std::cout << "log [calculate_AOA_profile]: CSI_packets_used = " << csi_timestamp_all.shape() << std::endl;
-            std::cout << "log [calculate_AOA_profile]: h_list size  = " << h_list_all.shape() << std::endl;
+            std::cout << "log [test_csi_data (forward-reverse channel)]: CSI_packets_used = " << csi_timestamp_all.shape() << std::endl;
+            std::cout << "log [test_csi_data (forward-reverse channel)]: h_list size  = " << h_list_all.shape() << std::endl;
 
             std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
             debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());
 
             //Store phase and timestamp of the channel for debugging
             std::string channel_data_all = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
-            std::cout << channel_data_all << std::endl;
+            std::cout << "log [test_csi_data (forward-reverse channel)]: Output file: " << channel_data_all << std::endl;
             utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all, __FLAG_interpolate_phase);
 
             auto starttime = std::chrono::high_resolution_clock::now();
             auto endtime = std::chrono::high_resolution_clock::now();
             float processtime = std::chrono::duration<float, std::milli>(endtime - starttime).count();
-            /*Interpolate the trajectory and csi data*/
+            //Interpolate the trajectory and csi data
             __paired_pkt_count[mac_id_tx[num_tx]] = csi_timestamp_all.shape().rows;
             __calculated_ts_offset[mac_id_tx[num_tx]] = cal_ts_offset;
             __rx_pkt_size[mac_id_tx[num_tx]] = data_packets_RX.size();
@@ -1929,11 +1932,11 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
         }
 
         //TODO: get azimuth and elevation from beta_profile
-        std::cout << "log [test_csi_data]: Completed Testing CSI data" << std::endl;
+        std::cout << "log [test_csi_data (forward-reverse channel)]: Completed Testing CSI data for TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
         TX_Neighbor_robot.reset();
     }
 
-    std::cout << "============ WSR module end ==============" << std::endl;
+    std::cout << "log [test_csi_data (forward-reverse channel)] ============ WSR module end ==============" << std::endl;
     RX_SAR_robot.reset();
 
     return 0;
