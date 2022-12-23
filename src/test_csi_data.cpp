@@ -69,15 +69,17 @@ int main(){
     }
 
 
+    std::cout << "log [main] ======= Output ======" << std::endl;
     auto detected_tx = run_module.get_paired_pkt_count();
-
     for(auto & itr : detected_tx)
     {
       std::string tx_id = itr.first;
       auto stats = run_module.get_performance_stats(tx_id, run_module.tx_name_list[tx_id]);
-
+      std::string channel_data_fn = run_module.get_channel_data_output_filename(tx_id);
+      std::cout << channel_data_fn << std::endl;
+      std::string cmd = "python3.8 ../scripts/viz_channel_data.py --file "+utils.__homedir+channel_data_fn;
       std::cout << stats.dump(4) << std::endl;
-      system("python3.8 ../scripts/viz_channel_data.py --file ../debug/tx2_2021-06-28_193409_all_channel_data.json");
+      system(cmd.c_str());
       std::cout << "********************************" << std::endl;
     }    
 

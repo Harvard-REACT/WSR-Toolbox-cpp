@@ -1914,7 +1914,7 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
             debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());
 
             //Store phase and timestamp of the channel for debugging
-            std::string channel_data_all = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
+            std::string channel_data_all = debug_dir + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
             std::cout << "log [test_csi_data (forward-reverse channel)]: Output file: " << channel_data_all << std::endl;
             utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all, __FLAG_interpolate_phase);
 
@@ -1929,6 +1929,7 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
             __perf_aoa_profile_cal_time[mac_id_tx[num_tx]] = processtime / 1000;
             __channel_phase_diff_mean[mac_id_tx[num_tx]] = moving_channel_ang_diff_mean;
             __channel_phase_diff_stdev[mac_id_tx[num_tx]] = moving_channel_ang_diff_stdev;
+            __channel_data_output_file[mac_id_tx[num_tx]] = channel_data_all;
         }
 
         //TODO: get azimuth and elevation from beta_profile
@@ -3834,4 +3835,13 @@ int WSR_Module::calculate_AOA_using_csi_conjugate_multiple(std::string rx_csi_fi
 
     return 0;
     
+}
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+std::string WSR_Module::get_channel_data_output_filename(const std::string &tx_mac_id)
+{
+    return __channel_data_output_file[tx_mac_id];
 }

@@ -63,6 +63,7 @@ class WSR_Module
         std::unordered_map<std::string, int>  __all_topN_above_threshold;
         int __num_peaks_above_threshold;
         std::string __debug_dir;
+        std::unordered_map<std::string, std::string> __channel_data_output_file;
         
     public:
         bool __FLAG_two_antenna=false;
@@ -193,7 +194,9 @@ class WSR_Module
         std::pair<std::vector<double>, std::vector<double>> find_topN_azimuth(); 
         int calculate_AOA_using_csi_conjugate_multiple(std::string rx_csi_file,
                                                         nc::NdArray<double> displacement,
-                                                        nc::NdArray<double> displacement_timestamp);                                            
+                                                        nc::NdArray<double> displacement_timestamp); 
+        std::string get_channel_data_output_filename(const std::string &tx_mac_id);
+                                           
 };
 
 

@@ -192,11 +192,11 @@
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-28_193409.dat"            
             },
             "tx2":{
-                "mac_id":"00:21:6A:30:D2:3C",
+                "mac_id":"00:21:6A:3F:17:5A",
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-28_193409.dat"            
             },
             "tx3":{
-                "mac_id":"00:21:6A:3F:17:5A",
+                "mac_id":"00:21:6A:30:D2:3C",
                 "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-28_193409.dat"            
             },
             "tx4":{
