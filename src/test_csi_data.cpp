@@ -57,7 +57,7 @@ int main(){
     }    
 
     //Check CSI data files
-    if(run_module.__FLAG_two_antenna)
+    if(run_module.get__FLAG_two_antenna())
     {
       //Uses complex conjugate method (only applicable to 2D motion)
       run_module.test_csi_data_conjugate(rx_robot_csi);
