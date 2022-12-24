@@ -4,28 +4,16 @@
         "value": 3e8
     },
     "bandwidth": {
-        "desc": "20 MHz",
+        "desc": "Bandwidth of the WiFi signal. Default is 20 MHz",
         "value": 20e6
     },
-    "centerfreq_108": {
-        "desc": "channel 100 frequency (Hz)",
-        "value": 5.54e9
-    },
     "channel": {
-        "desc": "wireless channel used in the 5.0 GHz range",
+        "desc": "Wireless channel used in the 5.0 GHz range",
         "value": 108
     },
     "subCarrier": {
         "desc": "subcarrier for the channel [1,..,30]. Default is 15.5 that corresponds to the center freqency.",
         "value": 15.5
-    },
-    "fastFlag": {
-        "desc":"don't set to true",
-        "value":false
-    },
-    "plotFlag":{
-        "desc":"Plot if it's not in 'fast mode'",
-        "value":true
     },
     "nfft":{
         "desc":"Number of sub-carriers",
@@ -43,17 +31,13 @@
         "desc":"end subcarrier number for forward-reverse music/bartlett. Total subcarriers 30",
         "value":18
     },
-    "multiple_sub_carriers":{
-        "desc":"Use multiple sub-carriers. Used when using relative channel",
-        "value":false
-    },
     "nphi":{
         "desc":"resolution of phi angle",
         "value":360
     },
     "ntheta":{
         "desc":"resolution of theta angle",
-        "value":5
+        "value":90
     },
     "phi_min":{
         "desc":"Minimum azimuth angle",
@@ -69,7 +53,7 @@
     },
     "theta_max":{
         "desc":"Maximum elevation angle",
-        "value":1
+        "value":90
     },
     "tau_min":{
         "desc":"N/A",
@@ -79,21 +63,9 @@
         "desc":"N/A",
         "value":50e-9
     },
-    "speedFlag":{
-        "desc":"N/A",
-        "value":50e-9
-    },
-    "refineFlag":{
-        "desc":"N/A",
-        "value":50e-9
-    },
-    "normalize_profile":{
-        "desc":"Normalize the profile",
-        "value":true
-    },
     "topN_count":{
         "desc":"Top N AOA angles to return from AOA profile",
-        "value":15
+        "value":5
     },
     "true_tx_positions":
     {
@@ -189,27 +161,27 @@
         "value":{
             "tx1":{
                 "mac_id":"00:21:6A:3F:16:DA",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-28_193409.dat"            
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx1_2021-06-27_202550.dat"            
             },
             "tx2":{
                 "mac_id":"00:21:6A:3F:17:5A",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-28_193409.dat"            
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"            
             },
             "tx3":{
                 "mac_id":"00:21:6A:30:D2:3C",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-28_193409.dat"            
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"            
             },
             "tx4":{
                 "mac_id":"00:21:6A:B2:6E:FA",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-28_193409.dat"
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_202550.dat"
             },
             "s3":{
                 "mac_id":"00:21:6A:AC:9C:1",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-28_193409.dat"            
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"            
             },
             "s4":{
                 "mac_id":"00:21:6A:3F:17:1",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-28_193409.dat"
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
             }
         }
     },
@@ -222,20 +194,20 @@
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
         "value":{           
             "mac_id":"00:21:6A:53:89:D2",
-            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-28_193409.dat"
+            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_202550.dat"
         }
     },
-    "input_trajectory_csv_fn_rx":{
-        "desc":"Trajectory fiile",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/rx_trajectory_2021-06-28_193409_.csv"
+    "input_displacement_csv_fn_rx":{
+        "desc":"Groundtruth motion capture displacement file (gt)",
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/rx_trajectory_2021-06-27_202550_.csv"
     },
-    "input_trajectory_csv_fn_rx_t265":{
-        "desc":"Trajectory fiile",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/t265_rx_trajectory_2021-06-28_193409_.csv"
+    "input_displacement_csv_fn_rx_t265":{
+        "desc":"Onboard sensor Intel T265 VIO camera displacement file (t265)",
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/t265_rx_trajectory_2021-06-27_202550_.csv"
     },
-    "input_trajectory_csv_fn_rx_odom":{
-        "desc":"Trajectory fiile",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/odom_rx_trajectory_2021-06-28_193409.csv"
+    "input_displacement_csv_fn_rx_odom":{
+        "desc":"Onboard odometer displacement file (odom)",
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/odom_rx_trajectory_2021-06-27_202550.csv"
     },
     "input_orientation_csv_fn_rx_joint":{
         "desc":"Orientation of indepdendently rotating platform (only supports 2D)",
@@ -257,21 +229,9 @@
         "desc":"Minimum number of csi packets to process",
         "value":1
     },
-    "use_max_packets_threshold":{
-        "desc":"Flag to enable/disable max packet threshold",
-        "value":true
-    },
-    "debug":{
-        "desc":"Flag to enable/disbale debug data generation",
-        "value":true
-    },
     "debug_dir":{
         "desc":"dir to save intermediate data files for debugging",
         "value":"/WSR_Project/WSR-Toolbox-cpp/debug/"
-    },
-    "use_relative_trajectory":{
-        "desc":"Flag to enable/disbale usage of relative trajectory",
-        "value":false
     },
     "input_dir":{
         "desc":"AOA profile",
@@ -280,14 +240,6 @@
     "output_dir":{
         "desc":"AOA profile",
         "value":"/REACT-Projects/WSR-Toolbox-cpp/data"
-    },
-    "multi_threading":{
-        "desc":"Enable multi-threading during AOA profile calculation",
-        "value":true
-    },
-    "interpolate_phase": {
-        "desc": "flag for phase angle interpolation",
-        "value": false
     },
     "time_offset": {
         "desc": "offset for time diff on different robots",
@@ -315,6 +267,14 @@
         "t265_offset":[0.0,0.0,0.06],
         "odom_offset":[0.0,0.16,0.14]
     },
+    "top_N_magnitude":{
+        "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
+        "value": 10
+    },
+    "antenna_separation":{
+        "desc": "(meters) Used with complex conjugate channel formulation",
+        "value": 0.27
+    },
     "get_mean_pose_RX": {
         "desc": "Get mean pose of the RX along its sub-trajectory",
         "value": false
@@ -323,9 +283,37 @@
         "desc": "Match forward-reverse packets using packet id instead of timestamps",
         "value": true
     },
-    "top_N_magnitude":{
-        "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
-        "value": 10
+    "multiple_sub_carriers":{
+        "desc":"Use multiple sub-carriers. Used when using relative channel",
+        "value":false
+    },
+    "normalize_profile":{
+        "desc":"Normalize the profile",
+        "value":true
+    },
+    "use_max_packets_threshold":{
+        "desc":"Flag to enable/disable max packet threshold",
+        "value":true
+    },
+    "info":{
+        "desc":"Flag to enable/disbale info log messages",
+        "value":true
+    },
+    "debug":{
+        "desc":"Flag to enable/disbale debug log messages",
+        "value":false
+    },
+    "use_relative_trajectory":{
+        "desc":"Flag to enable/disbale usage of relative trajectory",
+        "value":false
+    },
+    "multi_threading":{
+        "desc":"Enable multi-threading during AOA profile calculation",
+        "value":true
+    },
+    "interpolate_phase": {
+        "desc": "flag for phase angle interpolation",
+        "value":false
     },
     "offboard_computation":{
         "desc":"Perform computation offboard with high number of CPU cores",
@@ -334,10 +322,6 @@
     "openmp":{
         "desc":"Enable openmp usage for elementwise operation",
         "value":true
-    },
-    "antenna_separation":{
-        "desc": "(meters) Used with complex conjugate channel formulation",
-        "value": 0.27
     },
     "use_two_antennas":
     {

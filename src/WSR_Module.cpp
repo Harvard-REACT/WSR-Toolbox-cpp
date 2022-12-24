@@ -37,28 +37,28 @@ WSR_Module::WSR_Module(std::string config_fn)
 
     //Set flags
     __FLAG_packet_threshold   = bool(__precompute_config["use_max_packets_threshold"]["value"]);
+    __FLAG_info               = bool(__precompute_config["info"]["value"]);
     __FLAG_debug              = bool(__precompute_config["debug"]["value"]);
     __FLAG_threading          = bool(__precompute_config["multi_threading"]["value"]);
     __FLAG_offboard           = bool(__precompute_config["offboard_computation"]["value"]);
     __FLAG_interpolate_phase  = bool(__precompute_config["interpolate_phase"]["value"]);
     __FLAG_sub_sample         = bool(__precompute_config["sub_sample_channel_data"]["value"]);
-    __FLAG_slice              = bool(__precompute_config["slice_displacement"]["value"]);
-    __FLAG_slice_first        = bool(__precompute_config["slice_displacement_first"]["value"]);
-    __FLAG_slice_second       = bool(__precompute_config["slice_displacement_second"]["value"]);
     __FLAG_normalize_profile  = bool(__precompute_config["normalize_profile"]["value"]);
     __FLag_use_packet_id      = bool(__precompute_config["use_packet_id"]["value"]);
     __FLAG_openmp             = bool(__precompute_config["openmp"]["value"]);
     bool __FLAG_use_multiple_sub_carriers = bool(__precompute_config["multiple_sub_carriers"]["value"]);
     __FLAG_use_relative_displacement = bool(__precompute_config["use_relative_trajectory"]["value"]);
     __FLAG_two_antenna        = bool(__precompute_config["use_two_antennas"]["value"]);
-
+    __FLAG_slice              = bool(__precompute_config["slice_displacement"]["value"]);
+    __FLAG_slice_first        = bool(__precompute_config["slice_displacement_first"]["value"]);
+    __FLAG_slice_second       = bool(__precompute_config["slice_displacement_second"]["value"]);
 
     //Set variables
-    double centerfreq         = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
+    __centerfreq              = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
                                 (double(__precompute_config["subCarrier"]["value"]) - 15.5) * 20e6 / 30;
     __time_offset             = double(__precompute_config["time_offset"]["value"]);
     __time_threshold          = double(__precompute_config["time_threshold"]["value"]);
-    __lambda                  = double(__precompute_config["c"]["value"]) / centerfreq;
+    __lambda                  = double(__precompute_config["c"]["value"]) / __centerfreq;
     __nphi                    = int(__precompute_config["nphi"]["value"]);
     __ntheta                  = int(__precompute_config["ntheta"]["value"]);
     _phi_min                  = int(__precompute_config["phi_min"]["value"]);
@@ -144,13 +144,13 @@ WSR_Module::WSR_Module(std::string config_fn)
         get_repmat(__precomp__eigen_rep_theta, __eigen_precomp_rep_theta, 1, __max_packets_to_process);
     }
 
-    if (__FLAG_debug)
+    if (__FLAG_info)
     {
         //List of bool flags that impact calculations
-        std::cout << "log [Precomp]: Important FLAGS status" << std::endl;
+        std::cout << "log [Initialize]: Important FLAGS status" << std::endl;
         std::cout << "  Trajectory Type = " << __trajType << std::endl;
         std::cout << "  WiFi Channel = " << double(__precompute_config["channel"]["value"]) << std::endl;
-        std::cout << "  Channel center frequency (GHz) = " << centerfreq << std::endl;
+        std::cout << "  Channel center frequency (GHz) = " << __centerfreq << std::endl;
         std::cout << "  WiFi signal wavelength = " << __lambda << std::endl;
         std::cout << "  __FLAG_packet_threshold = " << utils.bool_to_string(__FLAG_packet_threshold) << std::endl;
         std::cout << "  __FLAG_debug = " << utils.bool_to_string(__FLAG_debug) << std::endl;
@@ -178,7 +178,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                                       nc::NdArray<double> displacement_timestamp)
 {
 
-    std::cout << "============ Starting WSR module ==============" << std::endl;
+    std::cout << "log [calculate_AOA_profile] ============ Starting WSR module ==============" << std::endl;
 
     WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR
     nc::NdArray<std::complex<double>> h_list_all, h_list_static, h_list;
@@ -200,15 +200,16 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
 
     for (auto key : RX_SAR_robot.unique_mac_ids_packets)
     {
-        if (__FLAG_debug)
+        if (__FLAG_info)
             std::cout << "log [calculate_AOA_profile]: Detected MAC ID = " << key.first
                       << ", Packet count: = " << key.second << std::endl;
         mac_id_tx.push_back(key.first);
     }
 
     //Get AOA profile for each of the RX neighboring robots
-    if (__FLAG_debug)
+    if (__FLAG_info)
         std::cout << "log [calculate_AOA_profile]: Getting AOA profiles" << std::endl;
+    
     std::vector<DataPacket> data_packets_RX, data_packets_TX;
 
     for (int num_tx = 0; num_tx < mac_id_tx.size(); num_tx++)
@@ -218,7 +219,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
 
         if (tx_csi_file.find(mac_id_tx[num_tx]) == tx_csi_file.end())
         {
-            if (__FLAG_debug)
+            if (__FLAG_info)
                 std::cout << "log [calculate_AOA_profile]: No CSI data available for TX Neighbor MAC-ID: "
                           << mac_id_tx[num_tx] << ". Skipping" << std::endl;
             continue;
@@ -231,7 +232,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
 
         for (auto key : TX_Neighbor_robot.unique_mac_ids_packets)
         {
-            if (__FLAG_debug)
+            if (__FLAG_info)
                 std::cout << "log [calculate_AOA_profile]: Detected RX MAC IDs = " << key.first
                           << ", Packet count: = " << key.second << std::endl;
             //mac_id_tx.push_back(key.first);
@@ -240,7 +241,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         data_packets_RX = RX_SAR_robot.get_wifi_data(mac_id_tx[num_tx]);          //Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
         data_packets_TX = TX_Neighbor_robot.get_wifi_data(__RX_SAR_robot_MAC_ID); //Packets only of RX_SAR_robot in a TX_Neighbor_robot's csi file
 
-        if (__FLAG_debug)
+        if (__FLAG_info)
         {
             std::cout << "log [calculate_AOA_profile]: Packets for TX_Neighbor_robot collected by RX_SAR_robot : "
                       << data_packets_RX.size() << std::endl;
@@ -275,14 +276,15 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         if (csi_timestamp_all.size() < __min_packets_to_process)
         {
             std::cout << csi_timestamp_all.size() << std::endl;
-            if (__FLAG_debug)
+            if (__FLAG_info)
                 std::cout << "log [calculate_AOA_profile]: Very few CSI data packets left after forward-backward product" << std::endl;
             break;
         }
 
         /*Get the shifted version of the pose timestamps such that they match exactly with csi timestamps.*/
-        if (__FLAG_debug)
+        if (__FLAG_info)
             std::cout << "log [calculate_AOA_profile]: Removing unused csi data" << std::endl;
+        
         std::pair<int, int> csi_timestamp_range = utils.returnClosestIndices(csi_timestamp_all, displacement_timestamp);
         int start_index = csi_timestamp_range.first, end_index = csi_timestamp_range.second;
 
@@ -290,8 +292,9 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         * Note: Make sure that the packet transmission freqency is high enough when random_packets is used, 
         * such that about 400 left after slicing even if the trajectory duration is small. 
         * */
-        if (__FLAG_debug)
+        if (__FLAG_info)
             std::cout << "log [calculate_AOA_profile]: Slicing CSI timestamps" << std::endl;
+        
         csi_timestamp = csi_timestamp_all({start_index, end_index}, csi_timestamp_all.cSlice());
         h_list = h_list_all({start_index, end_index}, h_list_all.cSlice());
         h_list_static = h_list_all({0, start_index}, h_list_all.cSlice());
@@ -305,14 +308,14 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
         }
         else
         {
-
             /*Interpolate the trajectory using the csi data timestamps*/
-            if (__FLAG_debug)
+            if (__FLAG_info)
                 std::cout << "log [calculate_AOA_profile]: interpolating the trajectory and csi forward-reverse product" << std::endl;
+            
             auto interpolated_data = utils.interpolate(csi_timestamp, displacement_timestamp, displacement);
             nc::NdArray<double> pose_list = interpolated_data.first;
 
-            if (__FLAG_debug)
+            if (__FLAG_info)
             {
                 std::cout << "log [calculate_AOA_profile]: CSI_packets_used = " << csi_timestamp.shape() << std::endl;
                 std::cout << "log [calculate_AOA_profile]: pose_list size  = " << pose_list.shape() << std::endl;
@@ -1813,14 +1816,14 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
 
     for (auto key : RX_SAR_robot.unique_mac_ids_packets)
     {
-        if (__FLAG_debug)
+        if (__FLAG_info)
             std::cout << "log [test_csi_data (forward-reverse channel)]: Detected MAC ID = " << key.first
                       << ", Packet count: = " << key.second << std::endl;
         mac_id_tx.push_back(key.first);
     }
 
     //Get AOA profile for each of the RX neighboring robots
-    if (__FLAG_debug) std::cout << "log [test_csi_data (forward-reverse channel)]: Getting AOA profiles" << std::endl;
+    if (__FLAG_info) std::cout << "log [test_csi_data (forward-reverse channel)]: Getting AOA profiles" << std::endl;
     
     std::vector<DataPacket> data_packets_RX, data_packets_TX;
 
@@ -3844,4 +3847,14 @@ int WSR_Module::calculate_AOA_using_csi_conjugate_multiple(std::string rx_csi_fi
 std::string WSR_Module::get_channel_data_output_filename(const std::string &tx_mac_id)
 {
     return __channel_data_output_file[tx_mac_id];
+}
+
+//=============================================================================================================================
+/**
+ *
+ *
+ * */
+bool WSR_Module::get__FLAG_two_antenna()
+{
+    return __FLAG_two_antenna;
 }

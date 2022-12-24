@@ -51,6 +51,7 @@ class WSR_Module
         bool __FLAG_slice_first=false;
         bool __FLAG_slice_second=false;
         bool __FLAG_two_antenna=false;
+        bool __FLAG_info = false;
         std::string __RX_SAR_robot_MAC_ID;
         std::string __trajType;
         std::string __debug_dir;

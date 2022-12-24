@@ -14,7 +14,7 @@ int main(){
     
 
     //================== Process RX_SAR_Robot files ====================
-    //RX_SAR_Robot: performs SAR
+    //RX_SAR_Robot: emulates SAR
     
     std::string reverse_csi = run_module.__precompute_config["input_RX_channel_csi_fn"]["value"]["csi_fn"].dump();
     std::string output = run_module.__precompute_config["output_aoa_profile_path"]["value"].dump();

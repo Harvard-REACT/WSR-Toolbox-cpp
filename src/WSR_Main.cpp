@@ -45,7 +45,7 @@ std::pair<std::vector<std::string>, std::vector<vector<double>>> WSR_Main::gener
 
     std::string rx_robot_csi = utils.__homedir + reverse_csi;
     std::string traj_fn_rx = utils.__homedir + trajectory_file_rx;
-    std::vector<std::vector<double>> trajectory_rx = utils.loadTrajFromCSV(traj_fn_rx); //Robot performing SAR
+    std::vector<std::vector<double>> trajectory_rx = utils.load_Displacement_From_CSV(traj_fn_rx); //Robot performing SAR
     nc::NdArray<double> displacement;
     nc::NdArray<double> displacement_timestamp;
     
@@ -89,7 +89,7 @@ std::pair<std::vector<std::string>, std::vector<vector<double>>> WSR_Main::gener
       std::string trajectory_file_tx = run_module.__precompute_config["input_trajectory_csv_fn_tx"]["value"].dump();
       trajectory_file_tx.erase(remove( trajectory_file_tx.begin(), trajectory_file_tx.end(), '\"' ),trajectory_file_tx.end());
       std::string traj_fn_tx = utils.__homedir + trajectory_file_tx;
-      trajectory_tx = utils.loadTrajFromCSV(traj_fn_tx);
+      trajectory_tx = utils.load_Displacement_From_CSV(traj_fn_tx);
     }
     std::cout << "log [WSR_Module]: Preprocessing Displacement " << std::endl;
     

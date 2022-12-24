@@ -58,7 +58,7 @@ class WSR_Util{
                             std::string fn);
         void writeTrajToFile(nc::NdArray<double>& rx_trajectory, 
                             const std::string& fn);
-        std::vector<std::vector<double>> loadTrajFromCSV(std::string traj_fn);
+        std::vector<std::vector<double>> load_Displacement_From_CSV(std::string traj_fn);
         double __offset =  pow(10,-6), __threshold = 600*pow(10,-6), __threshold_traj = 100*pow(10,-6);
         std::pair<nc::NdArray<double>, nc::NdArray<double>> match_trajectory_timestamps(
                                                     nc::NdArray<double> timestamp_tx,

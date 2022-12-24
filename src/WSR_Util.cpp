@@ -1096,7 +1096,7 @@ void WSR_Util::writeTrajToFile(nc::NdArray<double>& rx_trajectory, const std::st
  * Inputs: inXp ==> csi_timestamp, inX ==> trajectory_timestamp, inFp ==> trajectory
  * 
  * */
-std::vector<std::vector<double>> WSR_Util::loadTrajFromCSV(std::string traj_fn)
+std::vector<std::vector<double>> WSR_Util::load_Displacement_From_CSV(std::string traj_fn)
 {
     std::vector<std::vector<double>> rx_trajectory;
     std::cout << traj_fn<< std::endl;
