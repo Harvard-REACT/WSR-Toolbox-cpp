@@ -55,6 +55,7 @@ class WSR_Module
         std::string __RX_SAR_robot_MAC_ID;
         std::string __trajType;
         std::string __debug_dir;
+        std::string __estimator;
         std::unordered_map<std::string, double> __perf_aoa_profile_cal_time;
         std::unordered_map<std::string, double> __memory_used, __calculated_ts_offset;
         std::unordered_map<std::string, double> __channel_phase_diff_mean;
@@ -69,22 +70,12 @@ class WSR_Module
         std::vector<double> __aoa_profile_variance;
         std::vector<double> __peak_magnitudes;
         std::vector<std::string> __RX_SAR_robot_MAC_ID_List;
-        nc::NdArray<double> compute_profile_bartlett_multithread(
-            const nc::NdArray<std::complex<double>>& h_list, 
-            const nc::NdArray<double>& pose_list
-        );
         
-        nc::NdArray<double> compute_profile_bartlett_singlethread(
+        nc::NdArray<double> compute_profile_bartlett(
             const nc::NdArray<std::complex<double>>& h_list, 
             const nc::NdArray<double>& pose_list
         );
-        
-        nc::NdArray<double> compute_profile_bartlett_offboard(
-            const nc::NdArray<std::complex<double>>& h_list, 
-            const nc::NdArray<double>& pose_list
-        );
-
-        nc::NdArray<double> compute_profile_music_offboard(
+        nc::NdArray<double> compute_profile_music(
             const nc::NdArray<std::complex<double>>& h_list, 
             const nc::NdArray<double>& pose_list
         );

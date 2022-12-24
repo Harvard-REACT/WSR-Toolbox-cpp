@@ -271,6 +271,10 @@
         "desc": "(meters) Used with complex conjugate channel formulation",
         "value": 0.27
     },
+    "aoa_estimator":{
+        "desc": "use one of the following estimators : bartlett, music",
+        "value": "bartlett"
+    },
     "sub_sample_channel_data": {
         "desc": "flag for enabling subsampling of channle data to reduce packet count",
         "value": false
@@ -301,27 +305,15 @@
     },
     "debug":{
         "desc":"Flag to enable/disbale debug log messages",
-        "value":false
+        "value":true
     },
     "use_relative_trajectory":{
         "desc":"Flag to enable/disbale usage of relative trajectory",
         "value":false
     },
-    "multi_threading":{
-        "desc":"Enable multi-threading during AOA profile calculation",
-        "value":true
-    },
     "interpolate_phase": {
         "desc": "flag for phase angle interpolation",
         "value":false
-    },
-    "offboard_computation":{
-        "desc":"Perform computation offboard with high number of CPU cores",
-        "value":true
-    },
-    "openmp":{
-        "desc":"Enable openmp usage for elementwise operation",
-        "value":true
     },
     "use_two_antennas":
     {
