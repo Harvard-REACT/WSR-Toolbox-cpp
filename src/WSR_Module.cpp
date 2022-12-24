@@ -74,6 +74,8 @@ WSR_Module::WSR_Module(std::string config_fn)
     __trajType                = __precompute_config["trajectory_type"]["value"];
     __relative_magnitude_threshold = int(__precompute_config["top_N_magnitude"]["value"]);
     __antenna_separation      = float(__precompute_config["antenna_separation"]["value"]);
+    __debug_dir               = __precompute_config["debug_dir"]["value"].dump();
+    __debug_dir.erase(remove(__debug_dir.begin(), __debug_dir.end(), '\"'), __debug_dir.end());
 
 
     if(__FLAG_two_antenna)
@@ -103,9 +105,6 @@ WSR_Module::WSR_Module(std::string config_fn)
     
     precomp_rep_theta = nc::reshape(precomp_rep_theta, __nphi * __ntheta, 1);
     // std::cout << "Precomp rep theta =" << precomp_rep_theta.shape() << std::endl;
-
-    __debug_dir = __precompute_config["debug_dir"]["value"].dump();
-    __debug_dir.erase(remove(__debug_dir.begin(), __debug_dir.end(), '\"'), __debug_dir.end());
 
     nc::NdArray<double> lambda_list = {__lambda};
     __eigen_lambda_list = EigenDoubleMatrixMap(lambda_list.data(),
@@ -153,6 +152,7 @@ WSR_Module::WSR_Module(std::string config_fn)
         std::cout << "  Channel center frequency (GHz) = " << __centerfreq << std::endl;
         std::cout << "  WiFi signal wavelength = " << __lambda << std::endl;
         std::cout << "  __FLAG_packet_threshold = " << utils.bool_to_string(__FLAG_packet_threshold) << std::endl;
+        std::cout << "  __FLAG_info = " << utils.bool_to_string(__FLAG_info) << std::endl;
         std::cout << "  __FLAG_debug = " << utils.bool_to_string(__FLAG_debug) << std::endl;
         std::cout << "  __FLAG_threading = " << utils.bool_to_string(__FLAG_threading) << std::endl;
         std::cout << "  __FLAG_interpolate_phase = " << utils.bool_to_string(__FLAG_interpolate_phase) << std::endl;
@@ -180,21 +180,23 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
 
     std::cout << "log [calculate_AOA_profile] ============ Starting WSR module ==============" << std::endl;
 
-    WIFI_Agent RX_SAR_robot; //Broardcasts the csi packets and does SAR
-    nc::NdArray<std::complex<double>> h_list_all, h_list_static, h_list;
-    nc::NdArray<double> csi_timestamp_all, csi_timestamp;
-    double cal_ts_offset, moving_channel_ang_diff_mean, moving_channel_ang_diff_stdev,
-        static_channel_ang_mean, static_channel_ang_stdev;
-    std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
-    debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());
+    WIFI_Agent RX_SAR_robot;
+    nc::NdArray<std::complex<double>> h_list_all;
+    nc::NdArray<std::complex<double>> h_list_static;
+    nc::NdArray<std::complex<double>> h_list;
+    nc::NdArray<double> csi_timestamp_all;
+    nc::NdArray<double> csi_timestamp;
+    double cal_ts_offset;
+    double moving_channel_ang_diff_mean;
+    double moving_channel_ang_diff_stdev;
+    double static_channel_ang_mean;
+    double static_channel_ang_stdev;
     int ret_val = 0;
-
-    std::cout << "log [calculate_AOA_profile]: Parsing CSI Data " << std::endl;
-
-    auto temp1 = utils.readCsiData(rx_csi_file, RX_SAR_robot, __FLAG_debug);
-
-    // std::vector<std::string> mac_id_tx;
     std::vector<std::string> mac_id_tx;
+    std::vector<DataPacket> data_packets_RX, data_packets_TX;
+    
+    std::cout << "log [calculate_AOA_profile]: Parsing CSI Data " << std::endl;
+    utils.readCsiData(rx_csi_file, RX_SAR_robot, __FLAG_debug);
 
     std::cout << "log [calculate_AOA_profile]: Neighbouring TX robot IDs count = " << RX_SAR_robot.unique_mac_ids_packets.size() << std::endl;
 
@@ -210,11 +212,9 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
     if (__FLAG_info)
         std::cout << "log [calculate_AOA_profile]: Getting AOA profiles" << std::endl;
     
-    std::vector<DataPacket> data_packets_RX, data_packets_TX;
-
     for (int num_tx = 0; num_tx < mac_id_tx.size(); num_tx++)
     {
-        WIFI_Agent TX_Neighbor_robot; // Neighbouring robots who reply back
+        WIFI_Agent TX_Neighbor_robot;
         std::pair<nc::NdArray<std::complex<double>>, nc::NdArray<double>> csi_data;
 
         if (tx_csi_file.find(mac_id_tx[num_tx]) == tx_csi_file.end())
@@ -224,18 +224,18 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
                           << mac_id_tx[num_tx] << ". Skipping" << std::endl;
             continue;
         }
+
         std::cout << "log [calculate_AOA_profile]: =========================" << std::endl;
         std::cout << "log [calculate_AOA_profile]: Profile for RX_SAR_robot MAC-ID: " << __RX_SAR_robot_MAC_ID
                   << ", TX_Neighbor_robot MAC-ID: " << mac_id_tx[num_tx] << std::endl;
 
-        auto temp2 = utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], TX_Neighbor_robot, __FLAG_debug);
+        utils.readCsiData(tx_csi_file[mac_id_tx[num_tx]], TX_Neighbor_robot, __FLAG_debug);
 
         for (auto key : TX_Neighbor_robot.unique_mac_ids_packets)
         {
             if (__FLAG_info)
                 std::cout << "log [calculate_AOA_profile]: Detected RX MAC IDs = " << key.first
                           << ", Packet count: = " << key.second << std::endl;
-            //mac_id_tx.push_back(key.first);
         }
 
         data_packets_RX = RX_SAR_robot.get_wifi_data(mac_id_tx[num_tx]);          //Packets for a TX_Neigbor_robot in RX_SAR_robot's csi file
@@ -315,28 +315,25 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             auto interpolated_data = utils.interpolate(csi_timestamp, displacement_timestamp, displacement);
             nc::NdArray<double> pose_list = interpolated_data.first;
 
-            if (__FLAG_info)
+            if (__FLAG_debug)
             {
                 std::cout << "log [calculate_AOA_profile]: CSI_packets_used = " << csi_timestamp.shape() << std::endl;
                 std::cout << "log [calculate_AOA_profile]: pose_list size  = " << pose_list.shape() << std::endl;
                 std::cout << "log [calculate_AOA_profile]: h_list size  = " << h_list.shape() << std::endl;
 
-                std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
-                debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());
-
                 //Store phase and timestamp of the channel for debugging
-                std::string channel_data_sliced = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_sliced_channel_data.json";
+                std::string channel_data_sliced = __debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_sliced_channel_data.json";
                 utils.writeCSIToJsonFile(h_list, csi_timestamp, channel_data_sliced, __FLAG_interpolate_phase);
 
-                std::string channel_data_all = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
+                std::string channel_data_all = __debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_all_channel_data.json";
                 utils.writeCSIToJsonFile(h_list_all, csi_timestamp_all, channel_data_all, __FLAG_interpolate_phase);
 
                 //Store the packet distribution to check for spotty packets
-                std::string packet_dist = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_packet_dist.json";
+                std::string packet_dist = __debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_packet_dist.json";
                 utils.writePacketDistributionToJsonFile(csi_timestamp, displacement_timestamp, displacement, packet_dist);
 
                 //Store interpolated trajectory for debugging
-                std::string interpl_trajectory = debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_interpl_trajectory.json";
+                std::string interpl_trajectory = __debug_dir + "/" + tx_name_list[mac_id_tx[num_tx]] + "_" + data_sample_ts[mac_id_tx[num_tx]] + "_interpl_trajectory.json";
                 utils.writeTrajToFile(pose_list, interpl_trajectory);
             }
 
@@ -1910,8 +1907,11 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
         }
         else
         {
-            std::cout << "log [test_csi_data (forward-reverse channel)]: CSI_packets_used = " << csi_timestamp_all.shape() << std::endl;
-            std::cout << "log [test_csi_data (forward-reverse channel)]: h_list size  = " << h_list_all.shape() << std::endl;
+            if (__FLAG_debug)
+            {
+                std::cout << "log [test_csi_data (forward-reverse channel)]: CSI_packets_used = " << csi_timestamp_all.shape() << std::endl;
+                std::cout << "log [test_csi_data (forward-reverse channel)]: h_list size  = " << h_list_all.shape() << std::endl;
+            }
 
             std::string debug_dir = __precompute_config["debug_dir"]["value"].dump();
             debug_dir.erase(remove(debug_dir.begin(), debug_dir.end(), '\"'), debug_dir.end());

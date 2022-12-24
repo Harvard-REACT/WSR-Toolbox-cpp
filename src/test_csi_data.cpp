@@ -75,11 +75,15 @@ int main(){
     {
       std::string tx_id = itr.first;
       auto stats = run_module.get_performance_stats(tx_id, run_module.tx_name_list[tx_id]);
-      std::string channel_data_fn = run_module.get_channel_data_output_filename(tx_id);
-      std::cout << channel_data_fn << std::endl;
-      std::string cmd = "python3.8 ../scripts/viz_channel_data.py --file "+utils.__homedir+channel_data_fn;
       std::cout << stats.dump(4) << std::endl;
-      system(cmd.c_str());
+
+      if(run_module.__precompute_config["debug"]["value"])
+      {
+        std::string channel_data_fn = run_module.get_channel_data_output_filename(tx_id);
+        std::cout << channel_data_fn << std::endl;
+        std::string cmd = "python3.8 ../scripts/viz_channel_data.py --file "+utils.__homedir+channel_data_fn;
+        system(cmd.c_str());
+      }
       std::cout << "********************************" << std::endl;
     }    
 

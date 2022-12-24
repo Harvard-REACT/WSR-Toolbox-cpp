@@ -39,7 +39,6 @@ class WSR_Module
         int __num_peaks_above_threshold=5;
         bool __FLAG_normalize_profile = true;
         bool __FLAG_packet_threshold = false; 
-        bool __FLAG_debug = true; 
         bool __FLAG_threading=false;
         bool __FLAG_interpolate_phase = true;
         bool __FLAG_sub_sample = false; 
@@ -51,7 +50,8 @@ class WSR_Module
         bool __FLAG_slice_first=false;
         bool __FLAG_slice_second=false;
         bool __FLAG_two_antenna=false;
-        bool __FLAG_info = false;
+        bool __FLAG_debug = false; 
+        bool __FLAG_info = true;
         std::string __RX_SAR_robot_MAC_ID;
         std::string __trajType;
         std::string __debug_dir;

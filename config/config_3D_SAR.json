@@ -257,10 +257,6 @@
         "desc" : "Trajectory of robots (2D or 3D). Impacts AOA error calculation",
         "value": "2D"
     },
-    "sub_sample_channel_data": {
-        "desc": "flag for enabling subsampling of channle data to reduce packet count",
-        "value": false
-    },
     "antenna_position_offset": {
         "desc": "offset between center of displacement center and antenna tip (meters)",
         "mocap_offset":[0.00,0.00,0.00],
@@ -274,6 +270,10 @@
     "antenna_separation":{
         "desc": "(meters) Used with complex conjugate channel formulation",
         "value": 0.27
+    },
+    "sub_sample_channel_data": {
+        "desc": "flag for enabling subsampling of channle data to reduce packet count",
+        "value": false
     },
     "get_mean_pose_RX": {
         "desc": "Get mean pose of the RX along its sub-trajectory",
