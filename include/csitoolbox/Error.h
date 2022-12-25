@@ -5,10 +5,12 @@
 #ifndef CSITOOLBOX_ERROR_H
 #define CSITOOLBOX_ERROR_H
 
-namespace ct{
-#define THROW_CSI_INVALID_ARGUMENT_ERROR(msg) ct::Error::throwError<std::invalid_argument>(__FILE__, __func__, __LINE__, msg)
+namespace ct
+{
+#define THROW_INVALID_ARGUMENT_ERROR(msg) ct::Error::throwError<std::invalid_argument>(__FILE__, __func__, __LINE__, msg)
 #define THROW_CSI_RUNTIME_ERROR(msg) ct::Error::throwError<std::runtime_error>(__FILE__, __func__, __LINE__, msg)
-    class Error {
+
+class Error {
     public:
         template<typename eType>
         static void throwError(const std::string& file,
