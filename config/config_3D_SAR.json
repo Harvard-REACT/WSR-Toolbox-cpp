@@ -19,10 +19,6 @@
         "desc":"Number of sub-carriers",
         "value":1
     },
-    "tauSteps":{
-        "desc":"Resolution of TOFs",
-        "value":2
-    },
     "scnum_start":{
         "desc":"starting subcarrier number for forward-reverse music/bartlett. Total subcarriers 30, start 0, mid 15, end  30 ",
         "value":14
@@ -30,14 +26,6 @@
     "scnum_end":{
         "desc":"end subcarrier number for forward-reverse music/bartlett. Total subcarriers 30",
         "value":18
-    },
-    "nphi":{
-        "desc":"resolution of phi angle",
-        "value":360
-    },
-    "ntheta":{
-        "desc":"resolution of theta angle",
-        "value":90
     },
     "phi_min":{
         "desc":"Minimum azimuth angle",
@@ -47,6 +35,10 @@
         "desc":"Maximum azimuth angle",
         "value":180
     },
+    "nphi":{
+        "desc":"resolution of phi angle",
+        "value":360
+    },
     "theta_min":{
         "desc":"Minumum elevation angle",
         "value":0
@@ -55,13 +47,9 @@
         "desc":"Maximum elevation angle",
         "value":90
     },
-    "tau_min":{
-        "desc":"N/A",
-        "value":-50e-9
-    },
-    "tau_max":{
-        "desc":"N/A",
-        "value":50e-9
+    "ntheta":{
+        "desc":"resolution of theta angle",
+        "value":90
     },
     "topN_count":{
         "desc":"Top N AOA angles to return from AOA profile",
@@ -253,8 +241,8 @@
         "desc" : "radius of patch to ignore neighbor peak in degree",
         "value": 6
     },
-    "trajectory_type": {
-        "desc" : "Trajectory of robots (2D or 3D). Impacts AOA error calculation",
+    "displacement_type": {
+        "desc" : "Motion of robot: 2D, 3D. Impacts steering vector calculation for faster computation",
         "value": "2D"
     },
     "antenna_position_offset": {

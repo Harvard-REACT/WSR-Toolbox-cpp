@@ -67,12 +67,24 @@ WSR_Module::WSR_Module(std::string config_fn)
     __min_packets_to_process  = int(__precompute_config["min_packets_to_process"]["value"]);
     __peak_radius             = int(__precompute_config["peak_radius"]["value"]);
     __snum_end                = int(__precompute_config["scnum_end"]["value"]);
-    __trajType                = __precompute_config["trajectory_type"]["value"];
+    __displacement_type        = __precompute_config["displacement_type"]["value"];
     __relative_magnitude_threshold = int(__precompute_config["top_N_magnitude"]["value"]);
     __antenna_separation      = float(__precompute_config["antenna_separation"]["value"]);
     __estimator               = __precompute_config["aoa_estimator"]["value"];
     __debug_dir               = __precompute_config["debug_dir"]["value"].dump();
     __debug_dir.erase(remove(__debug_dir.begin(), __debug_dir.end(), '\"'), __debug_dir.end());
+
+
+    //=================== Check variables =======================
+    if(__estimator!="bartlett" && __estimator!="music")
+    {
+        THROW_INVALID_ARGUMENT_ERROR("Invalid AOA estimator selected. Valid options: bartlett, music.\n");
+    }
+    if(__displacement_type!="2D" && __displacement_type!="3D")
+    {
+        THROW_INVALID_ARGUMENT_ERROR("Invalid displacement type. Valid options: 2D, 3D.\n");
+    }
+    //=================== Check variables =======================
 
 
     if(__FLAG_two_antenna)
@@ -84,13 +96,6 @@ WSR_Module::WSR_Module(std::string config_fn)
         __RX_SAR_robot_MAC_ID      = __precompute_config["input_RX_channel_csi_fn"]["value"]["mac_id"];
         __RX_SAR_robot_MAC_ID_List = __precompute_config["RX_mac_ID_list"]["value"].get<std::vector<std::string>>();
     }
-
-    //Best way to handle elevation abiguity and also preserve multipath peaks.
-    // if(__trajType == "2D") 
-    // {
-    //     _theta_max = 90;
-    //     __ntheta = __ntheta/2;
-    // }
 
     theta_list = nc::linspace(_theta_min * M_PI / 180, _theta_max * M_PI / 180, __ntheta);
     phi_list = nc::linspace(_phi_min * M_PI / 180, _phi_max * M_PI / 180, __nphi);
@@ -127,7 +132,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     if (__FLAG_debug)
     {
         //List of bool flags that impact calculations
-        std::cout << "  Trajectory Type = " << __trajType << std::endl;
+        std::cout << "  Displacement Type = " << __displacement_type << std::endl;
         std::cout << "  WiFi Channel = " << double(__precompute_config["channel"]["value"]) << std::endl;
         std::cout << "  Channel center frequency (GHz) = " << __centerfreq << std::endl;
         std::cout << "  WiFi signal wavelength = " << __lambda << std::endl;
@@ -369,7 +374,7 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett(
     int total_packets = input_h_list.shape().rows;
     if (total_packets != input_pose_list.shape().rows)
     {
-        THROW_CSI_INVALID_ARGUMENT_ERROR("number of CSI and poses are different.\n");
+        THROW_INVALID_ARGUMENT_ERROR("Number of CSI and poses are different.\n");
     }
 
     int max_packets = total_packets;
@@ -395,7 +400,7 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett(
     auto num_poses = nc::shape(pose_list).rows;
     if (h_list_single_channel.shape().cols == 0)
     {
-        THROW_CSI_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
+        THROW_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
     }
 
     //========== Matrix repmat operation ====================
@@ -444,8 +449,11 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett(
     
     EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
     //====Openmp implementation =============.
-    get_bterm_all(std::ref(e_term_exp), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));
-    // int i, j;
+    if(__displacement_type == "2D")
+        get_bterm_all_2D(std::ref(e_term_exp), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));
+    else
+        get_bterm_all_3D(std::ref(e_term_exp), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));
+    
     //====Openmp implementation=============.
     
     std::complex<double> *cddataPtr = new std::complex<double>[e_term_exp.rows() * e_term_exp.cols()];
@@ -515,7 +523,7 @@ nc::NdArray<double> WSR_Module::compute_profile_music(
     int total_packets = input_h_list.shape().rows;
     if (total_packets != input_pose_list.shape().rows)
     {
-        THROW_CSI_INVALID_ARGUMENT_ERROR("number of CSI and poses are different.\n");
+        THROW_INVALID_ARGUMENT_ERROR("number of CSI and poses are different.\n");
     }
 
     int max_packets = total_packets;
@@ -577,8 +585,10 @@ nc::NdArray<double> WSR_Module::compute_profile_music(
     EigenDoubleMatrix e_term(__nphi * __ntheta, num_poses);
 
     //====Openmp implementation 0.2 sec faster =============.
-    // get_bterm_all(std::ref(e_term_exp), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));    
-    get_bterm_all_subcarrier(std::ref(e_term), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));
+    if(__displacement_type == "2D")
+        get_bterm_all_subcarrier_2D(std::ref(e_term), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));
+    else
+        get_bterm_all_subcarrier_3D(std::ref(e_term), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));
     //====Openmp implementation=============
     //========== Steering vector computation ================
 
@@ -607,7 +617,7 @@ nc::NdArray<double> WSR_Module::compute_profile_music(
         
         if (h_list_single_channel.shape().cols == 0)
         {
-            THROW_CSI_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
+            THROW_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
         }
 
         //Get complex conjugate of the channel  
@@ -827,11 +837,11 @@ int WSR_Module::test_csi_data(std::string rx_csi_file,
 }
 //=============================================================================================================================
 /**
- * Description: 
+ * Description: Single antenna steering vector for pure 2D motion. Ignores elevation (theta) angles, thus speeding up computation
  * Input:
  * Output:
  */
-void WSR_Module::get_bterm_all(EigencdMatrix &e_term_exp,
+void WSR_Module::get_bterm_all_2D(EigencdMatrix &e_term_exp,
                                EigenDoubleMatrix &eigen_pitch_list, EigenDoubleMatrix &eigen_yaw_list, EigenDoubleMatrix &rep_rho)
 {
 
@@ -842,9 +852,64 @@ void WSR_Module::get_bterm_all(EigencdMatrix &e_term_exp,
     {
         for (j = 0; j < e_term_exp.cols(); j++)
         {
-            e_term_exp(i, j) = exp((sin(__eigen_precomp_rep_theta(i, 0)) * cos(eigen_pitch_list(0,j)) * cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j)) +
-                                 sin(eigen_pitch_list(0, j)) * cos(__eigen_precomp_rep_theta(i, 0))) *
-                                rep_rho(0, j) * (-4.0 * std::complex<double>(0, 1) * M_PI / __lambda));
+            //Ignore elevation (theta) if motion is 2D. Uses Theta = 90 deg
+            e_term_exp(i, j) = exp((cos(eigen_pitch_list(0,j)) * 
+                                    cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j))) *
+                                    rep_rho(0, j) * 
+                                    (-4.0 * std::complex<double>(0, 1) * M_PI / __lambda));
+        }
+    }
+}
+//=============================================================================================================================
+/**
+ * Description: Single antenna steering vector for 3D motion.
+ * Input:
+ * Output:
+ */
+void WSR_Module::get_bterm_all_3D(EigencdMatrix &e_term_exp,
+                               EigenDoubleMatrix &eigen_pitch_list, EigenDoubleMatrix &eigen_yaw_list, EigenDoubleMatrix &rep_rho)
+{
+
+    int i = 0;
+    int j = 0;
+#pragma omp parallel for shared(e_term_exp, __eigen_precomp_rep_theta, eigen_pitch_list, eigen_yaw_list, rep_rho) private(i, j) collapse(2)
+    for (i = 0; i < e_term_exp.rows(); i++)
+    {
+        for (j = 0; j < e_term_exp.cols(); j++)
+        {
+            e_term_exp(i, j) = exp((sin(__eigen_precomp_rep_theta(i, 0)) * 
+                                    cos(eigen_pitch_list(0,j)) * 
+                                    cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j)) +
+                                    sin(eigen_pitch_list(0, j)) * 
+                                    cos(__eigen_precomp_rep_theta(i, 0))) *
+                                    rep_rho(0, j) * 
+                                    (-4.0 * std::complex<double>(0, 1) * M_PI / __lambda));
+        }
+    }
+}
+//=============================================================================================================================
+/**
+ * Description: Does not include division by lambda in the exponential term; can be used for different subcarriers. Motion is 2D 
+ * Input:
+ * Output:
+ */
+void WSR_Module::get_bterm_all_subcarrier_2D(
+                EigenDoubleMatrix &e_term,
+                EigenDoubleMatrix &eigen_pitch_list, 
+                EigenDoubleMatrix &eigen_yaw_list, 
+                EigenDoubleMatrix &rep_rho)
+{
+    int i = 0;
+    int j = 0;
+#pragma omp parallel for shared(e_term, __eigen_precomp_rep_theta, eigen_pitch_list, eigen_yaw_list, rep_rho) private(i, j) collapse(2)
+    for (i = 0; i < e_term.rows(); i++)
+    {
+        for (j = 0; j < e_term.cols(); j++)
+        {
+            //Ignore elevation (theta) if motion is 2D. Uses Theta = 90 deg
+            e_term(i, j) = (cos(eigen_pitch_list(0,j)) * 
+                            cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j))) *
+                            rep_rho(0, j) ;
         }
     }
 }
@@ -854,10 +919,12 @@ void WSR_Module::get_bterm_all(EigencdMatrix &e_term_exp,
  * Input:
  * Output:
  */
-void WSR_Module::get_bterm_all_subcarrier(EigenDoubleMatrix &e_term,
-                               EigenDoubleMatrix &eigen_pitch_list, EigenDoubleMatrix &eigen_yaw_list, EigenDoubleMatrix &rep_rho)
+void WSR_Module::get_bterm_all_subcarrier_3D(
+                EigenDoubleMatrix &e_term,
+                EigenDoubleMatrix &eigen_pitch_list, 
+                EigenDoubleMatrix &eigen_yaw_list, 
+                EigenDoubleMatrix &rep_rho)
 {
-
     int i = 0;
     int j = 0;
 #pragma omp parallel for shared(e_term, __eigen_precomp_rep_theta, eigen_pitch_list, eigen_yaw_list, rep_rho) private(i, j) collapse(2)
@@ -865,8 +932,12 @@ void WSR_Module::get_bterm_all_subcarrier(EigenDoubleMatrix &e_term,
     {
         for (j = 0; j < e_term.cols(); j++)
         {
-            e_term(i, j) = (sin(__eigen_precomp_rep_theta(i, 0)) * cos(eigen_pitch_list(0,j)) * cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j)) +
-                                 sin(eigen_pitch_list(0, j)) * cos(__eigen_precomp_rep_theta(i, 0))) * rep_rho(0, j);
+            e_term(i, j) = (sin(__eigen_precomp_rep_theta(i, 0)) * 
+                            cos(eigen_pitch_list(0,j)) * 
+                            cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(0,j)) +
+                            sin(eigen_pitch_list(0, j)) * 
+                            cos(__eigen_precomp_rep_theta(i, 0))) * 
+                            rep_rho(0, j);
         }
     }
 }
@@ -1726,7 +1797,7 @@ nlohmann::json WSR_Module::get_stats(double true_phi,
                                             {"groundtruth_azimuth", true_phi}, 
                                             {"groundtruth_elevation", true_theta}}},
             {"b_INFO_Receiving_robot", {{"id", pos_idx}, 
-                                        {"displacement_type", __trajType}, 
+                                        {"displacement_type", __displacement_type}, 
                                         {"estimated_start_position", 
                                         {{"x", rx_pos_est(0, 0)}, //Will be same as true positin when using gt flag
                                          {"y", rx_pos_est(0, 1)},
@@ -1828,7 +1899,7 @@ nlohmann::json WSR_Module::get_stats_old_json(double true_phi,
         {"c_Info_AOA_Top", {{"Phi(deg)", aoa_error[0][0]}, {"Theta(deg)", aoa_error[0][1]}, {"Confidence", get_top_confidence(tx_mac_id)}, {"Total_AOA_Error(deg)", aoa_error[0][2]}, {"Phi_Error(deg)", aoa_error[0][3]}, {"Theta_Error(deg)", aoa_error[0][4]}}},
         {"d_Info_AOA_Closest", {{"Phi(deg)", 0}, {"Theta(deg)", 0}, {"Total_AOA_Error(deg)", 0}, {"Phi_Error(deg)", 0}, {"Theta_Error(deg)", 0}}},
         {"RX_idx", pos_idx},
-        {"RX_displacement", __trajType},
+        {"RX_displacement", __displacement_type},
         {"RX_position", {{"x", rx_pos_true(0, 0)}, {"y", rx_pos_true(0, 1)}, {"z", rx_pos_true(0, 2)}, {"yaw", rx_pos_true(0, 3)}}}};
 
     std::cout << "Got json" << std::endl;
@@ -2484,7 +2555,7 @@ nc::NdArray<double> WSR_Module::compute_conjugate_profile_bartlett_multithread(
     int total_packets = input_h_list.shape().rows;
     if (total_packets != input_pose_list.shape().rows)
     {
-        THROW_CSI_INVALID_ARGUMENT_ERROR("number of CSI and poses are different.\n");
+        THROW_INVALID_ARGUMENT_ERROR("number of CSI and poses are different.\n");
     }
 
     int max_packets = total_packets;
@@ -2555,7 +2626,7 @@ nc::NdArray<double> WSR_Module::compute_conjugate_profile_bartlett_multithread(
         
         if (h_list_single_channel.shape().cols == 0)
         {
-            THROW_CSI_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
+            THROW_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
         }
 
         if (__FLAG_debug)
@@ -2642,7 +2713,7 @@ nc::NdArray<double> WSR_Module::compute_conjuate_profile_music_offboard(
     int total_packets = input_h_list.shape().rows;
     if (total_packets != input_pose_list.shape().rows)
     {
-        THROW_CSI_INVALID_ARGUMENT_ERROR("number of CSI and poses are different.\n");
+        THROW_INVALID_ARGUMENT_ERROR("number of CSI and poses are different.\n");
     }
 
     int max_packets = total_packets;
@@ -2722,7 +2793,7 @@ nc::NdArray<double> WSR_Module::compute_conjuate_profile_music_offboard(
         
         if (h_list_single_channel.shape().cols == 0)
         {
-            THROW_CSI_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
+            THROW_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
         }
 
         //Get complex conjugate of the channel  

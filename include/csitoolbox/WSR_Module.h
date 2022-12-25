@@ -49,7 +49,7 @@ class WSR_Module
         bool __FLAG_two_antenna=false;
         bool __FLAG_debug = false; 
         std::string __RX_SAR_robot_MAC_ID;
-        std::string __trajType;
+        std::string __displacement_type;
         std::string __debug_dir;
         std::string __estimator;
         std::unordered_map<std::string, double> __perf_aoa_profile_cal_time;
@@ -197,10 +197,28 @@ class WSR_Module
             EigencdMatrix& output, 
             EigenDoubleMatrix& input
         );
-        void get_bterm_all(
+        void get_bterm_all_2D(
             EigencdMatrix& e_term_exp, 
             EigenDoubleMatrix &e_rep_pitch,
             EigenDoubleMatrix &diff_phi_yaw,
+            EigenDoubleMatrix &rep_rho
+        );
+        void get_bterm_all_3D(
+            EigencdMatrix& e_term_exp, 
+            EigenDoubleMatrix &e_rep_pitch,
+            EigenDoubleMatrix &diff_phi_yaw,
+            EigenDoubleMatrix &rep_rho
+        );
+        void get_bterm_all_subcarrier_2D(
+            EigenDoubleMatrix &e_term_exp,
+            EigenDoubleMatrix &eigen_pitch_list, 
+            EigenDoubleMatrix &eigen_yaw_list, 
+            EigenDoubleMatrix &rep_rho
+        );
+        void get_bterm_all_subcarrier_3D(
+            EigenDoubleMatrix &e_term_exp,
+            EigenDoubleMatrix &eigen_pitch_list, 
+            EigenDoubleMatrix &eigen_yaw_list, 
             EigenDoubleMatrix &rep_rho
         );
         void get_block_exp(
@@ -218,12 +236,6 @@ class WSR_Module
         void get_bterm_all_subcarrier_conjugate(
             EigenDoubleMatrix &e_term,
             EigenDoubleMatrix &eigen_yaw_list
-        );
-        void get_bterm_all_subcarrier(
-            EigenDoubleMatrix &e_term_exp,
-            EigenDoubleMatrix &eigen_pitch_list, 
-            EigenDoubleMatrix &eigen_yaw_list, 
-            EigenDoubleMatrix &rep_rho
         );
         void getExponential(
             EigencdMatrix &out, 

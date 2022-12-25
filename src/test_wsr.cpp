@@ -141,7 +141,7 @@ int main(int argc, char *argv[]){
     auto all_aoa_profile = run_module.get_all_aoa_profile();
     auto all_topN_angles = run_module.get_TX_topN_angles();
     auto all_confidences = run_module.get_all_confidence();
-    string trajType = run_module.__precompute_config["trajectory_type"]["value"];
+    std::string displacement_type = run_module.__precompute_config["displacement_type"]["value"];
     double true_phi, true_theta;
 
     std::cout << "log [main] Getting AOA profile stats for TX Neighbor robots" << std::endl;
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]){
 
             std::vector<std::vector<float>> aoa_error = run_module.get_aoa_error(topN_angles,
                                                                                 all_true_AOA[run_module.tx_name_list[tx_id]],
-                                                                                trajType);
+                                                                                displacement_type);
             
             auto stats = run_module.get_stats(true_phi, true_theta, aoa_error,
                                                 tx_id, run_module.tx_name_list[tx_id],

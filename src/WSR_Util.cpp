@@ -884,19 +884,19 @@ std::pair<nc::NdArray<double>,std::vector<size_t> > WSR_Util::interpolate(const 
     // check the dimension fit
     if (nc::shape(inXp).rows != nc::shape(inFp).rows)
     {
-        THROW_CSI_INVALID_ARGUMENT_ERROR("time list and pose list should have same length");
+        THROW_INVALID_ARGUMENT_ERROR("time list and pose list should have same length");
         std::cout << "time list and pose list should have same length" << std::endl;
     }
     
     if (nc::shape(inFp).cols != 4) //x,y,z,yaw
     {
-        THROW_CSI_INVALID_ARGUMENT_ERROR("the shape of pose matrix should be n by 3");
+        THROW_INVALID_ARGUMENT_ERROR("the shape of pose matrix should be n by 3");
         std::cout << "the shape of pose matrix should be n by 4" << std::endl;
     }
     
     if (inX(0,0) > inXp(-1,0) || inX(-1,0)<inXp(0,0))
     {
-        THROW_CSI_INVALID_ARGUMENT_ERROR("the range of time to be interpolated has no overlap with pose time");
+        THROW_INVALID_ARGUMENT_ERROR("the range of time to be interpolated has no overlap with pose time");
         std::cout << "the shape of pose matrix should be n by 3" << std::endl;
     }
 
