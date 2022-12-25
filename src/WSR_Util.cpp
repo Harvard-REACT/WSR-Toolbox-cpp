@@ -48,7 +48,7 @@ void WSR_Util::displayDataPacket(DataPacket wifi_data_packet, int packet_number)
  **/
 int WSR_Util::readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug){
     
-    std::cout << "log [Utils] Reading from file : " << fn << std::endl;
+    std::cout << "log-info  [Utils] Reading from file : " << fn << std::endl;
     FILE *csi_file;
     long file_length, byte_count = 1, total_bytes_data_sz=0, curr_loc=0;
     size_t result = -1;
@@ -58,7 +58,7 @@ int WSR_Util::readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug){
     //std::cout << "Opening the csi file : "<<fn.c_str() << std::endl;
     csi_file = fopen ( fn.c_str() , "rb" );
     if (csi_file==NULL) {
-        fputs ("log [Utils]: Error opening CSI file \n",stderr); 
+        fputs ("log-info  [Utils]: Error opening CSI file \n",stderr); 
         fclose(csi_file);
         exit (1);
     }
@@ -68,19 +68,18 @@ int WSR_Util::readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug){
     status = fseek (csi_file , 0 , SEEK_END);
     if(status != 0) {
         error_no = ferror(csi_file);
-        std::cout << "log [Utils]: Error " << error_no <<" seeking end of file" << std::endl;
+        std::cout << "log-info  [Utils]: Error " << error_no <<" seeking end of file" << std::endl;
         fclose(csi_file);
         exit(1);
     }
 
-    
     file_length = ftell (csi_file);
-    if(__FLAG_debug) std::cout << "log [Utils]: file size : " << file_length << std::endl;
+    if(__FLAG_debug) std::cout << "log-debug [Utils]: file size : " << file_length << std::endl;
     
     status = fseek (csi_file , 0 , SEEK_SET);
     if(status != 0) {
         error_no = ferror(csi_file);
-        std::cout << "log [Utils]: Error " << error_no <<" seeking beginning of file" << std::endl;
+        std::cout << "log-info  [Utils]: Error " << error_no <<" seeking beginning of file" << std::endl;
         fclose(csi_file);
         exit(1);
     }
@@ -91,7 +90,7 @@ int WSR_Util::readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug){
         status = fseek (csi_file , 1 , SEEK_CUR);
         if(status != 0) {
             error_no = ferror(csi_file);
-            std::cout << "log [Utils]: Error " << error_no <<" seeking position in file stream" << std::endl;
+            std::cout << "log-info  [Utils]: Error " << error_no <<" seeking position in file stream" << std::endl;
             fclose(csi_file);
             exit(1);
         }
@@ -103,7 +102,6 @@ int WSR_Util::readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug){
         //get field len
         result = fread (robot.field_len,1,robot.byte_count,csi_file);
         if (result != robot.byte_count) {
-            std::cout << "result: " << result << std::endl;
             fputs ("log [Utils]: Reading error-field-len\n",stderr);
             break;
         }
@@ -114,7 +112,7 @@ int WSR_Util::readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug){
         //get code
         result = fread (robot.code,1,robot.byte_count,csi_file);
         if (result != robot.byte_count) {
-            fputs ("log [Utils]: Reading error-code\n",stderr); 
+            fputs ("log-info  [Utils]: Reading error-code\n",stderr); 
             break;
         }
     
@@ -131,13 +129,14 @@ int WSR_Util::readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug){
             
             robot.bytes_data = (uint8_t*) calloc (total_bytes_data_sz,sizeof(uint8_t)*total_bytes_data_sz);
             if (robot.bytes_data == NULL) {
-                fputs ("log [Utils]: Memory error for code 187",stderr); 
+                fputs ("log-info  [Utils]: Memory error for code 187",stderr); 
                 exit (2);
             }
     
             result = fread (robot.bytes_data,1,total_bytes_data_sz,csi_file);
-            if (result != total_bytes_data_sz) {
-                fputs ("log [Utils]: Completed reading data packets\n",stderr); 
+            if (result != total_bytes_data_sz) 
+            {
+                if (__FLAG_debug) fputs ("log-debug [Utils]: Completed reading data packets\n",stderr); 
                 break;
             }
             
@@ -152,7 +151,7 @@ int WSR_Util::readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug){
             status = fseek (csi_file , total_bytes_data_sz , SEEK_CUR);
             if(status != 0) {
                 error_no = ferror(csi_file);
-                std::cout << "log [Utils]: Error " << error_no <<" seeking file pointer location" << std::endl;
+                std::cout << "log-info  [Utils]: Error " << error_no <<" seeking file pointer location" << std::endl;
                 fclose(csi_file);
                 exit(1);
             }
@@ -166,7 +165,7 @@ int WSR_Util::readCsiData(std::string fn, WIFI_Agent& robot, bool __FLAG_debug){
     // terminate
     fclose (csi_file);
     int total_packets = robot.getPktCount();
-    std::cout << "log [Utils]: Exiting CSI File Read" << std::endl;
+    std::cout << "log-info  [Utils]: Exiting CSI File Read" << std::endl;
     return total_packets;
 }
 
@@ -223,7 +222,7 @@ void WSR_Util::read_bfee_timestamp_mac(uint8_t *inBytes, WIFI_Agent& robot)
     calc_len = (30 * (wifi_data_packet.Nrx * wifi_data_packet.Ntx * 8 * 2 + 3) + 7) / 8;
 
 	if (len != calc_len)
-		std::cout << "Wrong beamforming matrix size." << std::endl;
+		std::cout << "log-info  [Utils] : Wrong beamforming matrix size." << std::endl;
 
 
     /*Calcuate CSI*/

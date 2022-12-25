@@ -8,9 +8,9 @@ int main(int argc, char *argv[]){
     
     WSR_Util utils;
     string __d_type = argv[1];
-    std::cout << "log [main] Processing Displacement type: " << __d_type << std::endl;
+    std::cout << "log-info  [main] Processing Displacement type: " << __d_type << std::endl;
     std::string config = "../config/config_3D_SAR.json";
-    std::cout << "log [main] Config file : " << config << std::endl;
+    std::cout << "log-info  [main] Config file : " << config << std::endl;
     WSR_Module run_module(config);
 
     nc::NdArray<double> displacement;

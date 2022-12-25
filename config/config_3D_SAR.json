@@ -273,7 +273,7 @@
     },
     "aoa_estimator":{
         "desc": "use one of the following estimators : bartlett, music",
-        "value": "bartlett"
+        "value": "music"
     },
     "sub_sample_channel_data": {
         "desc": "flag for enabling subsampling of channle data to reduce packet count",
@@ -297,10 +297,6 @@
     },
     "use_max_packets_threshold":{
         "desc":"Flag to enable/disable max packet threshold",
-        "value":true
-    },
-    "info":{
-        "desc":"Flag to enable/disbale info log messages",
         "value":true
     },
     "debug":{
