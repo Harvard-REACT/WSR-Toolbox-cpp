@@ -17,7 +17,7 @@
     },
     "scnum_end":{
         "desc":"end subcarrier number music/bartlett. Total subcarriers 30",
-        "value":17
+        "value":16
     },
     "phi_min":{
         "desc":"Minimum azimuth angle",
@@ -236,8 +236,8 @@
         "value": 0.27
     },
     "aoa_estimator":{
-        "desc": "use one of the following estimators : bartlett, music",
-        "value": "music"
+        "desc": "use one of the following estimators : bartlett",
+        "value": "bartlett"
     },
     "sub_sample_channel_data": {
         "desc": "flag for enabling subsampling of channle data to reduce packet count",
@@ -250,10 +250,6 @@
     "use_packet_id":{
         "desc": "Match forward-reverse packets using packet id instead of timestamps",
         "value": true
-    },
-    "multiple_sub_carriers":{
-        "desc":"Use multiple sub-carriers. Used when using relative channel",
-        "value":false
     },
     "normalize_profile":{
         "desc":"Normalize the profile",
@@ -273,7 +269,7 @@
     },
     "interpolate_phase": {
         "desc": "flag for phase angle interpolation",
-        "value":false
+        "value":true
     },
     "use_two_antennas":
     {
