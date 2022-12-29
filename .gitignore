@@ -12,4 +12,4 @@ Cython_modules/wsr_module.cpp
 *__init__*
 wsr_build
 debug
-data
+

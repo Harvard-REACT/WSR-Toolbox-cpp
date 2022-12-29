@@ -46,8 +46,8 @@ int main(int argc, char *argv[])
     getline(tokenize_string3, time_val, '.');
 
 
-    std::vector<std::vector<double>> trajectory_rx = utils.loadTrajFromCSV(traj_fn_rx); //Robot performing SAR
-    // std::vector<std::vector<double>> true_trajectory_rx = utils.loadTrajFromCSV(true_traj_fn_rx); //Robot performing SAR
+    std::vector<std::vector<double>> trajectory_rx = utils.load_Displacement_From_CSV(traj_fn_rx); //Robot performing SAR
+    // std::vector<std::vector<double>> true_trajectory_rx = utils.load_Displacement_From_CSV(true_traj_fn_rx); //Robot performing SAR
     nc::NdArray<double> displacement;
     nc::NdArray<double> displacement_timestamp;
     

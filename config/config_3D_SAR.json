@@ -302,7 +302,7 @@
     "use_two_antennas":
     {
         "desc":"Use 2 antenna SAR formulation and complex conjugate to correct for CFO",
-        "value":false
+        "value":true
     },
     "slice_displacement":
     {
