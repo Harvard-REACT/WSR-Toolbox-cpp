@@ -42,7 +42,6 @@ WSR_Module::WSR_Module(std::string config_fn)
     __FLAG_sub_sample         = bool(__precompute_config["sub_sample_channel_data"]["value"]);
     __FLAG_normalize_profile  = bool(__precompute_config["normalize_profile"]["value"]);
     __FLag_use_packet_id      = bool(__precompute_config["use_packet_id"]["value"]);
-    bool __FLAG_use_multiple_sub_carriers = bool(__precompute_config["multiple_sub_carriers"]["value"]);
     __FLAG_use_relative_displacement = bool(__precompute_config["use_relative_trajectory"]["value"]);
     __FLAG_two_antenna        = bool(__precompute_config["use_two_antennas"]["value"]);
 
@@ -80,7 +79,7 @@ WSR_Module::WSR_Module(std::string config_fn)
 
     __snum_start              = int(__precompute_config["scnum_start"]["value"]);
     __snum_end                = int(__precompute_config["scnum_end"]["value"]);
-    if(__snum_start < 0 || __snum_start > 30 || __snum_end < 0 || __snum_end > 30 || __snum_end-__snum_start<0)
+    if(__snum_start < 0 || __snum_start > 29 || __snum_end < 0 || __snum_end > 29 || __snum_end-__snum_start<0)
     {
         THROW_INVALID_ARGUMENT_ERROR("Invalid scnum_start or scnum_end value. Valid subcarrier range: [0, 30].\n");
     }
@@ -167,7 +166,6 @@ WSR_Module::WSR_Module(std::string config_fn)
         std::cout << "  __FLAG_interpolate_phase = " << utils.bool_to_string(__FLAG_interpolate_phase) << std::endl;
         std::cout << "  __FLAG_sub_sample = " << utils.bool_to_string(__FLAG_sub_sample) << std::endl;
         std::cout << "  __FLAG_normalize_profile = " << utils.bool_to_string(__FLAG_normalize_profile) << std::endl;
-        std::cout << "  __FLAG_use_multiple_sub_carriers = " << utils.bool_to_string(__FLAG_use_multiple_sub_carriers) << std::endl;
         std::cout << "  __FLAG_use_relative_displacement = " << utils.bool_to_string(__FLAG_use_relative_displacement) << std::endl;
     }
 
@@ -627,7 +625,16 @@ nc::NdArray<double> WSR_Module::compute_profile_music(
 
     //========== AOA profile computation ===============
     std::cout << "log-info  [MUSIC estimator] : Getting profile using multiple subcarriers" << std::endl;
-    for(int h_i=__snum_start; h_i<__snum_end; h_i++)
+
+    if(__FLAG_interpolate_phase)
+    {
+        //A new column is added to h_list for storing interpolated phase
+        __snum_start = 30;
+        __snum_end = 30;
+        std::cout << "log-info  [MUSIC estimator] Using interpolated phase stored as Subcarrier : 30" << std::endl;
+    }
+
+    for(int h_i=__snum_start; h_i<=__snum_end; h_i++)
     {
         std::cout << "log-info  [MUSIC estimator] Subcarrier : " << h_i << std::endl;
  

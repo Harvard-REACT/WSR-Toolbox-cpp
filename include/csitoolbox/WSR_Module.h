@@ -26,8 +26,8 @@ class WSR_Module
         float __antenna_separation;
         size_t __nphi;
         size_t __ntheta;
-        size_t __snum_start;
-        size_t __snum_end;
+        int __snum_start;
+        int __snum_end;
         int _topN_count = 1;
         int __max_packets_to_process=500;
         int __min_packets_to_process=10;
