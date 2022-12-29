@@ -1,0 +1,314 @@
+{
+    "c": {
+        "desc":"Speed of light, default 3e8 m/s",
+        "value": 3e8
+    },
+    "bandwidth": {
+        "desc": "Bandwidth of the WiFi signal. Default is 20 MHz",
+        "value": 20e6
+    },
+    "channel": {
+        "desc": "Wireless channel used in the 5.0 GHz range",
+        "value": 108
+    },
+    "subCarrier": {
+        "desc": "subcarrier for the channel [1,..,30]. Default is 15.5 that corresponds to the center freqency.",
+        "value": 15.5
+    },
+    "nfft":{
+        "desc":"Number of sub-carriers",
+        "value":1
+    },
+    "scnum_start":{
+        "desc":"starting subcarrier number for forward-reverse music/bartlett. Total subcarriers 30, start 0, mid 15, end  30 ",
+        "value":14
+    },
+    "scnum_end":{
+        "desc":"end subcarrier number for forward-reverse music/bartlett. Total subcarriers 30",
+        "value":18
+    },
+    "phi_min":{
+        "desc":"Minimum azimuth angle",
+        "value":-180
+    },
+    "phi_max":{
+        "desc":"Maximum azimuth angle",
+        "value":180
+    },
+    "nphi":{
+        "desc":"resolution of phi angle",
+        "value":360
+    },
+    "theta_min":{
+        "desc":"Minumum elevation angle",
+        "value":0
+    },
+    "theta_max":{
+        "desc":"Maximum elevation angle",
+        "value":90
+    },
+    "ntheta":{
+        "desc":"resolution of theta angle",
+        "value":90
+    },
+    "topN_count":{
+        "desc":"Top N AOA angles to return from AOA profile",
+        "value":5
+    },
+    "true_tx_positions":
+    {
+        "desc":"True groundtruth positions of TX for checking accuracy",
+        "value":
+        {
+          "tx0":{
+            "position":{ 
+            "x": 0,
+            "y": 0,
+            "z": 0
+            },
+            "orientation": {
+              "x": 0,
+              "y": 0,
+              "z": 0,
+              "w": 0
+            }
+          },
+          "tx1":{
+              "position":{ 
+              "x": -2.48014688492,
+              "y": -0.0483481697738,
+              "z": 0.97895771265
+              },
+              "orientation": {
+                "x": 0.0168978497386,
+                "y":-0.006858184468,
+                "z": 0.453646808863,
+                "w": -0.890995025635
+              }
+            },
+            "tx2":{
+              "position":{ 
+              "x": -2.42,
+              "y": 2.65,
+              "z": 0.72
+              },
+              "orientation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 0
+              }
+            },
+            "tx3":{
+              "position":{ 
+              "x": 2.53,
+              "y": -2.65,
+              "z": 0.85
+              },
+              "orientation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 0
+              }
+            },
+            "tx4":{
+              "position":{ 
+              "x": -3.73,
+              "y": -1.49,
+              "z": 0.35
+              },
+              "orientation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 0
+              }
+            }
+        }
+      },
+    "other_robot_ID":{
+        "desc":"MAC-IDs of other robots (denoted as signal transmitters tx) in the team",
+        "value":{
+            "tx1":{
+                "mac_id":"00:21:6A:3F:16:DA"
+            },
+            "tx2":{
+                "mac_id":"00:21:6A:30:D2:3C"
+            },
+            "tx3":{
+                "mac_id":"00:21:6A:3F:17:5A"
+            },
+            "tx4":{
+                "mac_id":"00:21:6A:AC:9C:6A"
+            }
+        }
+    },
+    "input_TX_channel_csi_fn":{
+        "desc":"Forward channel csi File for each of the neighboring TX robots",
+        "value":{
+            "tx1":{
+                "mac_id":"00:21:6A:3F:16:DA",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/csi_tx1_2021-06-27_202550.dat"            
+            },
+            "tx2":{
+                "mac_id":"00:21:6A:3F:17:5A",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/csi_tx2_2021-06-27_202550.dat"            
+            },
+            "tx3":{
+                "mac_id":"00:21:6A:30:D2:3C",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/csi_tx3_2021-06-27_202550.dat"            
+            },
+            "tx4":{
+                "mac_id":"00:21:6A:B2:6E:FA",
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/csi_tx4_2021-06-27_202550.dat"
+            }
+        }
+    },
+    "RX_mac_ID_list":{
+        "desc":"List of all mac-ids",
+        "value_spoof":["00:21:6A:3F:16:DA","00:21:6A:30:D2:3C","00:21:6A:3F:17:5A","00:21:6A:AC:9C:6A","00:21:6A:AC:9C:1","00:21:6A:3F:17:1"],
+        "value":["00:21:6A:3F:16:DA","00:21:6A:30:D2:3C","00:21:6A:AC:9C:6A","00:21:6A:3F:17:5A"]
+    },
+    "input_RX_channel_csi_fn":{
+        "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
+        "value":{           
+            "mac_id":"00:21:6A:53:89:D2",
+            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/csi_rx_2021-06-27_202550.dat"
+        }
+    },
+    "input_displacement_csv_fn_rx":{
+        "desc":"Groundtruth motion capture displacement file (gt)",
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/rx_trajectory_2021-06-27_202550_.csv"
+    },
+    "input_displacement_csv_fn_rx_t265":{
+        "desc":"Onboard sensor Intel T265 VIO camera displacement file (t265)",
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/t265_rx_trajectory_2021-06-27_202550_.csv"
+    },
+    "input_displacement_csv_fn_rx_odom":{
+        "desc":"Onboard odometer displacement file (odom)",
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/odom_rx_trajectory_2021-06-27_202550.csv"
+    },
+    "input_orientation_csv_fn_rx_joint":{
+        "desc":"Orientation of indepdendently rotating platform (only supports 2D)",
+        "value":"/catkin_ws/src/wsr_exploration/data/motorjoint_displacement_2022-10-19_171432.csv"
+    },
+    "input_trajectory_csv_fn_tx":{
+        "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/tx_trajectory_2021-06-27_174307.csv"
+    },
+    "output_aoa_profile_path":{
+        "desc":"AOA profile",
+        "value":"/WSR_Project/WSR-Toolbox-cpp/debug/"
+    },
+    "max_packets_to_process":{
+        "desc":"Maximum number of csi packets to process",
+        "value":2500
+    },
+    "min_packets_to_process":{
+        "desc":"Minimum number of csi packets to process",
+        "value":1
+    },
+    "debug_dir":{
+        "desc":"dir to save intermediate data files for debugging",
+        "value":"/WSR_Project/WSR-Toolbox-cpp/debug/"
+    },
+    "input_dir":{
+        "desc":"AOA profile",
+        "value":"/REACT-Projects/WSR-Toolbox-cpp/data"
+    },    
+    "output_dir":{
+        "desc":"AOA profile",
+        "value":"/REACT-Projects/WSR-Toolbox-cpp/data"
+    },
+    "time_offset": {
+        "desc": "offset for time diff on different robots",
+        "value": 10e-6
+    },
+    "time_threshold": {
+        "desc": "threshold for paring forward and backward channel",
+        "value": 600e-6
+    },
+    "peak_radius": {
+        "desc" : "radius of patch to ignore neighbor peak in degree",
+        "value": 4
+    },
+    "displacement_type": {
+        "desc" : "Motion of robot: 2D, 3D. Impacts steering vector calculation for faster computation",
+        "value": "2D"
+    },
+    "antenna_position_offset": {
+        "desc": "offset between center of displacement center and antenna tip (meters)",
+        "mocap_offset":[0.00,0.00,0.00],
+        "t265_offset":[0.0,0.0,0.06],
+        "odom_offset":[0.0,0.16,0.14]
+    },
+    "top_N_magnitude":{
+        "desc": "Minumum magnitude of a peak with respect to the top peak (in precentage) in order to be considered in top N peaks",
+        "value": 10
+    },
+    "antenna_separation":{
+        "desc": "(meters) Used with complex conjugate channel formulation",
+        "value": 0.27
+    },
+    "aoa_estimator":{
+        "desc": "use one of the following estimators : bartlett, music",
+        "value": "music"
+    },
+    "sub_sample_channel_data": {
+        "desc": "flag for enabling subsampling of channle data to reduce packet count",
+        "value": false
+    },
+    "get_mean_pose_RX": {
+        "desc": "Get mean pose of the RX along its sub-trajectory",
+        "value": false
+    },
+    "use_packet_id":{
+        "desc": "Match forward-reverse packets using packet id instead of timestamps",
+        "value": true
+    },
+    "multiple_sub_carriers":{
+        "desc":"Use multiple sub-carriers. Used when using relative channel",
+        "value":false
+    },
+    "normalize_profile":{
+        "desc":"Normalize the profile",
+        "value":true
+    },
+    "use_max_packets_threshold":{
+        "desc":"Flag to enable/disable max packet threshold",
+        "value":true
+    },
+    "debug":{
+        "desc":"Flag to enable/disbale debug log messages",
+        "value":true
+    },
+    "use_relative_trajectory":{
+        "desc":"Flag to enable/disbale usage of relative trajectory",
+        "value":false
+    },
+    "interpolate_phase": {
+        "desc": "flag for phase angle interpolation",
+        "value":false
+    },
+    "use_two_antennas":
+    {
+        "desc":"Use 2 antenna SAR formulation and complex conjugate to correct for CFO",
+        "value":false
+    },
+    "slice_displacement":
+    {
+        "desc":"Slice the the diplacement into components",
+        "value":false
+    },
+    "slice_displacement_first":
+    {
+        "desc":"Slice the first diplacement component",
+        "value":false
+    },
+    "slice_displacement_second":
+    {
+        "desc":"Slice the second diplacement component",
+        "value":false
+    }
+}
