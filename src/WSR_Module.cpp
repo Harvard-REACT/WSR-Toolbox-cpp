@@ -35,7 +35,7 @@ WSR_Module::WSR_Module(std::string config_fn)
 
     input >> __precompute_config;
 
-    //Set flags
+    //Set  boolean flags
     __FLAG_packet_threshold   = bool(__precompute_config["use_max_packets_threshold"]["value"]);
     __FLAG_debug              = bool(__precompute_config["debug"]["value"]);
     __FLAG_interpolate_phase  = bool(__precompute_config["interpolate_phase"]["value"]);
@@ -46,41 +46,71 @@ WSR_Module::WSR_Module(std::string config_fn)
     __FLAG_use_relative_displacement = bool(__precompute_config["use_relative_trajectory"]["value"]);
     __FLAG_two_antenna        = bool(__precompute_config["use_two_antennas"]["value"]);
 
-    //Set variables
+    //Set variables and check value
     __centerfreq              = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6;
     __time_offset             = double(__precompute_config["time_offset"]["value"]);
     __time_threshold          = double(__precompute_config["time_threshold"]["value"]);
     __lambda                  = double(__precompute_config["c"]["value"]) / __centerfreq;
-    __nphi                    = int(__precompute_config["nphi"]["value"]);
-    __ntheta                  = int(__precompute_config["ntheta"]["value"]);
+    
     _phi_min                  = int(__precompute_config["phi_min"]["value"]);
     _phi_max                  = int(__precompute_config["phi_max"]["value"]);
+    if(_phi_min < -180 || _phi_min > 180 || _phi_max < -180 || _phi_max > 180 || _phi_max-_phi_min <= 0)
+    {
+        THROW_INVALID_ARGUMENT_ERROR("Invalid phi_* value. Valid range: [0, 360].\n");
+    }
+    
+    __nphi                    = int(__precompute_config["nphi"]["value"]);
+    if(__nphi != _phi_max-_phi_min)
+    {
+        THROW_INVALID_ARGUMENT_ERROR("Invalid nphi value. Set nphi = phi_max - phi_min. \n");
+    }
+
     _theta_min                = int(__precompute_config["theta_min"]["value"]);
     _theta_max                = int(__precompute_config["theta_max"]["value"]);
+    if(_theta_min < 0 || _theta_min > 180 || _theta_max < 0 || _theta_max > 180 || _theta_max-_theta_min <=0)
+    {
+        THROW_INVALID_ARGUMENT_ERROR("Invalid theta_* value. Valid range: [0, 180].\n");
+    }
+
+    __ntheta                  = int(__precompute_config["ntheta"]["value"]);
+    if(__ntheta != _theta_max-_theta_min)
+    {
+        THROW_INVALID_ARGUMENT_ERROR("Invalid ntheta value. Set ntheta = theta_max - theta_min. \n");
+    }
+
     __snum_start              = int(__precompute_config["scnum_start"]["value"]);
+    __snum_end                = int(__precompute_config["scnum_end"]["value"]);
+    if(__snum_start < 0 || __snum_start > 30 || __snum_end < 0 || __snum_end > 30 || __snum_end-__snum_start<0)
+    {
+        THROW_INVALID_ARGUMENT_ERROR("Invalid scnum_start or scnum_end value. Valid subcarrier range: [0, 30].\n");
+    }
+
     _topN_count               = int(__precompute_config["topN_count"]["value"]);
     __max_packets_to_process  = int(__precompute_config["max_packets_to_process"]["value"]);
     __min_packets_to_process  = int(__precompute_config["min_packets_to_process"]["value"]);
+    
     __peak_radius             = int(__precompute_config["peak_radius"]["value"]);
-    __snum_end                = int(__precompute_config["scnum_end"]["value"]);
-    __displacement_type        = __precompute_config["displacement_type"]["value"];
-    __relative_magnitude_threshold = int(__precompute_config["top_N_magnitude"]["value"]);
-    __antenna_separation      = float(__precompute_config["antenna_separation"]["value"]);
-    __estimator               = __precompute_config["aoa_estimator"]["value"];
-    __debug_dir               = __precompute_config["debug_dir"]["value"].dump();
-    __debug_dir.erase(remove(__debug_dir.begin(), __debug_dir.end(), '\"'), __debug_dir.end());
-
-
-    //=================== Check variables =======================
-    if(__estimator!="bartlett" && __estimator!="music")
+    if(__peak_radius > 45)
     {
-        THROW_INVALID_ARGUMENT_ERROR("Invalid AOA estimator selected. Valid options: bartlett, music.\n");
+        THROW_INVALID_ARGUMENT_ERROR("Peak_radius value very large.\n");
     }
+
+    __displacement_type        = __precompute_config["displacement_type"]["value"];
     if(__displacement_type!="2D" && __displacement_type!="3D")
     {
         THROW_INVALID_ARGUMENT_ERROR("Invalid displacement type. Valid options: 2D, 3D.\n");
     }
-    //=================== Check variables =======================
+    __relative_magnitude_threshold = int(__precompute_config["top_N_magnitude"]["value"]);
+    __antenna_separation      = float(__precompute_config["antenna_separation"]["value"]);
+    
+    __estimator               = __precompute_config["aoa_estimator"]["value"];
+    if(__estimator!="bartlett" && __estimator!="music")
+    {
+        THROW_INVALID_ARGUMENT_ERROR("aoa_estimator: Invalid value. Valid options: bartlett, music.\n");
+    }
+    __debug_dir               = __precompute_config["debug_dir"]["value"].dump();
+    __debug_dir.erase(remove(__debug_dir.begin(), __debug_dir.end(), '\"'), __debug_dir.end());
+
 
 
     if(__FLAG_two_antenna)
