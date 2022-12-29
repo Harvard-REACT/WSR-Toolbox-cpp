@@ -239,7 +239,7 @@
     },
     "peak_radius": {
         "desc" : "radius of patch to ignore neighbor peak in degree",
-        "value": 6
+        "value": 4
     },
     "displacement_type": {
         "desc" : "Motion of robot: 2D, 3D. Impacts steering vector calculation for faster computation",

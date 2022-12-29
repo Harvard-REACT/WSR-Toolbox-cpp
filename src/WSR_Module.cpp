@@ -327,7 +327,7 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
             float processtime = std::chrono::duration<float, std::milli>(endtime - starttime).count();
 
             //Stats
-            std::pair<std::vector<double>, std::vector<double>> top_N = find_topN();
+            std::pair<std::vector<double>, std::vector<double>> top_N = __displacement_type == "2D" ? find_topN_azimuth():find_topN();
             __TX_top_N_angles[mac_id_tx[num_tx]] = top_N;
             __paired_pkt_count[mac_id_tx[num_tx]] = csi_timestamp.shape().rows;
             __perf_aoa_profile_cal_time[mac_id_tx[num_tx]] = processtime / 1000;
@@ -673,8 +673,9 @@ nc::NdArray<double> WSR_Module::compute_profile_music(
  * Input: RX_SAR_ROBOT csi file name (reverse channel data) and TX_SAR_Robot(s) file(s) name(s)
  * Output: none
  * */
-int WSR_Module::test_csi_data(std::string rx_csi_file,
-                              std::unordered_map<std::string, std::string> tx_csi_file)
+int WSR_Module::test_csi_data(
+    std::string rx_csi_file,
+    std::unordered_map<std::string, std::string> tx_csi_file)
 {
 
     std::cout << "log-info  [test_csi_data (forward-reverse channel)] ============ Testing CSI data ==============" << std::endl;
@@ -1020,9 +1021,6 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
         }
     }
 
-    //find other peaks
-    //while((itr <__topN_phi_count) && (i_phi < 360))
-
     //Iterate all entries in the 2d matrix
     for (int itr = 1; itr < all_idx_flat.size() && peak_ind < _topN_count; itr++)
     {
@@ -1036,13 +1034,6 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
         //float relative_peak_magnitude = 100 * std::pow(__aoa_profile(phi_idx, theta_idx), 2) / std::pow(max_peak(0, 0), 2);
         
         float relative_peak_magnitude = 100 * __aoa_profile(phi_idx, theta_idx) / max_peak(0, 0);
-
-        //check if this is 1-unit near to other peaks already obtained
-        //        check_peak = (phi_idx+1  < 360 && phi_indexes_stored(0,phi_idx+1)   == 0) &&
-        //                     (phi_idx-1   > 0   && phi_indexes_stored(0,phi_idx-1)   == 0) &&
-        //                     (theta_idx+1 < 180 && theta_indexes_stored(0,theta_idx+1) == 0) &&
-        //                     (theta_idx-1 > 0   && theta_indexes_stored(0,theta_idx-1) == 0) &&
-        //                     (relative_peak_magnitude >= 40);
 
         //Default threshold so that we always return a good number of peaks.
         if (relative_peak_magnitude >= 0.0000005)
@@ -1129,10 +1120,179 @@ std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN()
         }
     }
 
-    //        i_phi++;
-    //        i_theta++;
     std::cout << "log-info  [find_top_N] Got top N angles from the AOA Profile" << std::endl;
     return std::make_pair(ret_phi, ret_theta);
+}
+//=============================================================================================================================
+/**
+ * Description:
+ * Input:
+ * Output:
+ * */
+std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN_azimuth()
+{
+
+    std::vector<double> ret_phi, ret_theta;
+    nc::NdArray<double> max_peak = nc::amax(__aoa_profile);
+    nc::NdArray<double> phi_max = nc::amax(__aoa_profile, nc::Axis::COL);
+    __aoa_profile_variance.clear();
+    __peak_magnitudes.clear();
+    __num_peaks_above_threshold = 0;
+    int peak_ind = 1, phi_idx = 0, theta_idx = 0;
+    bool check_peak = false;
+
+    // radius to define local maxima as per the config file
+    const int radius = __peak_radius;
+
+    auto all_idx_flat = nc::flip(nc::argsort((__aoa_profile.flatten())));
+    //n*2 array save coordinates for sorted value in the whole profile
+    nc::NdArray<int> sorted_inds(all_idx_flat.size(), 2);
+    for (int i = 0; i < all_idx_flat.size(); i++)
+    {
+        sorted_inds.put(i, sorted_inds.cSlice(), utils.unravel_index(all_idx_flat(0, i), __nphi, __ntheta));
+    }
+    phi_idx = sorted_inds(0, 0);
+    theta_idx = sorted_inds(0, 1);
+
+    //Get the peak AOA
+    if (__FLAG_debug)
+        std::cout << "log [calculate_AOA_profile] Top azimuth angle " << peak_ind
+                    << " : " << phi_list(0, phi_idx) * 180 / M_PI << std::endl;
+    ret_phi.push_back(phi_list(0, phi_idx) * 180 / M_PI);
+    ret_theta.push_back(0 * 180 / M_PI);
+
+    __peak_magnitudes.push_back(__aoa_profile(phi_idx, theta_idx));
+    std::cout << "Phi idx = " << phi_idx << ", theta idx = " << theta_idx << std::endl;
+
+    __num_peaks_above_threshold+=1;
+    float variance = get_profile_variance(phi_idx, theta_idx);
+    __aoa_profile_variance.push_back(variance);
+
+    if (__FLAG_debug)
+        std::cout << "log [calculate_AOA_profile] profile variance " << peak_ind << " : " << variance << std::endl;
+
+    auto ind_profile = nc::zeros<bool>(__nphi, __ntheta);
+
+    // Assign true to all neighbor region
+    for (int i = -radius; i < radius; i++)
+    {
+        int tmp_row = 0, tmp_col = 0;
+        if (phi_idx + i < 0)
+            tmp_row = __nphi + i;
+        else if (phi_idx + i >= __nphi)
+            tmp_row = (phi_idx + i) % __nphi;
+        else
+            tmp_row = i + phi_idx;
+        
+        for (int j = 0; j <__ntheta ; j++)
+        {
+            ind_profile(tmp_row, j) = true;
+        }
+    }
+
+    //Iterate all entries in the 2d matrix
+    for (int itr = 1; itr < all_idx_flat.size() && peak_ind < _topN_count; itr++)
+    {
+
+        phi_idx = sorted_inds(itr, 0);
+        theta_idx = 0;
+        
+        //Don't square since the entire profile itself is already squared.
+        //float relative_peak_magnitude = 100 * std::pow(__aoa_profile(phi_idx, theta_idx), 2) / std::pow(max_peak(0, 0), 2);
+        
+        float relative_peak_magnitude = 100 * __aoa_profile(phi_idx, theta_idx) / max_peak(0, 0);
+
+        //Default threshold so that we always return a good number of peaks.
+        if (relative_peak_magnitude >= 0.0000005)
+            check_peak = true;
+        else
+            check_peak = false;
+        
+        
+        for (int i = -radius; i < radius && check_peak; i++)
+        {
+            int tmp_row = 0, tmp_col = 0;
+            if (phi_idx + i < 0)
+                tmp_row = __nphi + i;
+            else if (phi_idx + i >= __nphi)
+                tmp_row = (phi_idx + i) % __nphi;
+            else
+                tmp_row = phi_idx + i;
+            
+            for (int j = 0; j < __ntheta && check_peak; j++)
+            {
+                //if the nearby pos is checked before or value is greater than current peak value
+                if (ind_profile(tmp_row, j) || __aoa_profile(tmp_row, 0) > __aoa_profile(phi_idx, 0))
+                { 
+                    check_peak = false;
+                    break;
+                }
+            }
+        }
+
+        //
+        if (check_peak)
+        {
+            peak_ind++;
+            if (__FLAG_debug)
+                std::cout << "log [calculate_AOA_profile] Top azimuth angle " << peak_ind
+                            << " : " << phi_list(0, phi_idx) * 180 / M_PI << std::endl;
+            ret_phi.push_back(phi_list(0, phi_idx) * 180 / M_PI);
+            ret_theta.push_back(0 * 180 / M_PI);
+
+            __peak_magnitudes.push_back(__aoa_profile(phi_idx, 0));
+            std::cout << "Phi idx = " << phi_idx << ", theta idx = " << 0 << std::endl;
+
+            if (relative_peak_magnitude >= __relative_magnitude_threshold)
+                __num_peaks_above_threshold+=1;
+
+            for (int i = -radius; i < radius; i++)
+            {
+                int tmp_row = 0, tmp_col = 0;
+                if (phi_idx + i < 0)
+                    tmp_row = __nphi + i;
+                else if (phi_idx + i >= __nphi)
+                    tmp_row = (phi_idx + i) % __nphi;
+                else
+                    tmp_row = phi_idx + i;
+                
+                for (int j = 0; j < __ntheta; j++)
+                {
+                  ind_profile(tmp_row, j) = true;
+                }
+            }
+        }
+    }
+
+    return std::make_pair(ret_phi, ret_theta);
+}
+//======================================================================================================================
+/**
+ * Description: Get the confidence of the AOA profile by calculating its variance 
+ * Input:
+ * Output:
+ * */
+
+float WSR_Module::get_profile_variance(double phi_ind, double theta_ind)
+{
+
+    float sumf = __aoa_profile.sum()(0, 0);
+    auto twod_profile = nc::sum(__aoa_profile, nc::Axis::COL);
+    // std::cout << twod_profile.shape() << std::endl;
+    float sigma_f = 0, sigma_n = 0, temp1 = 0, temp2;
+
+    for (size_t ind_r = 0; ind_r < __nphi; ind_r++)
+    {
+        for (size_t ind_c = 0; ind_c < __ntheta; ind_c++)
+        {
+            temp1 = pow((WSR_Util::diff_360(ind_r, phi_ind)), 2);
+            temp2 = pow((ind_c - theta_ind), 2);
+            sigma_f += ((temp1 + temp2) * __aoa_profile(ind_r, ind_c) / sumf);
+            sigma_n += ((temp1 + temp2) * sumf / (__ntheta * __nphi));
+        }
+    }
+
+    return sigma_f / sigma_n;
 }
 //======================================================================================================================
 /**
@@ -1574,34 +1734,7 @@ void WSR_Module::get_eigen_rep_angle_trig_openmp(EigenDoubleMatrix &output,
         }
     }
 }
-//======================================================================================================================
-/**
- * Description: 
- * Input:
- * Output:
- * */
 
-float WSR_Module::get_profile_variance(double phi_ind, double theta_ind)
-{
-
-    float sumf = __aoa_profile.sum()(0, 0);
-    auto twod_profile = nc::sum(__aoa_profile, nc::Axis::COL);
-    // std::cout << twod_profile.shape() << std::endl;
-    float sigma_f = 0, sigma_n = 0, temp1 = 0, temp2;
-
-    for (size_t ind_r = 0; ind_r < __nphi; ind_r++)
-    {
-        for (size_t ind_c = 0; ind_c < __ntheta; ind_c++)
-        {
-            temp1 = pow((WSR_Util::diff_360(ind_r, phi_ind)), 2);
-            temp2 = pow((ind_c - theta_ind), 2);
-            sigma_f += ((temp1 + temp2) * __aoa_profile(ind_r, ind_c) / sumf);
-            sigma_n += ((temp1 + temp2) * sumf / (__ntheta * __nphi));
-        }
-    }
-
-    return sigma_f / sigma_n;
-}
 
 //=============================================================================================================================
 /**
@@ -2861,154 +2994,6 @@ void WSR_Module::get_bterm_all_subcarrier_conjugate(EigenDoubleMatrix &e_term,
             e_term(i, j) = __antenna_separation*cos(__eigen_precomp_rep_phi(i, 0)-eigen_yaw_list(j,0));
         }
     }
-}
-
-
-//=============================================================================================================================
-/**
- * Description:
- * Input:
- * Output:
- * */
-std::pair<std::vector<double>, std::vector<double>> WSR_Module::find_topN_azimuth()
-{
-
-    std::vector<double> ret_phi, ret_theta;
-    nc::NdArray<double> max_peak = nc::amax(__aoa_profile);
-    nc::NdArray<double> phi_max = nc::amax(__aoa_profile, nc::Axis::COL);
-    __aoa_profile_variance.clear();
-    __peak_magnitudes.clear();
-    __num_peaks_above_threshold = 0;
-    int peak_ind = 1, phi_idx = 0, theta_idx = 0;
-    bool check_peak = false;
-
-    // radius to define local maxima as per the config file
-    const int radius = __peak_radius;
-
-    auto all_idx_flat = nc::flip(nc::argsort((__aoa_profile.flatten())));
-    //n*2 array save coordinates for sorted value in the whole profile
-    nc::NdArray<int> sorted_inds(all_idx_flat.size(), 2);
-    for (int i = 0; i < all_idx_flat.size(); i++)
-    {
-        sorted_inds.put(i, sorted_inds.cSlice(), utils.unravel_index(all_idx_flat(0, i), __nphi, __ntheta));
-    }
-    phi_idx = sorted_inds(0, 0);
-    theta_idx = sorted_inds(0, 1);
-
-    //Get the peak AOA
-    if (__FLAG_debug)
-        std::cout << "log [calculate_AOA_profile] Top azimuth angle " << peak_ind
-                    << " : " << phi_list(0, phi_idx) * 180 / M_PI << std::endl;
-    ret_phi.push_back(phi_list(0, phi_idx) * 180 / M_PI);
-    ret_theta.push_back(0 * 180 / M_PI);
-
-    __peak_magnitudes.push_back(__aoa_profile(phi_idx, theta_idx));
-    std::cout << "Phi idx = " << phi_idx << ", theta idx = " << theta_idx << std::endl;
-
-    __num_peaks_above_threshold+=1;
-    float variance = get_profile_variance(phi_idx, theta_idx);
-    __aoa_profile_variance.push_back(variance);
-
-    if (__FLAG_debug)
-        std::cout << "log [calculate_AOA_profile] profile variance " << peak_ind << " : " << variance << std::endl;
-
-    auto ind_profile = nc::zeros<bool>(__nphi, __ntheta);
-
-    // Assign true to all neighbor region
-    for (int i = -radius; i < radius; i++)
-    {
-        int tmp_row = 0, tmp_col = 0;
-        if (phi_idx + i < 0)
-            tmp_row = __nphi + i;
-        else if (phi_idx + i >= __nphi)
-            tmp_row = (phi_idx + i) % __nphi;
-        else
-            tmp_row = i + phi_idx;
-        
-        for (int j = 0; j <__ntheta ; j++)
-        {
-            ind_profile(tmp_row, j) = true;
-        }
-    }
-
-    //find other peaks
-    //while((itr <__topN_phi_count) && (i_phi < 360))
-
-    //Iterate all entries in the 2d matrix
-    for (int itr = 1; itr < all_idx_flat.size() && peak_ind < _topN_count; itr++)
-    {
-
-        phi_idx = sorted_inds(itr, 0);
-        theta_idx = 0;
-        
-        //Don't square since the entire profile itself is already squared.
-        //float relative_peak_magnitude = 100 * std::pow(__aoa_profile(phi_idx, theta_idx), 2) / std::pow(max_peak(0, 0), 2);
-        
-        float relative_peak_magnitude = 100 * __aoa_profile(phi_idx, theta_idx) / max_peak(0, 0);
-
-        //Default threshold so that we always return a good number of peaks.
-        if (relative_peak_magnitude >= 0.0000005)
-            check_peak = true;
-        else
-            check_peak = false;
-        
-        
-        for (int i = -radius; i < radius && check_peak; i++)
-        {
-            int tmp_row = 0, tmp_col = 0;
-            if (phi_idx + i < 0)
-                tmp_row = __nphi + i;
-            else if (phi_idx + i >= __nphi)
-                tmp_row = (phi_idx + i) % __nphi;
-            else
-                tmp_row = phi_idx + i;
-            
-            for (int j = 0; j < __ntheta && check_peak; j++)
-            {
-                //if the nearby pos is checked before or value is greater than current peak value
-                if (ind_profile(tmp_row, j) || __aoa_profile(tmp_row, 0) > __aoa_profile(phi_idx, 0))
-                { 
-                    check_peak = false;
-                    break;
-                }
-            }
-        }
-
-        //
-        if (check_peak)
-        {
-            peak_ind++;
-            if (__FLAG_debug)
-                std::cout << "log [calculate_AOA_profile] Top azimuth angle " << peak_ind
-                            << " : " << phi_list(0, phi_idx) * 180 / M_PI << std::endl;
-            ret_phi.push_back(phi_list(0, phi_idx) * 180 / M_PI);
-            ret_theta.push_back(0 * 180 / M_PI);
-
-            __peak_magnitudes.push_back(__aoa_profile(phi_idx, 0));
-            std::cout << "Phi idx = " << phi_idx << ", theta idx = " << 0 << std::endl;
-
-            if (relative_peak_magnitude >= __relative_magnitude_threshold)
-                __num_peaks_above_threshold+=1;
-
-            for (int i = -radius; i < radius; i++)
-            {
-                int tmp_row = 0, tmp_col = 0;
-                if (phi_idx + i < 0)
-                    tmp_row = __nphi + i;
-                else if (phi_idx + i >= __nphi)
-                    tmp_row = (phi_idx + i) % __nphi;
-                else
-                    tmp_row = phi_idx + i;
-                
-                for (int j = 0; j < __ntheta; j++)
-                {
-                  ind_profile(tmp_row, j) = true;
-                }
-            }
-        }
-    }
-
-    return std::make_pair(ret_phi, ret_theta);
 }
 
 //=============================================================================================================================
