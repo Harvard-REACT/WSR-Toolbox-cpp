@@ -45,9 +45,6 @@ WSR_Module::WSR_Module(std::string config_fn)
     bool __FLAG_use_multiple_sub_carriers = bool(__precompute_config["multiple_sub_carriers"]["value"]);
     __FLAG_use_relative_displacement = bool(__precompute_config["use_relative_trajectory"]["value"]);
     __FLAG_two_antenna        = bool(__precompute_config["use_two_antennas"]["value"]);
-    __FLAG_slice              = bool(__precompute_config["slice_displacement"]["value"]);
-    __FLAG_slice_first        = bool(__precompute_config["slice_displacement_first"]["value"]);
-    __FLAG_slice_second       = bool(__precompute_config["slice_displacement_second"]["value"]);
 
     //Set variables
     __centerfreq              = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6;
