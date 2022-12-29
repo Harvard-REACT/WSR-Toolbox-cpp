@@ -82,8 +82,8 @@ target_link_libraries(test_wsr
  )
 target_link_libraries(test_wsr_two_antenna_rotor
    -Wl,--no-as-needed -lgomp -lpthread -lm -ldl
-   ${BOOST_LIBRARIES} OpenMP::OpenMP_CXX
-
+   ${BOOST_LIBRARIES} OpenMP::OpenMP_CXX  
+  )
 
 #############
 ## Install ##

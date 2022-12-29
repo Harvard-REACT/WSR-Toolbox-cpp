@@ -9,23 +9,15 @@
     },
     "channel": {
         "desc": "Wireless channel used in the 5.0 GHz range",
-        "value": 108
-    },
-    "subCarrier": {
-        "desc": "subcarrier for the channel [1,..,30]. Default is 15.5 that corresponds to the center freqency.",
-        "value": 15.5
-    },
-    "nfft":{
-        "desc":"Number of sub-carriers",
-        "value":1
+        "value": 104
     },
     "scnum_start":{
-        "desc":"starting subcarrier number for forward-reverse music/bartlett. Total subcarriers 30, start 0, mid 15, end  30 ",
+        "desc":"starting subcarrier number music/bartlett. Total subcarriers 30, start 0, mid 15, end  30 ",
         "value":14
     },
     "scnum_end":{
-        "desc":"end subcarrier number for forward-reverse music/bartlett. Total subcarriers 30",
-        "value":18
+        "desc":"end subcarrier number music/bartlett. Total subcarriers 30",
+        "value":17
     },
     "phi_min":{
         "desc":"Minimum azimuth angle",
@@ -213,14 +205,6 @@
         "desc":"dir to save intermediate data files for debugging",
         "value":"/WSR_Project/WSR-Toolbox-cpp/debug/"
     },
-    "input_dir":{
-        "desc":"AOA profile",
-        "value":"/REACT-Projects/WSR-Toolbox-cpp/data"
-    },    
-    "output_dir":{
-        "desc":"AOA profile",
-        "value":"/REACT-Projects/WSR-Toolbox-cpp/data"
-    },
     "time_offset": {
         "desc": "offset for time diff on different robots",
         "value": 10e-6
@@ -294,21 +278,6 @@
     "use_two_antennas":
     {
         "desc":"Use 2 antenna SAR formulation and complex conjugate to correct for CFO",
-        "value":false
-    },
-    "slice_displacement":
-    {
-        "desc":"Slice the the diplacement into components",
-        "value":false
-    },
-    "slice_displacement_first":
-    {
-        "desc":"Slice the first diplacement component",
-        "value":false
-    },
-    "slice_displacement_second":
-    {
-        "desc":"Slice the second diplacement component",
         "value":false
     }
 }

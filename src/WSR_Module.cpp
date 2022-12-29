@@ -50,8 +50,7 @@ WSR_Module::WSR_Module(std::string config_fn)
     __FLAG_slice_second       = bool(__precompute_config["slice_displacement_second"]["value"]);
 
     //Set variables
-    __centerfreq              = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
-                                (double(__precompute_config["subCarrier"]["value"]) - 15.5) * 20e6 / 30;
+    __centerfreq              = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6;
     __time_offset             = double(__precompute_config["time_offset"]["value"]);
     __time_threshold          = double(__precompute_config["time_threshold"]["value"]);
     __lambda                  = double(__precompute_config["c"]["value"]) / __centerfreq;
@@ -605,9 +604,9 @@ nc::NdArray<double> WSR_Module::compute_profile_music(
     {
         std::cout << "log-info  [MUSIC estimator] Subcarrier : " << h_i << std::endl;
  
-        double centerfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
-                        (double(__precompute_config["subCarrier"]["value"]) - h_i) * 20e6 / 30;
-        double lambda_inv =  centerfreq/double(__precompute_config["c"]["value"]);
+        double carrierfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
+                            (15.5 - h_i) * 20e6 / 30;
+        double lambda_inv =  carrierfreq/double(__precompute_config["c"]["value"]);
         EigencdMatrix temp1 = e_term * (-4.0 * std::complex<double>(0, 1) * M_PI * lambda_inv);
         EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
         getExponential(e_term_exp, temp1);
@@ -1701,9 +1700,9 @@ nc::NdArray<double> WSR_Module::compute_conjugate_profile_bartlett_multithread(
     for(int h_i=__snum_start; h_i<=__snum_end; h_i++)
     {
         std::cout << "Subcarrier : " << h_i << std::endl;
-        double centerfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
-                        (double(__precompute_config["subCarrier"]["value"]) - h_i) * 20e6 / 30;
-        double lambda_inv =  centerfreq/double(__precompute_config["c"]["value"]);
+        double carrierfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
+                            (15.5 - h_i) * 20e6 / 30;
+        double lambda_inv =  carrierfreq/double(__precompute_config["c"]["value"]);
         EigencdMatrix temp1 = e_term * (2.0 * std::complex<double>(0, 1) * M_PI * lambda_inv);
         EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
         getExponential(e_term_exp, temp1);
@@ -1868,9 +1867,9 @@ nc::NdArray<double> WSR_Module::compute_conjuate_profile_music_offboard(
         int d = std::rand();
         std::cout << d << std::endl;
 
-        double centerfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
-                        (double(__precompute_config["subCarrier"]["value"]) - h_i) * 20e6 / 30;
-        double lambda_inv =  centerfreq/double(__precompute_config["c"]["value"]);
+        double carrierfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
+                            (15.5 - h_i) * 20e6 / 30;
+        double lambda_inv =  carrierfreq/double(__precompute_config["c"]["value"]);
         EigencdMatrix temp1 = e_term * (-2.0 * std::complex<double>(0, 1) * M_PI * lambda_inv);
         EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
         getExponential(e_term_exp, temp1);
