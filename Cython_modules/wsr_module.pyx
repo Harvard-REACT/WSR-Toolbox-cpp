@@ -13,7 +13,7 @@ cdef class PyWSR_Module:
         self.main_module = WSR_Main(config_fn, d_type)
 
     def AOA_profile(self):
-        cdef pair[vector[string], vector[double]] aoa_vals = self.main_module.generate_aoa()
+        cdef pair[vector[string], vector[vector[double]]] aoa_vals = self.main_module.generate_aoa()
         return aoa_vals
 
 
