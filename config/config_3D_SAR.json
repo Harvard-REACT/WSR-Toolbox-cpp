@@ -149,27 +149,19 @@
         "value":{
             "tx1":{
                 "mac_id":"00:21:6A:3F:16:DA",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx1_2021-06-27_202550.dat"            
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/csi_tx1_2021-06-27_202550.dat"            
             },
             "tx2":{
                 "mac_id":"00:21:6A:3F:17:5A",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx2_2021-06-27_202550.dat"            
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/csi_tx2_2021-06-27_202550.dat"            
             },
             "tx3":{
                 "mac_id":"00:21:6A:30:D2:3C",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"            
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/csi_tx3_2021-06-27_202550.dat"            
             },
             "tx4":{
                 "mac_id":"00:21:6A:B2:6E:FA",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx4_2021-06-27_202550.dat"
-            },
-            "s3":{
-                "mac_id":"00:21:6A:AC:9C:1",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"            
-            },
-            "s4":{
-                "mac_id":"00:21:6A:3F:17:1",
-                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_tx3_2021-06-27_202550.dat"
+                "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/csi_tx4_2021-06-27_202550.dat"
             }
         }
     },
@@ -182,20 +174,20 @@
         "desc":"Reverse channel csi File stored on the RX robot which is performing 3D SAR",
         "value":{           
             "mac_id":"00:21:6A:53:89:D2",
-            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/csi_rx_2021-06-27_202550.dat"
+            "csi_fn":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/csi_rx_2021-06-27_202550.dat"
         }
     },
     "input_displacement_csv_fn_rx":{
         "desc":"Groundtruth motion capture displacement file (gt)",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/rx_trajectory_2021-06-27_202550_.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/rx_trajectory_2021-06-27_202550_.csv"
     },
     "input_displacement_csv_fn_rx_t265":{
         "desc":"Onboard sensor Intel T265 VIO camera displacement file (t265)",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/t265_rx_trajectory_2021-06-27_202550_.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/t265_rx_trajectory_2021-06-27_202550_.csv"
     },
     "input_displacement_csv_fn_rx_odom":{
         "desc":"Onboard odometer displacement file (odom)",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/odom_rx_trajectory_2021-06-27_202550.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/odom_rx_trajectory_2021-06-27_202550.csv"
     },
     "input_orientation_csv_fn_rx_joint":{
         "desc":"Orientation of indepdendently rotating platform (only supports 2D)",
@@ -203,7 +195,7 @@
     },
     "input_trajectory_csv_fn_tx":{
         "desc":"Trajectory file of TX_Neighbor_robot (WIP)",
-        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/tx_trajectory_2021-06-27_174307.csv"
+        "value":"/WSR_Project/WSR-Toolbox-cpp/data/Sample_data/single_antenna/tx_trajectory_2021-06-27_174307.csv"
     },
     "output_aoa_profile_path":{
         "desc":"AOA profile",
@@ -302,7 +294,7 @@
     "use_two_antennas":
     {
         "desc":"Use 2 antenna SAR formulation and complex conjugate to correct for CFO",
-        "value":true
+        "value":false
     },
     "slice_displacement":
     {
