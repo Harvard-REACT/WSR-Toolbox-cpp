@@ -22,6 +22,7 @@ cdef extern from "WSR_Main.h":
         WSR_Main(string, string) except +
         pair[vector[string], vector[vector[double]]] generate_aoa()
 
+
 cdef extern from "WSR_Module.h":
     cdef cppclass WSR_Module:
         WSR_Module() except +

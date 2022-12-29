@@ -11,5 +11,5 @@ Cython_example
 Cython_modules/wsr_module.cpp
 *__init__*
 wsr_build
-debug
+cmake-build-release/
 
