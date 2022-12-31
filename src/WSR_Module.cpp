@@ -35,55 +35,81 @@ WSR_Module::WSR_Module(std::string config_fn)
 
     input >> __precompute_config;
 
-    //Set flags
+    //Set  boolean flags
     __FLAG_packet_threshold   = bool(__precompute_config["use_max_packets_threshold"]["value"]);
     __FLAG_debug              = bool(__precompute_config["debug"]["value"]);
     __FLAG_interpolate_phase  = bool(__precompute_config["interpolate_phase"]["value"]);
     __FLAG_sub_sample         = bool(__precompute_config["sub_sample_channel_data"]["value"]);
     __FLAG_normalize_profile  = bool(__precompute_config["normalize_profile"]["value"]);
     __FLag_use_packet_id      = bool(__precompute_config["use_packet_id"]["value"]);
-    bool __FLAG_use_multiple_sub_carriers = bool(__precompute_config["multiple_sub_carriers"]["value"]);
     __FLAG_use_relative_displacement = bool(__precompute_config["use_relative_trajectory"]["value"]);
     __FLAG_two_antenna        = bool(__precompute_config["use_two_antennas"]["value"]);
-    __FLAG_slice              = bool(__precompute_config["slice_displacement"]["value"]);
-    __FLAG_slice_first        = bool(__precompute_config["slice_displacement_first"]["value"]);
-    __FLAG_slice_second       = bool(__precompute_config["slice_displacement_second"]["value"]);
 
-    //Set variables
+    //Set variables and check value
     __centerfreq              = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6;
     __time_offset             = double(__precompute_config["time_offset"]["value"]);
     __time_threshold          = double(__precompute_config["time_threshold"]["value"]);
     __lambda                  = double(__precompute_config["c"]["value"]) / __centerfreq;
-    __nphi                    = int(__precompute_config["nphi"]["value"]);
-    __ntheta                  = int(__precompute_config["ntheta"]["value"]);
+    
     _phi_min                  = int(__precompute_config["phi_min"]["value"]);
     _phi_max                  = int(__precompute_config["phi_max"]["value"]);
+    if(_phi_min < -180 || _phi_min > 180 || _phi_max < -180 || _phi_max > 180 || _phi_max-_phi_min <= 0)
+    {
+        THROW_INVALID_ARGUMENT_ERROR("Invalid phi_* value. Valid range: [0, 360].\n");
+    }
+    
+    __nphi                    = int(__precompute_config["nphi"]["value"]);
+    if(__nphi != _phi_max-_phi_min)
+    {
+        THROW_INVALID_ARGUMENT_ERROR("Invalid nphi value. Set nphi = phi_max - phi_min. \n");
+    }
+
     _theta_min                = int(__precompute_config["theta_min"]["value"]);
     _theta_max                = int(__precompute_config["theta_max"]["value"]);
+    if(_theta_min < 0 || _theta_min > 180 || _theta_max < 0 || _theta_max > 180 || _theta_max-_theta_min <=0)
+    {
+        THROW_INVALID_ARGUMENT_ERROR("Invalid theta_* value. Valid range: [0, 180].\n");
+    }
+
+    __ntheta                  = int(__precompute_config["ntheta"]["value"]);
+    if(__ntheta != _theta_max-_theta_min)
+    {
+        THROW_INVALID_ARGUMENT_ERROR("Invalid ntheta value. Set ntheta = theta_max - theta_min. \n");
+    }
+
     __snum_start              = int(__precompute_config["scnum_start"]["value"]);
+    __snum_end                = int(__precompute_config["scnum_end"]["value"]);
+    if(__snum_start < 0 || __snum_start > 29 || __snum_end < 0 || __snum_end > 29 || __snum_end-__snum_start<0)
+    {
+        THROW_INVALID_ARGUMENT_ERROR("Invalid scnum_start or scnum_end value. Valid subcarrier range: [0, 30].\n");
+    }
+
     _topN_count               = int(__precompute_config["topN_count"]["value"]);
     __max_packets_to_process  = int(__precompute_config["max_packets_to_process"]["value"]);
     __min_packets_to_process  = int(__precompute_config["min_packets_to_process"]["value"]);
+    
     __peak_radius             = int(__precompute_config["peak_radius"]["value"]);
-    __snum_end                = int(__precompute_config["scnum_end"]["value"]);
-    __displacement_type        = __precompute_config["displacement_type"]["value"];
-    __relative_magnitude_threshold = int(__precompute_config["top_N_magnitude"]["value"]);
-    __antenna_separation      = float(__precompute_config["antenna_separation"]["value"]);
-    __estimator               = __precompute_config["aoa_estimator"]["value"];
-    __debug_dir               = __precompute_config["debug_dir"]["value"].dump();
-    __debug_dir.erase(remove(__debug_dir.begin(), __debug_dir.end(), '\"'), __debug_dir.end());
-
-
-    //=================== Check variables =======================
-    if(__estimator!="bartlett" && __estimator!="music")
+    if(__peak_radius > 45)
     {
-        THROW_INVALID_ARGUMENT_ERROR("Invalid AOA estimator selected. Valid options: bartlett, music.\n");
+        THROW_INVALID_ARGUMENT_ERROR("Peak_radius value very large.\n");
     }
+
+    __displacement_type        = __precompute_config["displacement_type"]["value"];
     if(__displacement_type!="2D" && __displacement_type!="3D")
     {
         THROW_INVALID_ARGUMENT_ERROR("Invalid displacement type. Valid options: 2D, 3D.\n");
     }
-    //=================== Check variables =======================
+    __relative_magnitude_threshold = int(__precompute_config["top_N_magnitude"]["value"]);
+    __antenna_separation      = float(__precompute_config["antenna_separation"]["value"]);
+    
+    __estimator               = __precompute_config["aoa_estimator"]["value"];
+    if(__estimator!="bartlett")
+    {
+        THROW_INVALID_ARGUMENT_ERROR("aoa_estimator: Invalid value. Valid options: bartlett.\n");
+    }
+    __debug_dir               = __precompute_config["debug_dir"]["value"].dump();
+    __debug_dir.erase(remove(__debug_dir.begin(), __debug_dir.end(), '\"'), __debug_dir.end());
+
 
 
     if(__FLAG_two_antenna)
@@ -140,7 +166,6 @@ WSR_Module::WSR_Module(std::string config_fn)
         std::cout << "  __FLAG_interpolate_phase = " << utils.bool_to_string(__FLAG_interpolate_phase) << std::endl;
         std::cout << "  __FLAG_sub_sample = " << utils.bool_to_string(__FLAG_sub_sample) << std::endl;
         std::cout << "  __FLAG_normalize_profile = " << utils.bool_to_string(__FLAG_normalize_profile) << std::endl;
-        std::cout << "  __FLAG_use_multiple_sub_carriers = " << utils.bool_to_string(__FLAG_use_multiple_sub_carriers) << std::endl;
         std::cout << "  __FLAG_use_relative_displacement = " << utils.bool_to_string(__FLAG_use_relative_displacement) << std::endl;
     }
 
@@ -319,8 +344,8 @@ int WSR_Module::calculate_AOA_profile(std::string rx_csi_file,
 
             if(__estimator == "bartlett")
                 __aoa_profile = compute_profile_bartlett(h_list, pose_list);
-            else if(__estimator == "music")
-                __aoa_profile = compute_profile_music(h_list, pose_list);
+            // else if(__estimator == "music")
+            //     __aoa_profile = compute_profile_music(h_list, pose_list);
 
             auto endtime = std::chrono::high_resolution_clock::now();
             float processtime = std::chrono::duration<float, std::milli>(endtime - starttime).count();
@@ -366,14 +391,25 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett(
     auto start = std::chrono::high_resolution_clock::now();
     auto end = std::chrono::high_resolution_clock::now();
     auto total_end = std::chrono::high_resolution_clock::now();
-    nc::NdArray<std::complex<double>> h_list_single_channel;
-    EigencdMatrix eigen_eterm_3DAdjustment, e_term_prod;
-    EigenDoubleMatrix eigen_rep_lambda, eigen_rep_phi, eigen_rep_theta, diff_phi_yaw, eigen_rep_yaw, eigen_rep_pitch, eigen_rep_rho;
+    
+    EigencdMatrix eigen_eterm_3DAdjustment;
+    EigencdMatrix e_term_prod;
+    EigenDoubleMatrix eigen_rep_lambda; 
+    EigenDoubleMatrix eigen_rep_phi;
+    EigenDoubleMatrix eigen_rep_theta;
+    EigenDoubleMatrix diff_phi_yaw;
+    EigenDoubleMatrix eigen_rep_yaw;
+    EigenDoubleMatrix eigen_rep_pitch;
+    EigenDoubleMatrix eigen_rep_rho;
+    EigenDoubleMatrix eigen_betaProfile_final;
+    bool first = true;
+    
+    WSR_Util util_obj;
 
     int total_packets = input_h_list.shape().rows;
     if (total_packets != input_pose_list.shape().rows)
     {
-        THROW_INVALID_ARGUMENT_ERROR("Number of CSI and poses are different.\n");
+        THROW_INVALID_ARGUMENT_ERROR("number of CSI and poses are different.\n");
     }
 
     int max_packets = total_packets;
@@ -385,23 +421,11 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett(
 
     nc::NdArray<std::complex<double>> h_list = input_h_list(nc::Slice(0, max_packets), input_h_list.cSlice());
     nc::NdArray<double> pose_list = input_pose_list(nc::Slice(0, max_packets), input_pose_list.cSlice());
+    auto num_poses = nc::shape(pose_list).rows;
 
-    if (__FLAG_debug)
-        std::cout << "log-debug [Bartlett estimator] Total packets: " << total_packets << ", Max packets used: " << max_packets << std::endl;
+    if (__FLAG_debug) std::cout << "log-debug  [Bartlett estimator] Total packets: " << total_packets << ", Max packets used: " << max_packets << std::endl;
 
     std::cout.precision(15);
-
-    if (__FLAG_interpolate_phase)
-        h_list_single_channel = h_list(h_list.rSlice(), 30);
-    else
-        h_list_single_channel = h_list(h_list.rSlice(), 15);
-
-    auto num_poses = nc::shape(pose_list).rows;
-    if (h_list_single_channel.shape().cols == 0)
-    {
-        THROW_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
-    }
-
     //========== Matrix repmat operation ====================
     if (__FLAG_debug)
     {
@@ -418,8 +442,6 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett(
                                                                 yaw_list.numRows(),
                                                                 yaw_list.numCols());
     EigenDoubleMatrix eigen_yaw_list = eigen_yaw_list_tmp.transpose();
- 
-
     auto pitch_list = nc::arctan2(pose_z, nc::sqrt(nc::square(pose_x) + nc::square(pose_y)));
     pitch_list = nc::angle(-nc::exp(nc::multiply(pitch_list, std::complex<double>(0, 1))));
     EigenDoubleMatrix eigen_pitch_list_tmp = EigenDoubleMatrixMap(pitch_list.data(),
@@ -427,14 +449,15 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett(
                                                                   pitch_list.numCols());
     EigenDoubleMatrix eigen_pitch_list = eigen_pitch_list_tmp.transpose();
 
-    assert(pitch_list.shape() == yaw_list.shape());
 
+    assert(pitch_list.shape() == yaw_list.shape());
     auto rho_list = nc::sqrt(nc::square(pose_x) + nc::square(pose_y) + nc::square(pose_z));
     EigenDoubleMatrix eigen_rho_list_tmp = EigenDoubleMatrixMap(rho_list.data(),
                                                                 rho_list.numRows(),
                                                                 rho_list.numCols());
     EigenDoubleMatrix eigen_rho_list = eigen_rho_list_tmp.transpose();
-    
+    //========== Matrix repmat operation ====================    
+
     if (__FLAG_debug)
     {
         end = std::chrono::high_resolution_clock::now();
@@ -443,57 +466,105 @@ nc::NdArray<double> WSR_Module::compute_profile_bartlett(
         start = std::chrono::high_resolution_clock::now();
     }
 
-    //========== Steering vector computation ===============
     std::cout << "log-info  [Bartlett estimator] : Computing steering vector" << std::endl;
-    
-    EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
-    //====Openmp implementation =============.
+    //========== Steering vector computation ================
+    EigenDoubleMatrix e_term(__nphi * __ntheta, num_poses);
+
+    //====Openmp implementation 0.2 sec faster =============.
     if(__displacement_type == "2D")
-        get_bterm_all_2D(std::ref(e_term_exp), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));
+        get_bterm_all_subcarrier_2D(std::ref(e_term), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));
     else
-        get_bterm_all_3D(std::ref(e_term_exp), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));
-    
-    //====Openmp implementation=============.
-    
-    std::complex<double> *cddataPtr = new std::complex<double>[e_term_exp.rows() * e_term_exp.cols()];
-    EigencdMatrixMap(cddataPtr, e_term_exp.rows(), e_term_exp.cols()) = e_term_exp;
-    auto e_term = nc::NdArray<std::complex<double>>(cddataPtr, e_term_exp.rows(), e_term_exp.cols(), __takeOwnership);
-    
+        get_bterm_all_subcarrier_3D(std::ref(e_term), std::ref(eigen_pitch_list), std::ref(eigen_yaw_list), std::ref(eigen_rho_list));
+    //====Openmp implementation=============
+    //========== Steering vector computation ================
+
     if (__FLAG_debug)
     {
         end = std::chrono::high_resolution_clock::now();
         std::cout << "log-debug [Bartlett estimator] : Time elapsed for Steering vector (eterm_prod and eterm_exp) :  " 
-                  << (end - start) / std::chrono::milliseconds(1) << "ms" << std::endl;
+                  << (end - start) / std::chrono::milliseconds(1) << std::endl;
     }
-    //========== Steering vector computation ===============
 
     //========== AOA profile computation ===============
-    if (__FLAG_debug) std::cout << "log-debug  [Bartlett estimator] : Getting transpose and returning profile" << std::endl;
-    auto result_mat = nc::matmul(e_term, h_list_single_channel);
-    auto betaProfileProd = nc::power(nc::abs(result_mat), 2);
-    auto angle_of_arrival_profile = nc::reshape(betaProfileProd, __ntheta, __nphi);
+    std::cout << "log-info  [Bartlett estimator] : Getting profile using multiple subcarriers" << std::endl;
 
-    if (__FLAG_normalize_profile)
+    if(__FLAG_interpolate_phase)
+    {
+        //A new column is added to h_list for storing interpolated phase
+        __snum_start = 30;
+        __snum_end = 30;
+        std::cout << "log-info  [Bartlett estimator] Using interpolated phase stored as Subcarrier : 30" << std::endl;
+    }
+
+    for(int h_i=__snum_start; h_i<=__snum_end; h_i++)
+    {
+        std::cout << "log-info  [Bartlett estimator] Subcarrier : " << h_i << std::endl;
+ 
+        double carrierfreq = (5000 + double(__precompute_config["channel"]["value"]) * 5) * 1e6 +
+                            (15.5 - h_i) * 20e6 / 30;
+        double lambda_inv =  carrierfreq/double(__precompute_config["c"]["value"]);
+        EigencdMatrix temp1 = e_term * (-4.0 * std::complex<double>(0, 1) * M_PI * lambda_inv);
+        EigencdMatrix e_term_exp(__nphi * __ntheta, num_poses);
+        getExponential(e_term_exp, temp1);
+        
+        nc::NdArray<std::complex<double>> h_list_single_channel;
+        h_list_single_channel = h_list(h_list.rSlice(), h_i);
+        
+        if (h_list_single_channel.shape().cols == 0)
+        {
+            THROW_INVALID_ARGUMENT_ERROR("No subcarrier selected for CSI data.\n");
+        }
+
+        //Get complex conjugate of the channel  
+        auto h_list_eigen = EigencdMatrixMap(h_list_single_channel.data(), h_list_single_channel.numRows(), h_list_single_channel.numCols());
+        EigenDoubleMatrix eigen_betaProfileProd = (e_term_exp * h_list_eigen).cwiseAbs2();    
+        EigenDoubleMatrixMap eigen_betaProfile(eigen_betaProfileProd.data(),__ntheta, __nphi);
+        
+        if(__FLAG_debug)
+        {
+            std::cout << "log-debug [Bartlett estimator] h_list rows = " << h_list_eigen.rows() << ", h_list cols = " << h_list_eigen.cols() << std::endl;
+            std::cout << "log-debug [Bartlett estimator] e_term rows = " << e_term_exp.rows() << ", e_term cols = " << e_term_exp.cols() << std::endl;
+            std::cout << "log-debug [Bartlett estimator] beta profile rows = " << eigen_betaProfile.rows() << ",  beta profile cols = " << eigen_betaProfile.cols() << std::endl;
+        }
+        
+        //Multiply the subcarrier profiles
+        if(first)
+        {
+            eigen_betaProfile_final = eigen_betaProfile;
+            first = false;
+        }
+        else
+        {
+            eigen_betaProfile_final = eigen_betaProfile_final.cwiseProduct(eigen_betaProfile);
+        }
+    }
+    
+    double *cddataPtr2 = new double[eigen_betaProfile_final.rows() * eigen_betaProfile_final.cols()];
+    EigenDoubleMatrixMap(cddataPtr2, eigen_betaProfile_final.rows(), eigen_betaProfile_final.cols()) = eigen_betaProfile_final;
+    auto angle_of_arrival_profile = nc::NdArray<double>(cddataPtr2, eigen_betaProfile_final.rows(), eigen_betaProfile_final.cols(), __takeOwnership);
+    //========== AOA profile computation ===============
+
+    if (__FLAG_debug) std::cout << "log-debug  [Bartlett estimator] : Getting transpose and returning profile" << std::endl;
+    if (__FLAG_normalize_profile || (__snum_end -__snum_start > 1)) //Always normalize if using multiple subcarriers.
     {
         auto sum_val = nc::sum(nc::sum(angle_of_arrival_profile));
         angle_of_arrival_profile = angle_of_arrival_profile / sum_val(0, 0);
     }
-
     angle_of_arrival_profile = nc::transpose((angle_of_arrival_profile));
+    
     std::cout << "log-info  [Bartlett estimator] : Got AOA profile" << std::endl;
-    //========== AOA profile computation ===============
-
-    if(__FLAG_debug)
+    if (__FLAG_debug)
     {
+        std::cout << "log-debug [Bartlett estimator] AOA profile shape:" << angle_of_arrival_profile.shape() << std::endl;
         total_end = std::chrono::high_resolution_clock::now();
-        std::cout << "log-debug [Bartlett estimator] : Profile computation time " << (total_end- total_start)/std::chrono::milliseconds(1)<< " ms"<< std::endl;
+        std::cout << "log-debug [Bartlett estimator] : Total Computation time : " << (total_end- total_start)/std::chrono::milliseconds(1)<< " ms"<< std::endl;
     }
-
+    
     return angle_of_arrival_profile;
 }
 //=============================================================================================================================
 /**
- *
+ *@bug incorrect estimator used. Error with using eigenvalues in C++.
  *
  * */
 nc::NdArray<double> WSR_Module::compute_profile_music(
@@ -600,7 +671,16 @@ nc::NdArray<double> WSR_Module::compute_profile_music(
 
     //========== AOA profile computation ===============
     std::cout << "log-info  [MUSIC estimator] : Getting profile using multiple subcarriers" << std::endl;
-    for(int h_i=__snum_start; h_i<__snum_end; h_i++)
+
+    if(__FLAG_interpolate_phase)
+    {
+        //A new column is added to h_list for storing interpolated phase
+        __snum_start = 30;
+        __snum_end = 30;
+        std::cout << "log-info  [MUSIC estimator] Using interpolated phase stored as Subcarrier : 30" << std::endl;
+    }
+
+    for(int h_i=__snum_start; h_i<=__snum_end; h_i++)
     {
         std::cout << "log-info  [MUSIC estimator] Subcarrier : " << h_i << std::endl;
  

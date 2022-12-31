@@ -481,8 +481,8 @@ std::pair<nc::NdArray<std::complex<double>>,nc::NdArray<double>> WSR_Util::getFo
                     auto central_snum = nc::NdArray<double>(1, 1) = 15.5;
                     auto xp = nc::arange<double>(0, 30);
                     auto fp = unwrap(nc::angle(temp1(0,nc::Slice(0,30))));
-                    auto mag1 = nc::abs(temp1(0,15));
-                    auto mag2 = nc::abs(temp1(0,16));
+                    auto mag1 = nc::abs(temp1(0,14));
+                    auto mag2 = nc::abs(temp1(0,15));
                     auto fitted =  nc::polynomial::Poly1d<double>::fit(xp.transpose(),fp.transpose(),1);
                     interpolated_phase = nc::unwrap(fitted(central_snum(0,0)));
                     interpolated_h = (mag1+mag2)/2*nc::exp(std::complex<double>(0,1)*interpolated_phase);
